@@ -117637,12 +117637,20 @@ export { default } from './OrderDetails';
 --- FILE: src\modules\TradeOrderHistory\components\OrderDetails\OrderDetails.tsx ---
 
 import { FC } from 'react';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import { Accordion, BottomSheet, Text } from '@aurora/components';
+import { ROUTE_TRADE_ORDER } from 'const/routes';
 
 import { useGetHintsQuery } from 'core/api/hints';
 import { useGetOrderTradesQuery } from 'core/api/orderTrades';
 import { updateLimitOrdersStatus } from 'core/limitOrdersStatus/limitOrdersStatusSlice';
+import {
+  setPrice,
+  setProductId,
+  setQuantity,
+  setSubAccountId,
+} from 'core/tradeOrder/tradeOrderSlice';
 
 import { getNoun } from 'utils/string';
 import { currencySign, sumFormatter } from 'utils/sumFormatter';
@@ -117651,13 +117659,16 @@ import { useAppDispatch, useAppSelector } from 'hooks';
 
 import Header from 'modules/Checks/components/Header/Header';
 import { formattedDateTime, getInstrumentIconIndicator } from 'modules/Checks/helpers';
-import { getFaceValueUnit, getStatusText } from 'modules/TradeOrder/helpers';
+import { LIMIT_ORDER_DENIED_REASON_HINTS_MAP } from 'modules/TradeOrder/components/consts';
+import { getFaceValueUnit, getHint, getStatusText } from 'modules/TradeOrder/helpers';
 import {
   formatOrderProductPortfolio,
   getIsLimitOrderBtnActive,
   getIsNewLimitOrder,
   getOrderCardVariant,
 } from 'modules/TradeOrderHistory/helpers/formatting';
+
+import { createAlertNotification } from 'components/Alert/createAlertNotification';
 
 import { OrderHistoryItem } from 'types/orders';
 
@@ -117675,6 +117686,7 @@ type Props = {
 
 const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const {
     instrumentImageName,
@@ -117705,6 +117717,8 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
     instrumentId,
     faceValue,
     secCode,
+    productId,
+    subAccountId,
   } = data;
 
   const { data: orderTrades } = useGetOrderTradesQuery({ orderNum, tradePlaceId });
@@ -117725,6 +117739,37 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
     isNewOrder ? cancelPermissionState : permissionState,
     tradePlaceId,
   );
+
+  const handleRepeatOrder = () => {
+    if (!isActive) {
+      const slugData = LIMIT_ORDER_DENIED_REASON_HINTS_MAP[deniedReason];
+      createAlertNotification({ text: getHint(hints?.hints, slugData) });
+      return;
+    }
+
+    orderType !== 'M' && dispatch(setPrice(price));
+    dispatch(setQuantity(quantity));
+    dispatch(setProductId(productId));
+    dispatch(setSubAccountId(subAccountId));
+
+    navigate(
+      generatePath(ROUTE_TRADE_ORDER, {
+        instrument: `${instrumentId}_${tradePlaceId}`,
+        direction: buySell === 'B' ? 'buy' : 'sell',
+      }),
+    );
+  };
+
+  const handleOrderCardBtnClick = () => {
+    if (onOrderButtonClick) {
+      onOrderButtonClick(data);
+      return;
+    }
+
+    if (!isNewOrder) {
+      handleRepeatOrder();
+    }
+  };
 
   if (type === 'performed' || type === 'error') {
     if (!(tradeSessionStatus === 'ACTIVE' && permissionState === 'GRANTED')) {
@@ -117767,7 +117812,7 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
       footer={
         <Footer
           type={type}
-          onOrderCardBtnClick={() => onOrderButtonClick && onOrderButtonClick(data)}
+          onOrderCardBtnClick={handleOrderCardBtnClick}
           onReadyButtonClick={onDismiss}
           isBtnDisabled={!isActive}
           deniedReason={status}
