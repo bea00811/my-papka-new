@@ -73755,19 +73755,16 @@ export const datePlusOneDay = () => DateTime.now().plus({ days: 1 }).toFormat('d
 
 --- FILE: src\modules\MyInformation\hooks\useExpiredAnketNeedAcceptAttention.ts ---
 
-import { useGetProfileQuery } from 'core/api/investmentProfile';
 import { useGetPersonalDraftStatusQuery } from 'core/api/personalData';
 
 import { getAnketAttentionInfo } from '../helpers/anketProfileAttention';
 
 /** Текст и признак отображения внимания для блока «Персональные данные». */
 export function useExpiredAnketNeedAcceptAttention() {
-  const { data } = useGetProfileQuery('current');
   const { data: draftStatusData } = useGetPersonalDraftStatusQuery();
 
-  return getAnketAttentionInfo(data?.anketDataStatus || draftStatusData?.anketDataStatus);
+  return getAnketAttentionInfo(draftStatusData?.anketDataStatus);
 }
-
 
 --- FILE: src\modules\MyInformation\hooks\useIsPersonProfile.ts ---
 
