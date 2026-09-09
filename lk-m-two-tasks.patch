@@ -1,0 +1,37 @@
+diff --git a/src/modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention.ts b/src/modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention.ts
+--- a/src/modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention.ts
++++ b/src/modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention.ts
+@@ -1,12 +1,10 @@
+-import { useGetProfileQuery } from 'core/api/investmentProfile';
+ import { useGetPersonalDraftStatusQuery } from 'core/api/personalData';
+ 
+ import { getAnketAttentionInfo } from '../helpers/anketProfileAttention';
+ 
+ /** Текст и признак отображения внимания для блока «Персональные данные». */
+ export function useExpiredAnketNeedAcceptAttention() {
+-  const { data } = useGetProfileQuery('current');
+   const { data: draftStatusData } = useGetPersonalDraftStatusQuery();
+ 
+-  return getAnketAttentionInfo(data?.anketDataStatus || draftStatusData?.anketDataStatus);
++  return getAnketAttentionInfo(draftStatusData?.anketDataStatus);
+ }
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -115,10 +115,14 @@ const getDisplayCommission = (
+ };
+ 
+ const formatCommissionDisplay = (value: string): string => {
+-  const amount = value === '' ? 0 : Number(value);
++  if (value === '') {
++    return '';
++  }
++
++  const amount = Number(value);
+ 
+   if (!Number.isFinite(amount)) {
+-    return `0 ${currencySign('RUB')}`;
++    return '';
+   }
+ 
+   return `${sumFormatter(amount, 2)} ${currencySign('RUB')}`;
