@@ -130499,10 +130499,14 @@ const getDisplayCommission = (
 };
 
 const formatCommissionDisplay = (value: string): string => {
-  const amount = value === '' ? 0 : Number(value);
+  if (value === '') {
+    return '';
+  }
+
+  const amount = Number(value);
 
   if (!Number.isFinite(amount)) {
-    return `0 ${currencySign('RUB')}`;
+    return '';
   }
 
   return `${sumFormatter(amount, 2)} ${currencySign('RUB')}`;
