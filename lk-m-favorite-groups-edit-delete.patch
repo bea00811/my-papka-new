@@ -10,7 +10,15 @@ diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups
  import { ReactComponent as BinSvg } from 'images/icons/bin.svg';
  import { ReactComponent as EditSvg } from 'images/icons/edit.svg';
  
-@@ -48,6 +50,14 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+@@ -24,6 +26,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+   instrumentCount,
+   isDragging = false,
+   onRefetch,
++  onGroupUpdated,
+ }) => {
+   const [deleteFavoriteGroup] = useDeleteFavoriteGroupMutation();
+ 
+@@ -48,6 +51,14 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
      setCreateOrEditFavoriteGroupBottomSheetOpen(false);
    };
    const closeConfirm = () => setConfirmOpen(false);
@@ -25,7 +33,7 @@ diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups
  
    return (
      <div
-@@ -71,18 +81,13 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+@@ -71,18 +82,13 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
  
        {isContainerDimensionsCalculated && (
          <div ref={buttonsWrapperRef} className={styles.buttonsWrapper}>
@@ -46,7 +54,19 @@ diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups
            >
              <BinSvg />
            </div>
-@@ -108,6 +113,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+@@ -94,9 +100,9 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+         groupId={groupId}
+         groupTitle={title}
+         groupName={name}
+-        onCreateOrEditGroup={() => {
++        onCreateOrEditGroup={(group) => {
+           closeCreateOrEditFavoriteGroupBottomSheet();
+-          onRefetch();
++          onGroupUpdated(group);
+         }}
+         onClose={closeCreateOrEditFavoriteGroupBottomSheet}
+       />
+@@ -108,6 +114,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
          onCancel={closeConfirm}
          onConfirm={async () => {
            await deleteFavoriteGroup({ group_Id: groupId });
@@ -79,13 +99,26 @@ diff --git a/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet
    useEffect(() => {
      if (value.length > 64) {
        setValue(value.slice(0, value.length - 1));
-@@ -89,6 +97,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
+@@ -80,7 +88,11 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
+             {isEdit ? 'Редактировать группу' : 'Создание группы'}
+           </Text>
+ 
+-          <div className={styles.iconWrapper} onClick={() => setChooseEmojiBottomSheetOpen(true)}>
++          <div
++            className={styles.iconWrapper}
++            style={{ cursor: 'pointer' }}
++            onClick={() => setChooseEmojiBottomSheetOpen(true)}
++          >
+             <SquircleWithPenSvg className={styles.iconMask} />
+             <div className={styles.icon}>{emojiIconGroup}</div>
+           </div>
+@@ -89,6 +101,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
              placeholder="Мой список"
              value={value}
              label={<Text type="lineRegular">Название группы</Text>}
 +            addonAfter={
 +              value ? (
-+                <div onClick={() => setValue('')}>
++                <div style={{ cursor: 'pointer' }} onClick={() => setValue('')}>
 +                  <CloseSvg />
 +                </div>
 +              ) : undefined
@@ -93,3 +126,79 @@ diff --git a/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet
              onChange={(e) => setValue(e.target.value)}
            />
  
+diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/FavoritesGroups.tsx b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/FavoritesGroups.tsx
+--- a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/FavoritesGroups.tsx
++++ b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/FavoritesGroups.tsx
+@@ -62,6 +62,24 @@ const FavoritesGroups = () => {
+     return <Skeleton />;
+   }
+ 
++  const upsertFavoriteGroup = (group: FavoriteGroupType) => {
++    setLocalFavoriteGroups((prev) => {
++      if (!prev) {
++        return [group];
++      }
++
++      const index = prev.findIndex(({ groupId }) => groupId === group.groupId);
++
++      if (index === -1) {
++        return [...prev, group];
++      }
++
++      const next = [...prev];
++      next[index] = { ...next[index], ...group };
++      return next;
++    });
++  };
++
+   const isAddInstrumentsMode = createdGroupId !== null;
+ 
+   const handleDragEnd = (dropResult: DropResult) => {
+@@ -129,6 +147,7 @@ const FavoritesGroups = () => {
+                             title={title}
+                             instrumentCount={instrumentCount}
+                             onRefetch={refetch}
++                            onGroupUpdated={upsertFavoriteGroup}
+                           />
+                         ),
+                       )}
+@@ -157,9 +176,9 @@ const FavoritesGroups = () => {
+ 
+       <CreateOrEditFavoriteGroupBottomSheet
+         isOpen={isCreateGroupOpen}
+-        onCreateOrEditGroup={({ groupId }) => {
+-          setCreatedGroupId(groupId);
+-          refetch();
++        onCreateOrEditGroup={(group) => {
++          setCreatedGroupId(group.groupId);
++          upsertFavoriteGroup(group);
+         }}
+         onClose={() => setIsCreateGroupOpen(false)}
+       />
+diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/types.ts b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/types.ts
+--- a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/types.ts
++++ b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/types.ts
+@@ -5,6 +5,7 @@ import { FavoriteGroup } from 'types/catalog/models';
+ export interface ISwipeableFavoriteGroupProps extends FavoriteGroup {
+   isDragging?: boolean;
+   onRefetch: () => void;
++  onGroupUpdated: (group: FavoriteGroup) => void;
+ }
+ 
+ export interface IFavoriteGroupProps extends Omit<FavoriteGroup, 'indexNumber'> {
+diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroupDragDrop.tsx b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroupDragDrop.tsx
+--- a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroupDragDrop.tsx
++++ b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroupDragDrop.tsx
+@@ -5,7 +5,11 @@ import { FavoriteGroup as FavoriteGroupType } from 'types/catalog/models';
+ import SwipeableFavoriteGroup from './SwipeableFavoriteGroup';
+ import styles from './SwipeableFavoriteGroupDragDrop.module.pcss';
+ 
+-type Props = FavoriteGroupType & { index: number; onRefetch: () => void };
++type Props = FavoriteGroupType & {
++  index: number;
++  onRefetch: () => void;
++  onGroupUpdated: (group: FavoriteGroupType) => void;
++};
+ 
+ const SwipeableFavoriteGroupDragDrop = (props: Props) => {
+   const { groupId, index, indexNumber } = props;
