@@ -1,0 +1,95 @@
+diff --git a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroup.tsx b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroup.tsx
+--- a/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroup.tsx
++++ b/src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/SwipeableFavoriteGroup.tsx
+@@ -10,6 +10,8 @@ import { useSwipeable } from 'hooks/useSwipeable';
+ 
+ import { CreateOrEditFavoriteGroupBottomSheet } from 'modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet';
+ 
++import { createAlertNotification } from 'components/Alert/createAlertNotification';
++
+ import { ReactComponent as BinSvg } from 'images/icons/bin.svg';
+ import { ReactComponent as EditSvg } from 'images/icons/edit.svg';
+ 
+@@ -48,6 +50,14 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+     setCreateOrEditFavoriteGroupBottomSheetOpen(false);
+   };
+   const closeConfirm = () => setConfirmOpen(false);
++  const openEdit = () => setCreateOrEditFavoriteGroupBottomSheetOpen(true);
++  const openDeleteConfirm = () => setConfirmOpen(true);
++  // react-beautiful-dnd вешает dragHandle на всю строку и съедает click; touch — для мобилки
++  const actionButtonProps = (action: () => void) => ({
++    onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
++    onClick: action,
++    onTouchStart: action,
++  });
+ 
+   return (
+     <div
+@@ -71,18 +81,13 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+ 
+       {isContainerDimensionsCalculated && (
+         <div ref={buttonsWrapperRef} className={styles.buttonsWrapper}>
+-          <div
+-            className={cx(styles.iconWrapper, styles.iconBlue)}
+-            // onClick иногда не работает из-за react-beautiful-dnd
+-            onTouchStart={() => setCreateOrEditFavoriteGroupBottomSheetOpen(true)}
+-          >
++          <div className={cx(styles.iconWrapper, styles.iconBlue)} {...actionButtonProps(openEdit)}>
+             <EditSvg />
+           </div>
+ 
+           <div
+             className={cx(styles.iconWrapper, styles.iconRed)}
+-            // onClick иногда не работает из-за react-beautiful-dnd
+-            onTouchStart={() => setConfirmOpen(true)}
++            {...actionButtonProps(openDeleteConfirm)}
+           >
+             <BinSvg />
+           </div>
+@@ -108,6 +113,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
+         onCancel={closeConfirm}
+         onConfirm={async () => {
+           await deleteFavoriteGroup({ group_Id: groupId });
++          createAlertNotification({ status: 'info', text: 'Группа удалена' });
+           onRefetch();
+           closeConfirm();
+         }}
+diff --git a/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet/CreateOrEditFavoriteGroupBottomSheet.tsx b/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet/CreateOrEditFavoriteGroupBottomSheet.tsx
+--- a/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet/CreateOrEditFavoriteGroupBottomSheet.tsx
++++ b/src/modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet/CreateOrEditFavoriteGroupBottomSheet.tsx
+@@ -8,6 +8,7 @@ import { allowedEmojis } from 'modules/Catalog/constants';
+ 
+ import { createAlertNotification } from 'components/Alert/createAlertNotification';
+ 
++import { ReactComponent as CloseSvg } from 'images/icons/search/close.svg';
+ import { ReactComponent as SquircleWithPenSvg } from 'images/raw-icons/catalog/squircle-with-pen.svg';
+ 
+ import { FavoriteGroup } from 'types/catalog';
+@@ -42,6 +43,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
+     isEdit ? groupTitle : allowedEmojis[Math.floor(Math.random() * allowedEmojis.length)],
+   );
+ 
++  useEffect(() => {
++    if (isOpen && isEdit) {
++      setValue(groupName);
++      setEmojiIconGroup(groupTitle);
++    }
++  }, [isOpen, isEdit, groupName, groupTitle]);
++
+   useEffect(() => {
+     if (value.length > 64) {
+       setValue(value.slice(0, value.length - 1));
+@@ -89,6 +97,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
+             placeholder="Мой список"
+             value={value}
+             label={<Text type="lineRegular">Название группы</Text>}
++            addonAfter={
++              value ? (
++                <div onClick={() => setValue('')}>
++                  <CloseSvg />
++                </div>
++              ) : undefined
++            }
+             onChange={(e) => setValue(e.target.value)}
+           />
+ 
