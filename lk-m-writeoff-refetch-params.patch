@@ -1,0 +1,40 @@
+diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
+--- a/src/core/api/transfers.ts
++++ b/src/core/api/transfers.ts
+@@ -169,6 +169,7 @@ export const transfersApi = createApi({
+     }),
+ 
+     getSecuritiesWriteOffParams: builder.query<SecuritiesWriteOffParamsResponse, void>({
++      keepUnusedDataFor: 0,
+       query: () => ({
+         url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
+       }),
+@@ -178,6 +179,7 @@ export const transfersApi = createApi({
+       SecuritiesContractor[],
+       SecuritiesContractorsRequestParams | void
+     >({
++      keepUnusedDataFor: 0,
+       query: (params) => ({
+         url: API_REQUEST_SECURITIES_CONTRACTORS,
+         params: params?.sbp === true ? { sbp: true } : undefined,
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -273,13 +273,15 @@ const SecuritiesWriteOff = () => {
+     data: writeOffParams,
+     isLoading,
+     isError: isParamsError,
+-  } = useGetSecuritiesWriteOffParamsQuery();
++  } = useGetSecuritiesWriteOffParamsQuery(undefined, { refetchOnMountOrArgChange: true });
+   const isSbpMode = selectedMode?.code === 'SBP';
+   const {
+     data: contractorsData,
+     isLoading: isContractorsLoading,
+     isFetching: isContractorsFetching,
+-  } = useGetSecuritiesContractorsQuery(isSbpMode ? { sbp: true } : undefined);
++  } = useGetSecuritiesContractorsQuery(isSbpMode ? { sbp: true } : undefined, {
++    refetchOnMountOrArgChange: true,
++  });
+   const [writeOff, { isLoading: isWriteOffLoading }] = useSecuritiesWriteOffMutation();
+   const [getWriteOffDetails] = useLazyGetSecuritiesWriteOffQuery();
+   const [getWriteOffFiles] = useLazyGetSecuritiesWriteOffFilesQuery();
