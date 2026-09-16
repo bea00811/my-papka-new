@@ -1,0 +1,159 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -1,24 +1,17 @@
+ import { useCallback, useMemo, useState } from 'react';
+-import { useNavigate } from 'react-router-dom';
+ 
+ import {
+-  BannerWarningLine,
+   BottomSheet,
+   Button,
+   DatePicker,
+   Headline,
+   Input,
+   Placeholder,
+-  Switch,
+   Text,
+ } from '@aurora/components';
+ import cx from 'classnames';
+ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+-import { ROUTE_PROFILE } from 'const/routes';
+ import { DateTime } from 'luxon';
+-import sanitizeHtml from 'sanitize-html';
+-
+-import { useGetHintsQuery } from 'core/api/hints';
+ 
+ import { visualDateFormatter } from 'modules/PersonalInformation/components/Passport/helper';
+ import { useReportOrder } from 'modules/ReportsPage/hooks/useReportOrder';
+@@ -26,7 +19,6 @@ import { useReportOrder } from 'modules/ReportsPage/hooks/useReportOrder';
+ import { ReactComponent as SomethingWrongSvg } from 'images/birds/birds-broken-pen.svg';
+ import { ReactComponent as NotConnectedSvg } from 'images/birds/birds-no-connect.svg';
+ import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+-import { ReactComponent as InfoBadgeIcon } from 'images/raw-icons/bannerWarningBadge.svg';
+ 
+ import { DepoInstrumentItem, ReportDepoAccountParameter, ReportType } from 'types/reports';
+ 
+@@ -44,7 +36,6 @@ const ReportsOrder = () => {
+   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+   const [bottomSheetDateOpen, setBottomSheetDateOpen] = useState(false);
+   const [bottomSheetPeriodOpen, setBottomSheetPeriodOpen] = useState(false);
+-  const [bottomSheetEmailConfirm, setBottomSheetEmailConfirm] = useState(false);
+   const [currentInput, setCurrentInput] = useState<ReportInputNames>('reportType');
+   const [dateError, setDateError] = useState<boolean>(false);
+   const [periodError, setPeriodError] = useState<boolean>(false);
+@@ -53,13 +44,6 @@ const ReportsOrder = () => {
+   const [openSearchInstrument, setOpenSearchInstrument] = useState<boolean>(false);
+   const [searchInstrumentText, setSearchInstrumentText] = useState<string>('');
+ 
+-  const { data: hintsResult } = useGetHintsQuery();
+-  const reportToEmailText = hintsResult?.hints.find(
+-    (item) => item.slug === 'REPORT_TO_EMAIL',
+-  )?.text;
+-
+-  const navigate = useNavigate();
+-
+   const {
+     handleFormSubmit,
+     setReportTypeSelected,
+@@ -75,7 +59,6 @@ const ReportsOrder = () => {
+     parameters,
+     isLoading,
+     isErrorParameters,
+-    email,
+     isStatusLoading,
+     isStatusError,
+     isCreateReportError,
+@@ -86,15 +69,6 @@ const ReportsOrder = () => {
+     setCurrentInput(name);
+   }, []);
+ 
+-  const handleChangeEmail = useCallback(() => {
+-    navigate(ROUTE_PROFILE);
+-  }, [navigate]);
+-
+-  const handleSubmit = () => {
+-    setBottomSheetEmailConfirm(false);
+-    handleFormSubmit();
+-  };
+-
+   const onReportTypeSelect = useCallback(
+     (item: ReportType) => {
+       setReportTypeSelected(item);
+@@ -193,13 +167,6 @@ const ReportsOrder = () => {
+     [paramsData.dates, setFormData],
+   );
+ 
+-  const onSendEmailChange = useCallback(
+-    (e: React.ChangeEvent<HTMLInputElement>) => {
+-      setFormData((oldData) => ({ ...oldData, sendViaEmail: e.target.checked }));
+-    },
+-    [setFormData],
+-  );
+-
+   const dateController = useCallback(
+     () => setDateError(formData?.fromDate?.length === 0),
+     [formData?.fromDate],
+@@ -422,29 +389,10 @@ const ReportsOrder = () => {
+       </div>
+ 
+       <div className={styles.buttonWrapper}>
+-        {email && (
+-          <Switch
+-            onChange={onSendEmailChange}
+-            checked={formData?.sendViaEmail}
+-            label="Отправить документ с электронной подписью на почту"
+-          />
+-        )}
+-
+-        {reportToEmailText && (
+-          <BannerWarningLine
+-            variant="attention"
+-            addonLeft={<InfoBadgeIcon />}
+-            title={<span dangerouslySetInnerHTML={{ __html: sanitizeHtml(reportToEmailText) }} />}
+-            className={styles.banner}
+-          />
+-        )}
+-
+         <Button
+           loading={isStatusLoading}
+           disabled={!isFormValid || isStatusLoading}
+-          onClick={
+-            formData?.sendViaEmail ? () => setBottomSheetEmailConfirm(true) : handleFormSubmit
+-          }
++          onClick={handleFormSubmit}
+         >
+           {isStatusLoading ? 'Отправка...' : 'Заказать отчёт'}
+         </Button>
+@@ -529,31 +477,6 @@ const ReportsOrder = () => {
+           }
+         />
+       </BottomSheet>
+-
+-      <BottomSheet
+-        open={bottomSheetEmailConfirm}
+-        onDismiss={() => setBottomSheetEmailConfirm(false)}
+-        onTouchMove={(e) => e.stopPropagation()}
+-        className={cx(styles.wrap, { [styles.bsWrapFixed]: !bottomSheetEmailConfirm })}
+-      >
+-        <div className={styles.BHtitle}>
+-          <Text type={'bodySemiBold'}>Подтверждение отправки</Text>
+-        </div>
+-
+-        <div className={styles.selectList}>
+-          <Text type="bodyRegular">
+-            {`${reportTypeSelected?.name} будет отправлен на почту `}
+-            <Text inline type="bodySemiBold">
+-              {email}
+-            </Text>
+-          </Text>
+-
+-          <Button onClick={handleSubmit}>Отправить</Button>
+-          <Button variant="secondary" onClick={handleChangeEmail}>
+-            Изменить почту
+-          </Button>
+-        </div>
+-      </BottomSheet>
+     </>
+   );
+ };
