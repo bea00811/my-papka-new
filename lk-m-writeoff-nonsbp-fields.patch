@@ -1,0 +1,613 @@
+diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
+--- a/src/modules/Transfers/types/securitiesWriteOff.ts
++++ b/src/modules/Transfers/types/securitiesWriteOff.ts
+@@ -53,6 +53,28 @@ export type SecuritiesContractor = {
+   name: string;
+   id?: number | string;
+   isSBP?: boolean;
++  contractorID?: string;
++  contractorId?: string;
++  depoIdentifier?: string;
++  depoNumber?: string;
++  depoDivision?: string;
++};
++
++export type WriteOffCreditType = 'WITH_RIGHTS' | 'WITHOUT_RIGHTS';
++
++export type SecuritiesWriteOffNonSbpDetails = {
++  contractorID: string;
++  depoNumber: string;
++  depoDivision: string;
++  creditType: WriteOffCreditType | '';
++  supplierName: string;
++  dealAmount: string;
++  dealDate: string;
++  settlementDate: string;
++  reference: string;
++  contractNumber: string;
++  contractDate: string;
++  comment: string;
+ };
+ 
+ export type SecuritiesContractorsRequestParams = {
+@@ -94,6 +116,7 @@ export type SecuritiesWriteOffFormPayload = {
+   } | null;
+   transferExpensesInfo: boolean;
+   documentId?: string;
++  nonSbp?: SecuritiesWriteOffNonSbpDetails;
+ };
+ 
+ export type SecuritiesWriteOffRequestParams = {
+@@ -104,6 +127,18 @@ export type SecuritiesWriteOffRequestParams = {
+   sbp: boolean | null;
+   sendCosts: boolean;
+   personalDataAgreement: boolean;
++  contractorID?: string | null;
++  depoNumber?: string | null;
++  depoDivision?: string | null;
++  withRightsTransfer?: boolean | null;
++  supplierName?: string | null;
++  dealAmount?: number | null;
++  dealDate?: string | null;
++  settlementDate?: string | null;
++  reference?: string | null;
++  contractNumber?: string | null;
++  contractDate?: string | null;
++  comment?: string | null;
+ };
+ 
+ export type SecuritiesWriteOffResponse = {
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+@@ -10,7 +10,19 @@ export type WriteOffFormField =
+   | 'mode'
+   | 'quantity'
+   | 'contractor'
+-  | 'personalDataAgreement';
++  | 'personalDataAgreement'
++  | 'contractorID'
++  | 'depoNumber'
++  | 'depoDivision'
++  | 'creditType'
++  | 'supplierName'
++  | 'dealAmount'
++  | 'dealDate'
++  | 'settlementDate'
++  | 'reference'
++  | 'contractNumber'
++  | 'contractDate'
++  | 'comment';
+ 
+ export type WriteOffFieldErrors = Partial<Record<WriteOffFormField, string>>;
+ 
+@@ -33,6 +45,19 @@ const FIELD_NAME_MAP: Record<string, WriteOffFormField> = {
+   sbp: 'mode',
+   mode: 'mode',
+   personaldataagreement: 'personalDataAgreement',
++  contractorid: 'contractorID',
++  deponumber: 'depoNumber',
++  depodivision: 'depoDivision',
++  withrightstransfer: 'creditType',
++  credittype: 'creditType',
++  suppliername: 'supplierName',
++  dealamount: 'dealAmount',
++  dealdate: 'dealDate',
++  settlementdate: 'settlementDate',
++  reference: 'reference',
++  contractnumber: 'contractNumber',
++  contractdate: 'contractDate',
++  comment: 'comment',
+ };
+ 
+ type RawCheckResultItem = {
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
+ import { NumberFormatValues } from 'react-number-format';
+ import { useNavigate } from 'react-router-dom';
+ 
+-import { Button, Checkbox, CircleLoader, Input, SearchSelect, Text } from '@aurora/components';
++import { BottomSheet, Button, Checkbox, CircleLoader, DatePicker, Input, SearchSelect, Text } from '@aurora/components';
+ import { APP_TITLE, CDN_BASE_URL } from 'const/app';
++import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+ import { ROUTE_SECURITIES_WRITEOFF_ORDER, ROUTE_TRANSFERS } from 'const/routes';
++import { DateTime } from 'luxon';
+ 
+ import { isMobileDevice } from 'core/DeviceDetector';
+ import {
+@@ -23,16 +25,19 @@ import {
+   SecuritiesContractor,
+   SecuritiesWriteOffAccount,
+   SecuritiesWriteOffMode,
++  SecuritiesWriteOffNonSbpDetails,
+   SecuritiesWriteOffParameter,
+   SecuritiesWriteOffRequestParams,
+   SecuritiesWriteOffResponse,
+   SecuritiesWriteOffStatus,
++  WriteOffCreditType,
+ } from 'modules/Transfers/types';
+ 
+ import { HeaderPage } from 'components';
+ import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
+ 
+ import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
++import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+ 
+ import BlockedContent from '../../components/BlockedContent';
+ import WriteOffFailed from '../SecuritiesWriteOffOrder/WriteOffFailed';
+@@ -56,6 +61,45 @@ import {
+ } from './writeOffStatus';
+ 
+ const ACCOUNT_HINT = 'Счёт депо (депозитарий, номер договора)';
++const LATIN_DIGIT_RE = /[^A-Za-z0-9]/g;
++const EMPTY_NON_SBP: SecuritiesWriteOffNonSbpDetails = {
++  contractorID: '',
++  depoNumber: '',
++  depoDivision: '',
++  creditType: '',
++  supplierName: '',
++  dealAmount: '',
++  dealDate: '',
++  settlementDate: '',
++  reference: '',
++  contractNumber: '',
++  contractDate: '',
++  comment: '',
++};
++const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
++  { id: 'WITH_RIGHTS', value: 'С переходом прав' },
++  { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
++];
++const DATE_FIELD_TITLES: Record<'dealDate' | 'settlementDate' | 'contractDate', string> = {
++  dealDate: 'Выберите дату сделки',
++  settlementDate: 'Выберите дату расчётов',
++  contractDate: 'Выберите дату договора',
++};
++
++const sanitizeLatin = (value: string, max: number) =>
++  value.replace(LATIN_DIGIT_RE, '').slice(0, max);
++
++const parseFormDate = (value: string) => {
++  if (!value) {
++    return null;
++  }
++
++  const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
++  return parsed.isValid ? parsed : null;
++};
++
++const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
++  contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
+ 
+ const getInstrumentIconSrc = (instrumentImageName?: string) =>
+   instrumentImageName ? getSrc(CDN_BASE_URL, instrumentImageName) : undefined;
+@@ -269,12 +313,18 @@ const SecuritiesWriteOff = () => {
+   const [contractorValue, setContractorValue] = useState('');
+   const [selectedContractor, setSelectedContractor] = useState<SecuritiesContractor | null>(null);
+   const [transferExpensesInfo, setTransferExpensesInfo] = useState(false);
++  const [nonSbp, setNonSbp] = useState<SecuritiesWriteOffNonSbpDetails>(EMPTY_NON_SBP);
++  const [openDateField, setOpenDateField] = useState<
++    'dealDate' | 'settlementDate' | 'contractDate' | null
++  >(null);
+   const {
+     data: writeOffParams,
+     isLoading,
+     isError: isParamsError,
+   } = useGetSecuritiesWriteOffParamsQuery(undefined, { refetchOnMountOrArgChange: true });
+   const isSbpMode = selectedMode?.code === 'SBP';
++  const isNonSbpMode = Boolean(selectedMode) && !isSbpMode;
++  const isWithRights = nonSbp.creditType === 'WITH_RIGHTS';
+   const {
+     data: contractorsData,
+     isLoading: isContractorsLoading,
+@@ -437,6 +487,10 @@ const SecuritiesWriteOff = () => {
+     setCommissionValue('');
+   };
+ 
++  const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {
++    setNonSbp((prev) => ({ ...prev, ...patch }));
++  };
++
+   const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {
+     clearFieldError('instrument');
+     setSelectedInstrument(instrument);
+@@ -463,12 +517,25 @@ const SecuritiesWriteOff = () => {
+     setSelectedMode(mode);
+     setModeValue(mode?.name ?? '');
+     setCommissionValue(getDisplayCommission(mode, transferExpensesInfo));
++    if (!mode || mode.code === 'SBP') {
++      setNonSbp(EMPTY_NON_SBP);
++    }
+   };
+ 
+   const selectContractor = (contractor: SecuritiesContractor | null) => {
+     clearFieldError('contractor');
+     setSelectedContractor(contractor);
+     setContractorValue(contractor?.name ?? '');
++    if (contractor) {
++      clearFieldError('contractorID');
++      clearFieldError('depoNumber');
++      clearFieldError('depoDivision');
++      patchNonSbp({
++        contractorID: getContractorIdentifier(contractor),
++        depoNumber: contractor.depoNumber ?? '',
++        depoDivision: contractor.depoDivision ?? '',
++      });
++    }
+   };
+ 
+   useEffect(() => {
+@@ -595,6 +662,7 @@ const SecuritiesWriteOff = () => {
+           }
+         : null,
+       transferExpensesInfo,
++      nonSbp: isNonSbpMode ? nonSbp : undefined,
+     }),
+     [
+       selectedInstrument,
+@@ -605,6 +673,8 @@ const SecuritiesWriteOff = () => {
+       commissionValue,
+       selectedContractor,
+       transferExpensesInfo,
++      isNonSbpMode,
++      nonSbp,
+     ],
+   );
+ 
+@@ -612,18 +682,80 @@ const SecuritiesWriteOff = () => {
+     navigate(ROUTE_TRANSFERS);
+   };
+ 
++  const handleLatinChange =
++    (field: 'contractorID' | 'depoNumber' | 'depoDivision' | 'reference', max: number) =>
++    (event: { target: { value: string } }) => {
++      clearFieldError(field);
++      patchNonSbp({ [field]: sanitizeLatin(event.target.value, max) });
++    };
++
++  const handleDateSubmit = (dates: Date[]) => {
++    if (!openDateField || !dates?.[0]) {
++      return;
++    }
++
++    const formatted = DateTime.fromJSDate(new Date(dates[0])).toFormat(DEFAULT_DATE_VIEW_FORMAT);
++    clearFieldError(openDateField);
++    if (openDateField === 'dealDate') {
++      clearFieldError('settlementDate');
++    }
++    patchNonSbp({ [openDateField]: formatted });
++    setOpenDateField(null);
++  };
++
++  const validateNonSbpFields = (): WriteOffFieldErrors => {
++    if (!isNonSbpMode) {
++      return {};
++    }
++
++    const errors: WriteOffFieldErrors = {};
++    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {
++      errors.contractorID = 'От 3 до 12 знаков, латинские буквы и цифры';
++    }
++    if (nonSbp.depoDivision && nonSbp.depoDivision.length < 6) {
++      errors.depoDivision = 'От 6 до 17 знаков, латинские буквы и цифры';
++    }
++
++    const dealDate = parseFormDate(nonSbp.dealDate);
++    const settlementDate = parseFormDate(nonSbp.settlementDate);
++    if (dealDate && settlementDate && settlementDate < dealDate) {
++      errors.settlementDate = 'Не может быть раньше даты сделки';
++    }
++
++    return errors;
++  };
++
+   const buildWriteOffRequest = (): SecuritiesWriteOffRequestParams => {
+     const quantity = toQuantityNumber(formPayload.quantity);
+     const contractorId = Number(formPayload.contractor?.id);
++    const sbp = formPayload.mode == null ? null : formPayload.mode.code === 'SBP';
++    const dealAmount = toQuantityNumber(nonSbp.dealAmount);
+ 
+     return {
+       depoInstrument_Id: formPayload.instrument?.depoInstrumentId ?? null,
+       depoSubAccount_Id: formPayload.account?.depoSubAccountId ?? null,
+       quantity: quantity != null && quantity > 0 ? quantity : null,
+       contractor_Id: Number.isFinite(contractorId) ? contractorId : null,
+-      sbp: formPayload.mode == null ? null : formPayload.mode.code === 'SBP',
++      sbp,
+       sendCosts: formPayload.transferExpensesInfo,
+       personalDataAgreement: true,
++      // ponytail: extra POST keys from the mockup; rename if backend contract differs
++      ...(sbp === false
++        ? {
++            contractorID: nonSbp.contractorID || null,
++            depoNumber: nonSbp.depoNumber || null,
++            depoDivision: nonSbp.depoDivision || null,
++            withRightsTransfer: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
++            supplierName: isWithRights ? nonSbp.supplierName || null : null,
++            dealAmount: isWithRights && dealAmount != null ? dealAmount : null,
++            dealDate: nonSbp.dealDate || null,
++            settlementDate: nonSbp.settlementDate || null,
++            reference: nonSbp.reference || null,
++            contractNumber: nonSbp.contractNumber || null,
++            contractDate: nonSbp.contractDate || null,
++            comment: nonSbp.comment || null,
++          }
++        : {}),
+     };
+   };
+ 
+@@ -651,6 +783,12 @@ const SecuritiesWriteOff = () => {
+       return;
+     }
+ 
++    const nonSbpErrors = validateNonSbpFields();
++    if (hasWriteOffFieldErrors(nonSbpErrors)) {
++      setFieldErrors(nonSbpErrors);
++      return;
++    }
++
+     const requestParams = buildWriteOffRequest();
+ 
+     console.log('[SecuritiesWriteOff] POST /v1/nontrade/securities/writeoff', requestParams);
+@@ -995,7 +1133,10 @@ const SecuritiesWriteOff = () => {
+             }
+             separatorActionCells={false}
+             status={fieldErrors.contractor ? 'error' : null}
+-            description={fieldErrors.contractor}
++            description={
++              fieldErrors.contractor ??
++              (isNonSbpMode ? 'Наименование контрагента' : undefined)
++            }
+             onChange={(event) => {
+               clearFieldError('contractor');
+               setContractorValue(event.target.value);
+@@ -1011,6 +1152,222 @@ const SecuritiesWriteOff = () => {
+               selectContractor(selected);
+             }}
+           />
++          {isNonSbpMode && (
++            <>
++              <Input
++                label="Идентификатор:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Идентификатор или код"
++                scale="small"
++                value={nonSbp.contractorID}
++                status={fieldErrors.contractorID ? 'error' : null}
++                description={
++                  fieldErrors.contractorID ??
++                  'Идентификатор или код. От 3 до 12 знаков, латинские буквы и цифры'
++                }
++                onChange={handleLatinChange('contractorID', 12)}
++              />
++              <Input
++                label="Номер счета:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Номер счета депо"
++                scale="small"
++                value={nonSbp.depoNumber}
++                status={fieldErrors.depoNumber ? 'error' : null}
++                description={
++                  fieldErrors.depoNumber ??
++                  'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
++                }
++                onChange={handleLatinChange('depoNumber', 12)}
++              />
++              <Input
++                label="Раздел счета:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Раздел счета депо"
++                scale="small"
++                value={nonSbp.depoDivision}
++                status={fieldErrors.depoDivision ? 'error' : null}
++                description={
++                  fieldErrors.depoDivision ??
++                  'Раздел счета депо. От 6 до 17 знаков, латинские буквы и цифры'
++                }
++                onChange={handleLatinChange('depoDivision', 17)}
++              />
++              <SearchSelect
++                label="Тип зачисления:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNamePopover={styles.searchSelectPopover}
++                classNameContent={styles.searchSelectDropdown}
++                classNameDescription={styles.fieldHint}
++                placeholder="Выберите тип зачисления"
++                scale="small"
++                clearable
++                list={CREDIT_TYPE_OPTIONS}
++                value={CREDIT_TYPE_OPTIONS.find((item) => item.id === nonSbp.creditType)?.value ?? ''}
++                minChar={0}
++                emptyMessage="Ничего не найдено"
++                separatorActionCells={false}
++                status={fieldErrors.creditType ? 'error' : null}
++                description={fieldErrors.creditType}
++                onChange={() => undefined}
++                onClear={clearSearchSelect(() => {
++                  clearFieldError('creditType');
++                  patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
++                })}
++                onSelect={(item) => {
++                  const creditType = item.id as WriteOffCreditType;
++                  clearFieldError('creditType');
++                  patchNonSbp({
++                    creditType,
++                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
++                  });
++                }}
++              />
++              <Input
++                label="Поставщик:"
++                className={`${styles.sideField} ${styles.fieldMax400}`}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="ФИО поставщика ценных бумаг"
++                scale="small"
++                value={nonSbp.supplierName}
++                disabled={!isWithRights}
++                status={fieldErrors.supplierName ? 'error' : null}
++                description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
++                onChange={(event) => {
++                  clearFieldError('supplierName');
++                  patchNonSbp({ supplierName: event.target.value });
++                }}
++              />
++              <Text className={styles.sectionTitle}>Данные для зачисления</Text>
++              <Input
++                label="Сумма сделки:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="0"
++                scale="small"
++                variant="number"
++                precision={2}
++                decimalSeparator="."
++                allowedDecimalSeparators={['.', ',']}
++                thousandSeparator=""
++                disabled={!isWithRights}
++                status={fieldErrors.dealAmount ? 'error' : null}
++                description={
++                  fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
++                }
++                value={nonSbp.dealAmount}
++                onValueChange={(values) => {
++                  clearFieldError('dealAmount');
++                  patchNonSbp({ dealAmount: values.value ?? '' });
++                }}
++              />
++              <div onClick={() => setOpenDateField('dealDate')}>
++                <Input
++                  label="Дата сделки:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Выберите дату"
++                  scale="small"
++                  value={nonSbp.dealDate}
++                  addonAfter={<Calendar />}
++                  status={fieldErrors.dealDate ? 'error' : null}
++                  description={
++                    fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
++                  }
++                  onChange={() => undefined}
++                />
++              </div>
++              <div onClick={() => setOpenDateField('settlementDate')}>
++                <Input
++                  label="Дата расчетов:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Выберите дату"
++                  scale="small"
++                  value={nonSbp.settlementDate}
++                  addonAfter={<Calendar />}
++                  status={fieldErrors.settlementDate ? 'error' : null}
++                  description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
++                  onChange={() => undefined}
++                />
++              </div>
++              <Input
++                label="Референс:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Референс"
++                scale="small"
++                value={nonSbp.reference}
++                status={fieldErrors.reference ? 'error' : null}
++                description={fieldErrors.reference ?? 'До 16 знаков, латинские буквы и цифры'}
++                onChange={handleLatinChange('reference', 16)}
++              />
++              <Text className={styles.sectionTitle}>Основание для зачисления</Text>
++              <Input
++                label="Номер договора:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Номер договора"
++                scale="small"
++                value={nonSbp.contractNumber}
++                status={fieldErrors.contractNumber ? 'error' : null}
++                description={
++                  fieldErrors.contractNumber ?? 'Номер депозитарного договора с контрагентом'
++                }
++                onChange={(event) => {
++                  clearFieldError('contractNumber');
++                  patchNonSbp({ contractNumber: event.target.value });
++                }}
++              />
++              <div onClick={() => setOpenDateField('contractDate')}>
++                <Input
++                  label="Дата договора:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Выберите дату"
++                  scale="small"
++                  value={nonSbp.contractDate}
++                  addonAfter={<Calendar />}
++                  status={fieldErrors.contractDate ? 'error' : null}
++                  description={
++                    fieldErrors.contractDate ?? 'Дата депозитарного договора с контрагентом'
++                  }
++                  onChange={() => undefined}
++                />
++              </div>
++              <Text className={styles.sectionTitle}>Прочее</Text>
++              <Input
++                label="Примечание:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Примечание"
++                scale="small"
++                value={nonSbp.comment}
++                maxLength={250}
++                status={fieldErrors.comment ? 'error' : null}
++                description={fieldErrors.comment ?? 'До 250 символов'}
++                onChange={(event) => {
++                  clearFieldError('comment');
++                  patchNonSbp({ comment: event.target.value.slice(0, 250) });
++                }}
++              />
++            </>
++          )}
+           <Checkbox
+             className={styles.expensesCheckbox}
+             classNameLabel={styles.expensesCheckboxLabel}
+@@ -1046,6 +1403,24 @@ const SecuritiesWriteOff = () => {
+           </Button>
+         </div>
+       </div>
++
++      <BottomSheet
++        open={Boolean(openDateField)}
++        onDismiss={() => setOpenDateField(null)}
++        onTouchMove={(event) => event.stopPropagation()}
++      >
++        <Text type="subtitleBold">{openDateField ? DATE_FIELD_TITLES[openDateField] : ''}</Text>
++        <DatePicker
++          withPeriod={false}
++          withOptions={false}
++          minDate={
++            openDateField === 'settlementDate'
++              ? parseFormDate(nonSbp.dealDate)?.toJSDate()
++              : undefined
++          }
++          onSubmit={handleDateSubmit}
++        />
++      </BottomSheet>
+     </div>
+   );
+ };
