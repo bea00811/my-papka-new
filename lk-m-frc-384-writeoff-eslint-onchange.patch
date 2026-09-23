@@ -1,0 +1,39 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -1210,7 +1210,7 @@
+                 separatorActionCells={false}
+                 status={fieldErrors.creditType ? 'error' : null}
+                 description={fieldErrors.creditType}
+-                onChange={() => {}}
++                onChange={() => null}
+                 onClear={clearSearchSelect(() => {
+                   clearFieldError('creditType');
+                   patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
+@@ -1279,7 +1279,7 @@
+                   description={
+                     fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
+                   }
+-                  onChange={() => {}}
++                  onChange={() => null}
+                 />
+               </div>
+               <div onClick={() => setOpenDateField('settlementDate')}>
+@@ -1294,7 +1294,7 @@
+                   addonAfter={<Calendar />}
+                   status={fieldErrors.settlementDate ? 'error' : null}
+                   description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
+-                  onChange={() => {}}
++                  onChange={() => null}
+                 />
+               </div>
+               <Input
+@@ -1341,7 +1341,7 @@
+                   description={
+                     fieldErrors.contractDate ?? 'Дата депозитарного договора с контрагентом'
+                   }
+-                  onChange={() => {}}
++                  onChange={() => null}
+                 />
+               </div>
+               <Text className={styles.sectionTitle}>Прочее</Text>
