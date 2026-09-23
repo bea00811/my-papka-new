@@ -96,5 +96,81 @@ false - несогласие
 noCommit	Body	Bool	
 Оставлять заявку активной для добавления еще инструментов:
 
+
+
+
+✖ npx eslint --fix:
+
+C:\Users\kozlova.ip\Desktop\test project\lk_m\src\modules\Transfers\pages\SecuritiesWriteOff\SecuritiesWriteOff.tsx
+   362:9   warning  The 'instruments' logical expression could make the dependencies of useEffect Hook (at line 398) change on every render. To fix this, wrap the initialization of 'instruments' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   362:9   warning  The 'instruments' logical expression could make the dependencies of useMemo Hook (at line 431) change on every render. To fix this, wrap the initialization of 'instruments' in its own useMemo() Hook    react-hooks/exhaustive-deps
+   363:9   warning  The 'contractors' logical expression could make the dependencies of useEffect Hook (at line 414) change on every render. To fix this, wrap the initialization of 'contractors' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   363:9   warning  The 'contractors' logical expression could make the dependencies of useMemo Hook (at line 479) change on every render. To fix this, wrap the initialization of 'contractors' in its own useMemo() Hook    react-hooks/exhaustive-deps
+   364:9   warning  The 'accounts' logical expression could make the dependencies of useMemo Hook (at line 447) change on every render. To fix this, wrap the initialization of 'accounts' in its own useMemo() Hook          react-hooks/exhaustive-deps
+   365:9   warning  The 'modes' logical expression could make the dependencies of useMemo Hook (at line 462) change on every render. To fix this, wrap the initialization of 'modes' in its own useMemo() Hook                react-hooks/exhaustive-deps
+   380:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   381:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   405:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   406:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   551:6   warning  React Hook useEffect has a missing dependency: 'selectInstrument'. Either include it or remove the dependency array                                                                                       react-hooks/exhaustive-deps
+   562:6   warning  React Hook useEffect has a missing dependency: 'selectAccount'. Either include it or remove the dependency array                                                                                          react-hooks/exhaustive-deps
+   573:6   warning  React Hook useEffect has a missing dependency: 'selectMode'. Either include it or remove the dependency array                                                                                             react-hooks/exhaustive-deps
+   579:6   warning  React Hook useEffect has a missing dependency: 'selectContractor'. Either include it or remove the dependency array                                                                                       react-hooks/exhaustive-deps
+   595:6   warning  React Hook useEffect has a missing dependency: 'selectContractor'. Either include it or remove the dependency array                                                                                       react-hooks/exhaustive-deps
+   597:43  warning  Unexpected any. Specify a different type
+                                                                                             @typescript-eslint/no-explicit-any  
+   775:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   798:5   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   803:7   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   829:9   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   855:9   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   868:7   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   874:7   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+   880:7   warning  Unexpected property on console object was called
+                                                                                             no-restricted-syntax
+  1224:33  error    Unexpected empty arrow function
+                                                                                             no-empty-function
+  1224:33  error    Unexpected empty arrow function
+                                                                                             @typescript-eslint/no-empty-function  1293:35  error    Unexpected empty arrow function
+                                                                                             no-empty-function
+  1293:35  error    Unexpected empty arrow function
+                                                                                             @typescript-eslint/no-empty-function  1308:35  error    Unexpected empty arrow function
+                                                                                             no-empty-function
+  1308:35  error    Unexpected empty arrow function
+                                                                                             @typescript-eslint/no-empty-function  1355:35  error    Unexpected empty arrow function
+                                                                                             no-empty-function
+  1355:35  error    Unexpected empty arrow function
+                                                                                             @typescript-eslint/no-empty-function
+
+✖ 32 problems (8 errors, 24 warnings)
+
+husky - pre-commit hook exited with code 1 (error)
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-384-new)
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
 false - заявка переходит в состояние ожидания подтверждения (по умолчанию)
 true - заявка остается активной для добавления еще инструментов
