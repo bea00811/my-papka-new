@@ -1,0 +1,100 @@
+POST /v1/nontrade/securities/writeoff
+
+
+JSESSIONID	Header/Cookie	TOKEN	Идентификатор сессии.
+*	depoInstrument_Id	Body	Integer	
+Идентификатор списываемого инструмента депо
+
+*	depoSubAccount_Id	Body	Integer	
+ID секции счета депо
+
+*	quantity	Body	Decimal	
+Количество инструмента
+
+*	contractor_Id	Body	Integer	
+ID контрагента
+
+
+contractorDepoAccount	Body	String	
+Счет депо контрагента (обязательно для sbp=false)
+
+
+contractorDepoSection	Body	String	
+Раздел счета депо контрагента (обязательно для sbp=false)
+
+
+contractorID	Body	String	
+Идентификатор (код) контрагента (обязательно для sbp=false)
+
+
+contractorAgreementNum	Body	String	
+Номер депозитарного договора с контрагентом (обязательно для sbp=false)
+
+
+contractorAgreementDate	Body	Date(ISO)	
+Дата депозитарного договора с контрагентом (обязательно для sbp=false)
+
+
+changeOwnership	Body	Bool	
+Признак перехода прав собственности (обязательно для sbp=false)
+
+false - без перехода прав
+true - с переходом прав
+
+recipient	Body	String	
+ФИО получателя ценных бумаг
+
+
+dealDate	Body	Date(ISO)	
+Дата сделки (обязательно для sbp=false)
+
+
+settleDate	Body	Date(ISO)	
+Дата расчетов (обязательно для sbp=false)
+
+
+reference	Body	String	
+Референс (обязательно для sbp=false)
+
+
+volume	Body	Decimal	
+Сумма сделки
+
+
+comment	Body	String	
+Примечание
+
+
+sbp
+
+Body	Bool	
+Признак отправки списания через СБП:
+
+false - не отправлять через СБП (по умолчанию)
+true - отправить через СБП
+
+sendCosts
+
+
+
+Body	Bool	
+Отправлять информацию о затратах на приобретение (имеет смысл только для sbp=true)
+
+true - отправлять
+false - не отправлять (по умолчанию)
+
+personalDataAgreement
+
+параметр пока исключен
+
+Body	Bool	
+Признак согласия на передачу персональных данных:
+
+true - согласие
+false - несогласие
+
+noCommit	Body	Bool	
+Оставлять заявку активной для добавления еще инструментов:
+
+false - заявка переходит в состояние ожидания подтверждения (по умолчанию)
+true - заявка остается активной для добавления еще инструментов
