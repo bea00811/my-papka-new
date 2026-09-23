@@ -1,39 +1,48 @@
 diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 --- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 +++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
-@@ -1210,7 +1210,7 @@
+@@ -1211,7 +1211,6 @@ const SecuritiesWriteOff = () => {
                  separatorActionCells={false}
                  status={fieldErrors.creditType ? 'error' : null}
                  description={fieldErrors.creditType}
--                onChange={() => {}}
-+                onChange={() => null}
+-                onChange={() => null}
                  onClear={clearSearchSelect(() => {
                    clearFieldError('creditType');
                    patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
-@@ -1279,7 +1279,7 @@
+@@ -1275,11 +1274,11 @@ const SecuritiesWriteOff = () => {
+                   scale="small"
+                   value={nonSbp.dealDate}
+                   addonAfter={<Calendar />}
++                  readOnly
+                   status={fieldErrors.dealDate ? 'error' : null}
                    description={
                      fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
                    }
--                  onChange={() => {}}
-+                  onChange={() => null}
+-                  onChange={() => null}
                  />
                </div>
                <div onClick={() => setOpenDateField('settlementDate')}>
-@@ -1294,7 +1294,7 @@
+@@ -1292,9 +1291,9 @@ const SecuritiesWriteOff = () => {
+                   scale="small"
+                   value={nonSbp.settlementDate}
                    addonAfter={<Calendar />}
++                  readOnly
                    status={fieldErrors.settlementDate ? 'error' : null}
                    description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
--                  onChange={() => {}}
-+                  onChange={() => null}
+-                  onChange={() => null}
                  />
                </div>
                <Input
-@@ -1341,7 +1341,7 @@
+@@ -1337,11 +1336,11 @@ const SecuritiesWriteOff = () => {
+                   scale="small"
+                   value={nonSbp.contractDate}
+                   addonAfter={<Calendar />}
++                  readOnly
+                   status={fieldErrors.contractDate ? 'error' : null}
                    description={
                      fieldErrors.contractDate ?? 'Дата депозитарного договора с контрагентом'
                    }
--                  onChange={() => {}}
-+                  onChange={() => null}
+-                  onChange={() => null}
                  />
                </div>
                <Text className={styles.sectionTitle}>Прочее</Text>
