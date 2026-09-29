@@ -1,0 +1,12 @@
+diff --git a/src/modules/TradeOrderHistory/components/StopOrders/StopOrdersHistory/consts.ts b/src/modules/TradeOrderHistory/components/StopOrders/StopOrdersHistory/consts.ts
+--- a/src/modules/TradeOrderHistory/components/StopOrders/StopOrdersHistory/consts.ts
++++ b/src/modules/TradeOrderHistory/components/StopOrders/StopOrdersHistory/consts.ts
+@@ -12,7 +12,7 @@ export const STOP_ORDER_DENIED_REASON_HINTS_MAP: HintsMapType = {
+   StopOrderNotAvailable: {
+     slug: 'STOP_ORDER_NOT_AVAILABLE',
+     default:
+-      'Торговая сессия уже завершена. Повторите попытку в будние дни с учётом времени работы площадки',
++      'Работа с условными заявками доступна только в терминале ИТС QUIK, либо через трейдера тел. 8 800 775-1945, доб. 3',
+   },
+   MT5TerminalConnected: {
+     slug: 'ORDER_LIST_MT_FIVE_TERMINAL_CONNECTED',
