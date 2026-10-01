@@ -219,7 +219,7 @@ diff --git a/src/modules/ReportsPage/ReportsPage.tsx b/src/modules/ReportsPage/R
 diff --git a/src/modules/ReportsPage/constants.ts b/src/modules/ReportsPage/constants.ts
 --- a/src/modules/ReportsPage/constants.ts
 +++ b/src/modules/ReportsPage/constants.ts
-@@ -1,5 +1,7 @@
+@@ -1,12 +1,19 @@
  import { ROUTE_REPORTS, ROUTE_REPORTS_HISTORY } from 'const/routes';
  
 +import { Permissions } from 'core/permissions';
@@ -227,12 +227,15 @@ diff --git a/src/modules/ReportsPage/constants.ts b/src/modules/ReportsPage/cons
  export const DEFAULT_QUERY_ERROR_MESSAGE =
    'При запросе произошла ошибка. Повторите попытку позднее.';
  export const DEFAULT_MUTATION_ERROR_MESSAGE = 'Что-то пошло не так';
-@@ -11,3 +13,8 @@ export const pageTabs = [
+ 
+ export const pageTabs = [
+   { name: 'Новый запрос', link: ROUTE_REPORTS },
+   { name: 'История обращений', link: ROUTE_REPORTS_HISTORY },
+ ];
  
  export const PERMISSION_PERSON_REPORTING = 'PERSON_REPORTING';
- 
++
 +export const isReportsMenuEnabled = () => {
 +  const isTestMode = !process.env.TIER || process.env.TIER === 'tt';
 +  return isTestMode && !Permissions.denied(PERMISSION_PERSON_REPORTING);
 +};
-+
