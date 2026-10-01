@@ -1,0 +1,238 @@
+diff --git a/src/components/DesktopMenu/DesktopMenu.tsx b/src/components/DesktopMenu/DesktopMenu.tsx
+--- a/src/components/DesktopMenu/DesktopMenu.tsx
++++ b/src/components/DesktopMenu/DesktopMenu.tsx
+@@ -15,6 +15,8 @@ import {
+   ROUTE_REQUISITES_VIEW,
+   ROUTE_SECURITIES_REQUISITES,
+   ROUTE_SECURITIES_WRITEOFF,
++  ROUTE_REPORTS,
++  ROUTE_REPORTS_HISTORY,
+   ROUTE_SETTINGS,
+   ROUTE_TRANSFERS,
+   ROUTE_WITHDRAWAL,
+@@ -29,6 +31,7 @@ import { useAppSelector } from 'hooks';
+ 
+ import { LOGOUT_CONFIRM_TITLE } from 'modules/MyInformation/constants';
+ import { useExpiredAnketNeedAcceptAttention } from 'modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention';
++import { isReportsMenuEnabled } from 'modules/ReportsPage/constants';
+ import CollectionCurrency from 'modules/View360/components/CollectionCurrency';
+ import { ReactComponent as TransferSvg } from 'modules/View360/icons/transferIcon.svg';
+ 
+@@ -36,6 +39,7 @@ import { createAlertNotification } from 'components/Alert/createAlertNotificatio
+ 
+ import { ReactComponent as CatalogSvg } from 'images/icons/catalog.svg';
+ import { ReactComponent as IndicatorSvg } from 'images/icons/circle-indicator.svg';
++import { ReactComponent as ReportsSvg } from 'images/icons/copy.svg';
+ import { ReactComponent as HomeSvg } from 'images/icons/home.svg';
+ import { ReactComponent as LogoutSvg } from 'images/icons/logout.svg';
+ import { ReactComponent as HelpSvg } from 'images/icons/question-outline.svg';
+@@ -106,6 +110,14 @@ const DesktopMenu = () => {
+       return;
+     }
+ 
++    const reportsRoutes = [ROUTE_REPORTS, ROUTE_REPORTS_HISTORY];
++    if (reportsRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
++      if (activeTab !== 'reports') {
++        sessionStorage.setItem('activeTab', 'reports');
++      }
++      return;
++    }
++
+     for (const section of menuItems) {
+       const tab = section.find(({ link }) => link === pathname);
+       if (tab && activeTab !== tab.id) {
+@@ -130,6 +142,9 @@ const DesktopMenu = () => {
+       { id: 'view360', name: 'Портфель', link: ROUTE_360, icon: <HomeSvg /> },
+       // { id: 'catalog', name: 'Каталог', link: ROUTE_CATALOG, icon: <CatalogSvg /> },
+       { id: 'transfers', name: 'Переводы', link: ROUTE_TRANSFERS, icon: <TransferSvg /> },
++      ...(isReportsMenuEnabled()
++        ? [{ id: 'reports', name: 'Отчёты', link: ROUTE_REPORTS, icon: <ReportsSvg /> }]
++        : []),
+     ],
+     //   [
+     //    {
+diff --git a/src/components/MobileMenu/MobileMenu.tsx b/src/components/MobileMenu/MobileMenu.tsx
+--- a/src/components/MobileMenu/MobileMenu.tsx
++++ b/src/components/MobileMenu/MobileMenu.tsx
+@@ -11,6 +11,8 @@ import {
+   ROUTE_FAVORITE_GROUPS,
+   ROUTE_FEED,
+   ROUTE_PROFILE,
++  ROUTE_REPORTS,
++  ROUTE_REPORTS_HISTORY,
+   ROUTE_REQUISITES_VIEW,
+   ROUTE_TRANSFERS,
+ } from 'const/routes';
+@@ -19,12 +21,13 @@ import { RootState } from 'store';
+ import { reachGoal } from 'core/helpers/analytics';
+ 
+ import { ECatalogGoal } from 'modules/Catalog/types';
++import { isReportsMenuEnabled } from 'modules/ReportsPage/constants';
+ import { ReactComponent as TransferSvg } from 'modules/View360/icons/transferIcon.svg';
+ 
+ import SkeletonMobileMenu from 'components/MobileMenu/components/SkeletonMobileMenu';
+ 
+ import { ReactComponent as CatalogSvg } from 'images/icons/catalog.svg';
+-//import { ReactComponent as FeedSvg } from 'images/icons/feed.svg';
++import { ReactComponent as ReportsSvg } from 'images/icons/copy.svg';
+ import { ReactComponent as HomeSvg } from 'images/icons/home.svg';
+ //import { ReactComponent as MessageSvg } from 'images/icons/message.svg';
+ import { ReactComponent as MoreSvg } from 'images/icons/more.svg';
+@@ -36,10 +39,16 @@ const isTransfersPath = (pathname: string) =>
+   pathname.startsWith(`${ROUTE_TRANSFERS}/`) ||
+   pathname === ROUTE_REQUISITES_VIEW;
+ 
++const isReportsPath = (pathname: string) =>
++  pathname === ROUTE_REPORTS ||
++  pathname === ROUTE_REPORTS_HISTORY ||
++  pathname.startsWith(`${ROUTE_REPORTS}/`);
++
+ const menuItems = [
+   { id: 'view', name: 'Портфель', url: ROUTE_360, icon: HomeSvg },
+   // { id: 'catalog', name: 'Каталог', url: ROUTE_CATALOG, icon: CatalogSvg },
+   { id: 'transfers', name: 'Переводы', url: ROUTE_TRANSFERS, icon: TransferSvg },
++  { id: 'reports', name: 'Отчёты', url: ROUTE_REPORTS, icon: ReportsSvg },
+   // { id: 'feed', name: 'Лента', url: ROUTE_FEED, icon: FeedSvg },
+   // { id: 'chat', name: 'Чат', url: ROUTE_CHAT, icon: MessageSvg },
+   { id: 'more', name: 'Ещё', url: ROUTE_PROFILE, icon: MoreSvg },
+@@ -56,11 +65,17 @@ const MobileMenu: FC = () => {
+   };
+ 
+   const filteredMenuItems = useMemo(() => {
++    let items = menuItems;
++
+     if (!session.data?.chatEnabled) {
+-      return menuItems.filter(({ id }) => id !== 'chat');
++      items = items.filter(({ id }) => id !== 'chat');
++    }
++
++    if (!isReportsMenuEnabled()) {
++      items = items.filter(({ id }) => id !== 'reports');
+     }
+ 
+-    return menuItems;
++    return items;
+   }, [session.data?.chatEnabled]);
+ 
+   const isFavorites = pathname === ROUTE_FAVORITES_360 || pathname === ROUTE_FAVORITE_GROUPS;
+@@ -78,7 +93,9 @@ const MobileMenu: FC = () => {
+                   className={({ isActive }) =>
+                     cn(styles.menuItem, {
+                       [styles.menuItemActive]:
+-                        isActive || (id === 'transfers' && isTransfersPath(pathname)),
++                        isActive ||
++                        (id === 'transfers' && isTransfersPath(pathname)) ||
++                        (id === 'reports' && isReportsPath(pathname)),
+                     })
+                   }
+                   onClick={() => handleClick(url)}
+diff --git a/src/const/routes.ts b/src/const/routes.ts
+--- a/src/const/routes.ts
++++ b/src/const/routes.ts
+@@ -210,7 +210,7 @@ export const ROUTE_ISSUERS_INSTRUMENTS = '/issuers/:issuerId/instruments';
+ export const ROUTE_ISSUERS_INSTRUMENTS_GROUP = ROUTE_ISSUERS_INSTRUMENTS + '/:groupId';
+ export const ROUTE_ISSUERS_ABOUT = '/issuers/:issuerId/about';
+ 
+-// Отчёты и справки
++// Отчёты
+ export const ROUTE_REPORTS = '/reports';
+ export const ROUTE_REPORTS_HISTORY = '/reports/history';
+ 
+diff --git a/src/modules/MyInformation/MyInformation.tsx b/src/modules/MyInformation/MyInformation.tsx
+--- a/src/modules/MyInformation/MyInformation.tsx
++++ b/src/modules/MyInformation/MyInformation.tsx
+@@ -50,7 +50,6 @@ import SelectProductBSH from 'modules/MyInformation/components/Services/SelectPr
+ import { useRiskGroup } from 'modules/MyInformation/hooks/useRiskGroup';
+ import { useTariff } from 'modules/MyInformation/hooks/useTariff';
+ import { useUBA } from 'modules/MyInformation/hooks/useUBA';
+-import { PERMISSION_PERSON_REPORTING } from 'modules/ReportsPage/constants';
+ 
+ //import { PersonalInfoMappingType } from 'modules/MyInformation/types';
+ import { HeaderPage } from 'components';
+@@ -70,7 +69,6 @@ import { ReactComponent as NegativeUserGlyph } from 'images/raw-icons/more/negat
+ import { ReactComponent as PositiveUserGlyph } from 'images/raw-icons/more/positiveUserGlyph.svg';
+ 
+ import styles from './MyInformation.module.pcss';
+-import ReportsActionCell from './components/Services/ReportsActionCell';
+ import { LOGOUT_CONFIRM_TITLE } from './constants';
+ import { useExpiredAnketNeedAcceptAttention } from './hooks/useExpiredAnketNeedAcceptAttention';
+ import { useIsPersonProfile } from './hooks/useIsPersonProfile';
+@@ -85,11 +83,6 @@ const MyInformation = () => {
+   const { productIdServices } = useAppSelector(servicesSelector);
+ 
+   const isPersonDocumentManagementGranted = Permissions.granted('PERSON_DOCUMENTMANAGEMENT');
+-  const isPersonReportingDenied = Permissions.denied(PERMISSION_PERSON_REPORTING);
+-
+-  //**TODO: временное ограничение для прода */
+-  const isTestMode = !process.env.TIER || process.env.TIER === 'tt';
+-  const isReportsEnabled = isTestMode && !isPersonReportingDenied;
+ 
+   const {
+     data: { products = [] } = {},
+@@ -351,8 +344,6 @@ const MyInformation = () => {
+               <Text type="bodySemiBold" className={styles.cardTitle}>
+                 Обслуживание
+               </Text>
+-              {isReportsEnabled && <ReportsActionCell />}
+-
+               <ActionCell
+                 disabled={!isPersonDocumentManagementGranted}
+                 description={
+diff --git a/src/modules/ReportsPage/ReportsPage.tsx b/src/modules/ReportsPage/ReportsPage.tsx
+--- a/src/modules/ReportsPage/ReportsPage.tsx
++++ b/src/modules/ReportsPage/ReportsPage.tsx
+@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
+ 
+ import { Headline, Placeholder } from '@aurora/components';
+ import cx from 'classnames';
+-import { ROUTE_MY_INFORMATION } from 'const/routes';
++import { ROUTE_360 } from 'const/routes';
+ 
+ import { isMobileDevice } from 'core/DeviceDetector';
+ import { Permissions } from 'core/permissions';
+@@ -22,20 +22,20 @@ const ReportsPage: FC = ({ children }) => {
+   const isMobile = isMobileDevice();
+   const navigate = useNavigate();
+ 
+-  const goBackToProfile = () => {
+-    navigate(ROUTE_MY_INFORMATION);
++  const goBack = () => {
++    navigate(ROUTE_360);
+   };
+ 
+   return (
+     <>
+       {isMobile ? (
+         <HeaderPage
+-          title="Отчёты и справки"
++          title="Отчёты"
+           leftIconVariant="back"
+-          onLeftIconClick={goBackToProfile}
++          onLeftIconClick={goBack}
+         />
+       ) : (
+-        <Headline className={styles.headlineDesktop} title="Отчёты и справки" />
++        <Headline className={styles.headlineDesktop} title="Отчёты" />
+       )}
+ 
+       {isPermissionGranted ? (
+diff --git a/src/modules/ReportsPage/constants.ts b/src/modules/ReportsPage/constants.ts
+--- a/src/modules/ReportsPage/constants.ts
++++ b/src/modules/ReportsPage/constants.ts
+@@ -1,5 +1,7 @@
+ import { ROUTE_REPORTS, ROUTE_REPORTS_HISTORY } from 'const/routes';
+ 
++import { Permissions } from 'core/permissions';
++
+ export const DEFAULT_QUERY_ERROR_MESSAGE =
+   'При запросе произошла ошибка. Повторите попытку позднее.';
+ export const DEFAULT_MUTATION_ERROR_MESSAGE = 'Что-то пошло не так';
+@@ -11,3 +13,8 @@ export const pageTabs = [
+ 
+ export const PERMISSION_PERSON_REPORTING = 'PERSON_REPORTING';
+ 
++export const isReportsMenuEnabled = () => {
++  const isTestMode = !process.env.TIER || process.env.TIER === 'tt';
++  return isTestMode && !Permissions.denied(PERMISSION_PERSON_REPORTING);
++};
++
