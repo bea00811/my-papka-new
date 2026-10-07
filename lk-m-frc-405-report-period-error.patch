@@ -1,7 +1,7 @@
 diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
 --- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
 +++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
-@@ -79,6 +79,8 @@ const ReportsOrder = () => {
+@@ -62,6 +62,8 @@ const ReportsOrder = () => {
      isStatusLoading,
      isStatusError,
      isCreateReportError,
@@ -10,7 +10,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/
    } = useReportOrder();
  
    const handleInputClick = useCallback((name: ReportInputNames) => {
-@@ -177,6 +179,7 @@ const ReportsOrder = () => {
+@@ -151,6 +153,7 @@ const ReportsOrder = () => {
        const fromDate = DateTime.fromFormat(e[0].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
        const toDate = DateTime.fromFormat(e[1].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
  
@@ -18,7 +18,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/
        setFormData((oldData) => ({
          ...oldData,
          fromDate:
-@@ -190,7 +193,7 @@ const ReportsOrder = () => {
+@@ -164,7 +167,7 @@ const ReportsOrder = () => {
        }));
        setBottomSheetPeriodOpen(false);
      },
@@ -26,8 +26,8 @@ diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/
 +    [clearPeriodError, paramsData.dates, setFormData],
    );
  
-   const onSendEmailChange = useCallback(
-@@ -272,7 +275,7 @@ const ReportsOrder = () => {
+   const dateController = useCallback(
+@@ -239,7 +242,7 @@ const ReportsOrder = () => {
      );
    }
  
@@ -36,7 +36,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/
      return (
        <Placeholder
          title={'Что-то пошло не так'}
-@@ -329,8 +332,8 @@ const ReportsOrder = () => {
+@@ -296,8 +299,8 @@ const ReportsOrder = () => {
                        : ''
                    }
                    className={styles.input}
