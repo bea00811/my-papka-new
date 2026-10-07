@@ -99,7 +99,7 @@ diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/Repor
    return {
      formData,
      setFormData,
-@@ -203,6 +216,8 @@ export const useReportOrder = () => {
+@@ -203,5 +216,7 @@ export const useReportOrder = () => {
      isStatusLoading,
      isStatusError,
      isCreateReportError,
@@ -107,4 +107,3 @@ diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/Repor
 +    clearPeriodError: reset,
    };
  };
- 
