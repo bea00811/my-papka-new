@@ -1,0 +1,110 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -79,6 +79,8 @@ const ReportsOrder = () => {
+     isStatusLoading,
+     isStatusError,
+     isCreateReportError,
++    periodErrorText,
++    clearPeriodError,
+   } = useReportOrder();
+ 
+   const handleInputClick = useCallback((name: ReportInputNames) => {
+@@ -177,6 +179,7 @@ const ReportsOrder = () => {
+       const fromDate = DateTime.fromFormat(e[0].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
+       const toDate = DateTime.fromFormat(e[1].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
+ 
++      clearPeriodError();
+       setFormData((oldData) => ({
+         ...oldData,
+         fromDate:
+@@ -190,7 +193,7 @@ const ReportsOrder = () => {
+       }));
+       setBottomSheetPeriodOpen(false);
+     },
+-    [paramsData.dates, setFormData],
++    [clearPeriodError, paramsData.dates, setFormData],
+   );
+ 
+   const onSendEmailChange = useCallback(
+@@ -272,7 +275,7 @@ const ReportsOrder = () => {
+     );
+   }
+ 
+-  if (isCreateReportError || isStatusError) {
++  if ((isCreateReportError && !periodErrorText) || isStatusError) {
+     return (
+       <Placeholder
+         title={'Что-то пошло не так'}
+@@ -329,8 +332,8 @@ const ReportsOrder = () => {
+                       : ''
+                   }
+                   className={styles.input}
+-                  status={periodError ? 'error' : undefined}
+-                  description={periodError && 'Введите корректый период'}
++                  status={periodError || periodErrorText ? 'error' : undefined}
++                  description={periodErrorText || (periodError && 'Введите корректый период')}
+                   onBlur={periodController}
+                   onFocus={periodController}
+                   addonAfter={<Calendar />}
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -10,6 +10,7 @@ import {
+   useGetReportsParametersQuery,
+   useLazyGetReportStatusQuery,
+ } from 'core/api/reports';
++import { isError } from 'core/helpers/isError';
+ import { getReportsParametersWithData } from 'core/reports/helpers';
+ import { reportsSelector } from 'core/reports/reportsSelector';
+ import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
+@@ -23,6 +24,13 @@ import {
+   ReportType,
+ } from 'types/reports';
+ 
++const getPeriodTooLongMessage = (error: unknown): string => {
++  if (!isError(error)) return '';
++  const item = error.data.error[0];
++  if (String(item?.error ?? '') !== '701' && item?.errorCode !== 'Report.PeriodTooLong') return '';
++  return item.errorMessageText || '';
++};
++
+ export const useReportOrder = () => {
+   const dispatch = useAppDispatch();
+   const navigate = useNavigate();
+@@ -36,7 +44,8 @@ export const useReportOrder = () => {
+   const { data, isLoading, isError } = useGetReportsParametersQuery();
+   const [getReportStatus, { isLoading: isStatusLoading, isError: isStatusError }] =
+     useLazyGetReportStatusQuery();
+-  const [createReport, { isError: isCreateReportError }] = useCreateReportMutation();
++  const [createReport, { isError: isCreateReportError, error: createReportError, reset }] =
++    useCreateReportMutation();
+ 
+   const reportTypes = useMemo(() => data?.reportTypes || [], [data?.reportTypes]);
+ 
+@@ -172,11 +181,15 @@ export const useReportOrder = () => {
+           }
+         }
+       } catch (err) {
+-        console.error(err);
++        if (!getPeriodTooLongMessage(err)) {
++          console.error(err);
++        }
+       }
+     }
+   }, [createReport, dispatch, formData, getReportStatus, navigate]);
+ 
++  const periodErrorText = isCreateReportError ? getPeriodTooLongMessage(createReportError) : '';
++
+   return {
+     formData,
+     setFormData,
+@@ -203,6 +216,8 @@ export const useReportOrder = () => {
+     isStatusLoading,
+     isStatusError,
+     isCreateReportError,
++    periodErrorText,
++    clearPeriodError: reset,
+   };
+ };
+ 
