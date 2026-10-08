@@ -1,0 +1,42 @@
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -96,6 +96,22 @@ export const useReportOrder = () => {
+     [formData],
+   );
+ 
++  const maxToDate = reportDateList[0]?.maxToDate;
++
++  useEffect(() => {
++    if (reOrderData?.reportTypeId) return;
++
++    const formatted = maxToDate
++      ? DateTime.fromISO(maxToDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
++      : undefined;
++
++    setFormData((old) => {
++      if (!old) return old;
++      if (old.fromDate === formatted && old.toDate === formatted) return old;
++      return { ...old, fromDate: formatted, toDate: formatted };
++    });
++  }, [maxToDate, reOrderData?.reportTypeId]);
++
+   const reportAgreementList = useMemo(
+     () =>
+       data?.reportAgreementParameters?.filter(
+@@ -151,15 +167,10 @@ export const useReportOrder = () => {
+               )?.portfolioId
+             : undefined;
+ 
+-          const today = DateTime.now().toFormat('dd.MM.yyyy');
+-          const yesterday = DateTime.now().minus({ days: 1 }).toFormat('dd.MM.yyyy');
+-
+           setFormData({
+             reportTypeId: reportType.reportTypeId,
+             productId: firstProductId,
+             portfolioId: firstPortfolioId,
+-            fromDate: yesterday,
+-            toDate: today,
+           });
+         }
+       }
