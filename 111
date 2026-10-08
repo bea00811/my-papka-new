@@ -1,0 +1,45 @@
+{isWithRights && (
+  <Input
+    label="Поставщик:"
+    className={styles.sideField}
+    classNameLabel={styles.sideFieldLabel}
+    classNameDescription={styles.fieldHint}
+    placeholder="ФИО поставщика ценных бумаг"
+    scale="small"
+    value={nonSbp.supplierName}
+    status={fieldErrors.supplierName ? 'error' : null}
+    description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
+    onChange={(event) => {
+      clearFieldError('supplierName');
+      patchNonSbp({ supplierName: event.target.value });
+    }}
+  />
+)}
+
+
+
+{isWithRights && (
+  <Input
+    label="Сумма сделки:"
+    className={styles.sideField}
+    classNameLabel={styles.sideFieldLabel}
+    classNameDescription={styles.fieldHint}
+    placeholder="0"
+    scale="small"
+    variant="number"
+    precision={2}
+    decimalSeparator="."
+    allowedDecimalSeparators={['.', ',']}
+    thousandSeparator=""
+    status={fieldErrors.dealAmount ? 'error' : null}
+    description={
+      fieldErrors.dealAmount ??
+      'Если зачисление производится на основании купли-продажи'
+    }
+    value={nonSbp.dealAmount}
+    onValueChange={(values) => {
+      clearFieldError('dealAmount');
+      patchNonSbp({ dealAmount: values.value ?? '' });
+    }}
+  />
+)}
