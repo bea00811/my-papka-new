@@ -1,12 +1,10 @@
 diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 --- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 +++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
-@@ -1223,48 +1223,50 @@
-                     creditType,
-                     ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
+@@ -1224,46 +1224,48 @@ const SecuritiesWriteOff = () => {
                    });
--                }}
--              />
+                 }}
+               />
 -              <Input
 -                label="Поставщик:"
 -                className={`${styles.sideField} ${styles.fieldMax400}`}
@@ -21,8 +19,8 @@ diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.t
 -                onChange={(event) => {
 -                  clearFieldError('supplierName');
 -                  patchNonSbp({ supplierName: event.target.value });
-                 }}
-               />
+-                }}
+-              />
 +              {isWithRights && (
 +                <Input
 +                  label="Поставщик:"
