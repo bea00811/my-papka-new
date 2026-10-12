@@ -28,11 +28,10 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.ts
 diff --git a/src/modules/ReportsPage/hooks/useReportHistory.ts b/src/modules/ReportsPage/hooks/useReportHistory.ts
 --- a/src/modules/ReportsPage/hooks/useReportHistory.ts
 +++ b/src/modules/ReportsPage/hooks/useReportHistory.ts
-@@ -26,6 +26,7 @@ export const useReportHistory = (filters: ReportHistoryFilters) => {
+@@ -26,5 +26,6 @@ export const useReportHistory = (filters: ReportHistoryFilters) => {
    return {
      data,
      isLoading,
 +    getReportsHistory,
    };
  };
- 
