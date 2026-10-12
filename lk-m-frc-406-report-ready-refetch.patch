@@ -1,0 +1,38 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -54,7 +54,7 @@ const ReportsHistory = () => {
+   const [readyReportGuids, setReadyReportGuids] = useState<string[]>([]);
+   const [isErrorReportParameters, setIsErrorReportParameters] = useState(false);
+ 
+-  const { data: reportRequests, isLoading } = useReportHistory(filters);
++  const { data: reportRequests, isLoading, getReportsHistory } = useReportHistory(filters);
+   const { data: reportParams } = useGetReportsParametersQuery();
+ 
+   const reportTypeList = useMemo(
+@@ -76,12 +76,13 @@ const ReportsHistory = () => {
+         const newGuids = list.filter((guid) => !oldList.includes(guid));
+         return [...oldList, ...newGuids];
+       });
++      getReportsHistory(filters);
+     };
+     const unsubscribe = Notifications.subscribe('ReportReady', listener);
+     return () => {
+       unsubscribe();
+     };
+-  }, [startReportGuidsListener]);
++  }, [filters, getReportsHistory, startReportGuidsListener]);
+ 
+   const handleResetAllFilters = useCallback(() => {
+     setSelectPeriod(defaultFilterPeriod);
+diff --git a/src/modules/ReportsPage/hooks/useReportHistory.ts b/src/modules/ReportsPage/hooks/useReportHistory.ts
+--- a/src/modules/ReportsPage/hooks/useReportHistory.ts
++++ b/src/modules/ReportsPage/hooks/useReportHistory.ts
+@@ -26,6 +26,7 @@ export const useReportHistory = (filters: ReportHistoryFilters) => {
+   return {
+     data,
+     isLoading,
++    getReportsHistory,
+   };
+ };
+ 
