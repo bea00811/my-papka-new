@@ -1,0 +1,11 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.module.pcss b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.module.pcss
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.module.pcss
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.module.pcss
+@@ -29,6 +29,7 @@
+ 
+ .bsWrapFixed {
+   position: fixed;
++  pointer-events: none;
+ }
+ 
+ .selectList {
