@@ -1,0 +1,64 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -9,15 +9,9 @@ import { saveAs } from 'file-saver';
+ 
+ import { API_REQUEST_REPORT_FILE } from 'core/api/apiConstants';
+ import { getDefaultHeaders } from 'core/api/common';
+-import {
+-  useLazyGetReportFileQuery,
+-  useLazyGetReportParametersQuery,
+-  useLazyGetReportStatusQuery,
+-} from 'core/api/reports';
++import { useLazyGetReportParametersQuery, useLazyGetReportStatusQuery } from 'core/api/reports';
+ import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
+ 
+-import { isErrorResponseType } from 'utils/errorResponse';
+-
+ import { useAppDispatch } from 'hooks';
+ 
+ import { orderDateReformat } from 'modules/OrderHistory/helpers';
+@@ -32,7 +26,6 @@ import { visualIsoPeriodFormatter } from 'modules/ReportsPage/components/Reports
+ 
+ import { ReactComponent as PdfSvg } from 'images/raw-icons/history/filePdf.svg';
+ 
+-import { ErrorData } from 'types/auth/models';
+ import { ReportItem } from 'types/reports';
+ 
+ import DetailsItem from '../DetailsItem';
+@@ -67,7 +60,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
+     useLazyGetReportParametersQuery();
+ 
+-  const [checkReportFile, { data: fileData }] = useLazyGetReportFileQuery();
+   const [isFileError, setIsFileError] = useState<boolean>(false);
+ 
+   const handleDownloadFile = async () => {
+@@ -142,13 +134,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+     report.requestGuid,
+   ]);
+ 
+-  useEffect(() => {
+-    const fileId = report.fileList?.[0]?.fileId;
+-    if (openDetails && fileId) {
+-      checkReportFile(fileId);
+-    }
+-  }, [checkReportFile, openDetails, report.fileList]);
+-
+   const onDismiss = useCallback(() => {
+     dispatch(setReorderData(null));
+     dispatch(setCurrentRequestGuid(null));
+@@ -167,12 +152,7 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   const isNew = currentReportStatus === 'new' || report.requestStatusCode === 'new';
+   const showReorderButton = isCompleted || isNew;
+ 
+-  const canDownload =
+-    report.downloadable &&
+-    !isFileError &&
+-    !isErrorResponseType(fileData) &&
+-    !(fileData as ErrorData)?.error &&
+-    isCompleted;
++  const canDownload = report.downloadable && !isFileError && isCompleted;
+ 
+   return (
+     <BottomSheet
