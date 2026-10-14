@@ -478,7 +478,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Report
      </>
    );
  };
-
+ 
  export default ReportListItem;
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/constants.ts b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
 --- a/src/modules/ReportsPage/components/ReportsHistory/constants.ts
