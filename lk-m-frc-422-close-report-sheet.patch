@@ -1,0 +1,59 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -1,4 +1,4 @@
+-import { useCallback, useEffect, useMemo, useState } from 'react';
++import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+ 
+ import BottomSheetComponent from '@aurora/bottom-sheet';
+ import { Button, DatePicker, Filter, FilterBar, Placeholder, Text } from '@aurora/components';
+@@ -10,10 +10,9 @@ import {
+   useLazyGetReportStatusQuery,
+ } from 'core/api/reports';
+ import Notifications from 'core/notification/notifications';
+-import { reportsSelector } from 'core/reports/reportsSelector';
+ import { setCurrentRequestGuid } from 'core/reports/reportsSlice';
+ 
+-import { useAppDispatch, useAppSelector } from 'hooks';
++import { useAppDispatch } from 'hooks';
+ 
+ import CommonHeadSheet from 'modules/OrderHistory/components/CommonHeadSheet';
+ import OrderSkeleton from 'modules/OrderHistory/components/OrderSkeleton';
+@@ -50,7 +49,6 @@ import {
+ import { applyReportStatus, isReportFinished } from './helpers';
+ 
+ const ReportsHistory = () => {
+-  const { currentRequestGuid } = useAppSelector(reportsSelector);
+   const [typeBottomSheet, setTypeBottomSheet] = useState(false);
+   const [periodBottomSheet, setPeriodBottomSheet] = useState(false);
+   const [selectPeriod, setSelectPeriod] = useState<ReportsPeriodTypes>(
+@@ -72,6 +70,7 @@ const ReportsHistory = () => {
+   );
+ 
+   const dispatch = useAppDispatch();
++  const restoredPendingReport = useRef(false);
+ 
+   const patchReportFromStatus = useCallback(
+     (guid: string, status: ReportStatusPayload) => {
+@@ -91,8 +90,11 @@ const ReportsHistory = () => {
+   );
+ 
+   useEffect(() => {
++    if (restoredPendingReport.current) return;
++    restoredPendingReport.current = true;
++
+     const pendingGuid = sessionStorage.getItem(PENDING_REPORT_GUID);
+-    if (!pendingGuid || currentRequestGuid) return;
++    if (!pendingGuid) return;
+ 
+     dispatch(setCurrentRequestGuid(pendingGuid));
+     getReportStatus(pendingGuid)
+@@ -101,7 +103,7 @@ const ReportsHistory = () => {
+         if (status) patchReportFromStatus(pendingGuid, status);
+       })
+       .catch(() => undefined);
+-  }, [currentRequestGuid, dispatch, getReportStatus, patchReportFromStatus]);
++  }, [dispatch, getReportStatus, patchReportFromStatus]);
+ 
+   useEffect(() => {
+     const listener = (data: ReportsReadyNotificatorResponse) => {
