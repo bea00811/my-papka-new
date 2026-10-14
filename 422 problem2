@@ -1,0 +1,47 @@
+ttomSheetDetails/BottomSheetDetails.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss:6
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx:94
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx: patch does not apgit apply lk-m-frc-422-report-icons-and-status.patchlova.ip\Desktop\test project\lk_m> 
+PS C:\Users\kozlova.ip\Desktop\test project\lk_m> git apply lk-m-frc-422-report-icons-and-status.patch
+error: patch failed: src/core/api/reports.ts:11
+error: src/core/api/reports.ts: patch does not apply
+error: src/images/icons/reports/ReportMany.svg: already exists in working directory
+error: src/images/icons/reports/ReportManySign.svg: already exists in working directoryerror: src/images/icons/reports/ReportOne.svg: already exists in working directory
+error: src/images/icons/reports/ReportOneSign.svg: already exists in working directory
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx:4
+error: src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx:1
+error: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx:12
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx: patch does not apply
+error: src/modules/ReportsPage/components/ReportsHistory/constants.ts: patch does not apply
+error: src/modules/ReportsPage/components/ReportsHistory/helpers.tsx: already exists in working directory
+error: patch failed: src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx:59
+error: src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/hooks/useReportOrder.ts:5
+error: src/modules/ReportsPage/hooks/useReportOrder.ts: patch does not apply
+error: patch failed: src/types/reports/responses.ts:36
+error: src/types/reports/responses.ts: patch does not apply
+PS C:\Users\kozlova.ip\Desktop\test project\lk_m>  git apply --ignore-whitespace lk-m-frc-422-report-icons-and-status.patch 
+error: patch failed: src/core/api/reports.ts:11
+error: src/core/api/reports.ts: patch does not apply
+error: src/images/icons/reports/ReportMany.svg: already exists in working directory
+error: src/images/icons/reports/ReportManySign.svg: already exists in working directoryerror: src/images/icons/reports/ReportOne.svg: already exists in working directory
+error: src/images/icons/reports/ReportOneSign.svg: already exists in working directory
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx:4
+error: src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx:1
+error: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx:12
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/constants.ts:4
+error: src/modules/ReportsPage/components/ReportsHistory/constants.ts: patch does not apply
+error: src/modules/ReportsPage/components/ReportsHistory/helpers.tsx: already exists in working directory
+error: patch failed: src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx:59
+error: src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/hooks/useReportOrder.ts:5
+error: src/modules/ReportsPage/hooks/useReportOrder.ts: patch does not apply
+error: patch failed: src/types/reports/responses.ts:36
+error: src/types/reports/responses.ts: patch does not apply
+PS C:\Users\kozlova.ip\Desktop\test project\lk_m> 
