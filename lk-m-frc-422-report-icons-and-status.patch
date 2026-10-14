@@ -1,0 +1,745 @@
+diff --git a/src/core/api/reports.ts b/src/core/api/reports.ts
+--- a/src/core/api/reports.ts
++++ b/src/core/api/reports.ts
+@@ -11,7 +11,7 @@ import {
+   ReportItem,
+   ReportParameterData,
+   ReportParametersResponse,
+-  ReportStatus,
++  ReportStatusPayload,
+   ReportStatusResponse,
+   ReportsParametersResponse,
+ } from 'types/reports';
+@@ -26,9 +26,9 @@ export const reportsApi = createApi({
+     getReportsParameters: builder.query<ReportsParametersResponse, void>({
+       query: () => ({ url: '/reports/parameters' }),
+     }),
+-    getReportStatus: builder.query<ReportStatus, string>({
++    getReportStatus: builder.query<ReportStatusPayload | undefined, string>({
+       query: (reportRequestGuid) => ({ url: `/reports/${reportRequestGuid}/status` }),
+-      transformResponse: (resp: ReportStatusResponse) => resp?.reportRequestStatus?.[0]?.status,
++      transformResponse: (resp: ReportStatusResponse) => resp?.reportRequestStatus?.[0],
+     }),
+     getReportParameters: builder.query<ReportParameterData, string>({
+       query: (reportRequestGuid) => ({ url: `/reports/${reportRequestGuid}/parameters` }),
+diff --git a/src/images/icons/reports/ReportMany.svg b/src/images/icons/reports/ReportMany.svg
+new file mode 100644
+--- /dev/null
++++ b/src/images/icons/reports/ReportMany.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2-9" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M25.524 11.127h-8c-1.885 0-2.828 0-3.414.586s-.586 1.529-.586 3.414v12c0 1.886 0 2.829.586 3.414.586.586 1.529.586 3.414.586h8c1.886 0 2.829 0 3.415-.586.585-.585.585-1.528.585-3.414v-12c0-1.885 0-2.828-.585-3.414-.586-.586-1.529-.586-3.415-.586z" style="fill:#fff;fill-opacity:1"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M22.854 8.506h-8c-1.885 0-2.828 0-3.414.585-.586.586-.586 1.529-.586 3.415v12c0 1.885 0 2.828.586 3.414s1.529.586 3.414.586h8c1.886 0 2.829 0 3.414-.586.586-.586.586-1.529.586-3.414v-12c0-1.886 0-2.829-.586-3.415-.585-.585-1.528-.585-3.414-.585z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M14.864 18.506h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M14.945 22.506h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.854 14.506h8"/></svg>
+\ No newline at end of file
+diff --git a/src/images/icons/reports/ReportManySign.svg b/src/images/icons/reports/ReportManySign.svg
+new file mode 100644
+--- /dev/null
++++ b/src/images/icons/reports/ReportManySign.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2-9" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M25.524 11.127h-8c-1.885 0-2.828 0-3.414.586s-.586 1.529-.586 3.414v12c0 1.886 0 2.829.586 3.414.586.586 1.529.586 3.414.586h8c1.886 0 2.829 0 3.415-.586.585-.585.585-1.528.585-3.414v-12c0-1.885 0-2.828-.585-3.414-.586-.586-1.529-.586-3.415-.586z" style="fill:#fff;fill-opacity:1"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M22.854 8.506h-8c-1.885 0-2.828 0-3.414.585-.586.586-.586 1.529-.586 3.415v12c0 1.885 0 2.828.586 3.414s1.529.586 3.414.586h8c1.886 0 2.829 0 3.414-.586.586-.586.586-1.529.586-3.414v-12c0-1.886 0-2.829-.586-3.415-.585-.585-1.528-.585-3.414-.585z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M14.864 18.506h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M14.945 22.506h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.854 14.506h8"/><path id="rect1" d="M19.442 20.964h10.315v10.253H19.442z" style="fill:#fff;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:1.871;stroke-dasharray:none;stroke-opacity:1"/><path id="path6" d="m21.631 25.22.875.5-.375 2 1.875-3.375 1.125 2 .125-2.5 1.25 4.125.625-3h.75" style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:.971;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"/></svg>
+\ No newline at end of file
+diff --git a/src/images/icons/reports/ReportOne.svg b/src/images/icons/reports/ReportOne.svg
+new file mode 100644
+--- /dev/null
++++ b/src/images/icons/reports/ReportOne.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M24 10h-8c-1.886 0-2.828 0-3.414.586S12 12.114 12 14v12c0 1.886 0 2.828.586 3.414S14.114 30 16 30h8c1.886 0 2.828 0 3.414-.586S28 27.886 28 26V14c0-1.886 0-2.828-.586-3.414S25.886 10 24 10Z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M16.01 20h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M16.091 24h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16h8"/></svg>
+\ No newline at end of file
+diff --git a/src/images/icons/reports/ReportOneSign.svg b/src/images/icons/reports/ReportOneSign.svg
+new file mode 100644
+--- /dev/null
++++ b/src/images/icons/reports/ReportOneSign.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M24 10h-8c-1.886 0-2.828 0-3.414.586S12 12.114 12 14v12c0 1.886 0 2.828.586 3.414S14.114 30 16 30h8c1.886 0 2.828 0 3.414-.586S28 27.886 28 26V14c0-1.886 0-2.828-.586-3.414S25.886 10 24 10Z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M16.01 20h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M16.091 24h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16h8"/><path id="rect1" d="M19.436 21.869h10.315v10.253H19.436z" style="fill:#fff;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:1.871;stroke-opacity:1;stroke-dasharray:none"/><path id="path1-4" fill="#4a4a4a" d="M24.14 25.7a.3.3 0 0 0 .212-.08l2.026-1.863a.3.276 0 1 0-.424-.39l-2.027 1.862a.3.276 0 0 0 .213.472m3.642-.609-2.017 1.854-.8-.736 2.017-1.853a.62.62 0 0 1 .8 0 .567.52 0 0 1 0 .735m-5.133 4.718-1.073.251.273-.986 2.692-2.474.8.735zm5.558-5.844a1.159 1.065 0 0 0-.825-.313 1.158 1.065 0 0 0-.825.313l-5.19 4.772a.27.27 0 0 0-.08.127l-.418 1.51a.3.276 0 0 0 .365.336l1.643-.384a.3.3 0 0 0 .138-.073l5.192-4.772a1.168 1.074 0 0 0 0-1.516" style="display:none;overflow:hidden;fill:#434348;fill-opacity:1;stroke:none;stroke-width:.137302;stroke-dasharray:none;stroke-opacity:1"/><path id="path6" d="m21.625 26.125.875.5-.375 2L24 25.25l1.125 2 .125-2.5 1.25 4.125.625-3h.75" style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:.971;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"/></svg>
+\ No newline at end of file
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -4,8 +4,11 @@ import BottomSheetComponent from '@aurora/bottom-sheet';
+ import { Button, DatePicker, Filter, FilterBar, Placeholder, Text } from '@aurora/components';
+ import cx from 'classnames';
+ 
+-import { isMobileDevice } from 'core/DeviceDetector';
+-import { useGetReportsParametersQuery } from 'core/api/reports';
++import {
++  reportsApi,
++  useGetReportsParametersQuery,
++  useLazyGetReportStatusQuery,
++} from 'core/api/reports';
+ import Notifications from 'core/notification/notifications';
+ import { reportsSelector } from 'core/reports/reportsSelector';
+ import { setCurrentRequestGuid } from 'core/reports/reportsSlice';
+@@ -25,22 +28,28 @@ import { useReportHistory } from 'modules/ReportsPage/hooks/useReportHistory';
+ import { ReactComponent as EmptySvg } from 'images/birds/birds-empty-content.svg';
+ import { ReactComponent as NotConnectedSvg } from 'images/birds/birds-no-connect.svg';
+ 
+-import { ReportHistoryFilters, ReportType, ReportsReadyNotificatorResponse } from 'types/reports';
++import {
++  ReportHistoryFilters,
++  ReportStatusPayload,
++  ReportType,
++  ReportsReadyNotificatorResponse,
++} from 'types/reports';
+ 
+ import Skeleton from '../ReportsOrder/Skeleton';
+ import ReportSelectItem from '../ReportsOrder/components/ReportSelectItem';
+ import styles from './ReportsHistory.module.pcss';
+ import ReportListItem from './components/ReportListItem';
+ import {
++  PENDING_REPORT_GUID,
+   REPORT_HISTORY_FILTER_PERIOD_KEY,
+   ReportsPeriodTypes,
+   defaultFilterPeriod,
+   defaultFilterType,
+   defaultFilters,
+ } from './constants';
++import { applyReportStatus, isReportFinished } from './helpers';
+ 
+ const ReportsHistory = () => {
+-  const isMobile = isMobileDevice();
+   const { currentRequestGuid } = useAppSelector(reportsSelector);
+   const [typeBottomSheet, setTypeBottomSheet] = useState(false);
+   const [periodBottomSheet, setPeriodBottomSheet] = useState(false);
+@@ -50,12 +59,12 @@ const ReportsHistory = () => {
+   const [selectReportType, setSelectReportType] = useState<ReportType>(defaultFilterType);
+ 
+   const [filters, setFilters] = useState<ReportHistoryFilters>(defaultFilters);
+-  const [startReportGuidsListener, setStartReportGuidsListener] = useState(false);
+   const [readyReportGuids, setReadyReportGuids] = useState<string[]>([]);
+   const [isErrorReportParameters, setIsErrorReportParameters] = useState(false);
+ 
+   const { data: reportRequests, isLoading, getReportsHistory } = useReportHistory(filters);
+   const { data: reportParams } = useGetReportsParametersQuery();
++  const [getReportStatus] = useLazyGetReportStatusQuery();
+ 
+   const reportTypeList = useMemo(
+     () => [defaultFilterType, ...(reportParams?.reportTypes || [])],
+@@ -64,25 +73,57 @@ const ReportsHistory = () => {
+ 
+   const dispatch = useAppDispatch();
+ 
++  const patchReportFromStatus = useCallback(
++    (guid: string, status: ReportStatusPayload) => {
++      let found = false;
++      dispatch(
++        reportsApi.util.updateQueryData('getReportsHistory', filters, (draft) => {
++          const item = draft.find((report) => report.requestGuid === guid);
++          if (!item) return;
++          found = true;
++          applyReportStatus(item, status);
++        }),
++      );
++      if (!found) getReportsHistory(filters);
++      if (isReportFinished(status)) sessionStorage.removeItem(PENDING_REPORT_GUID);
++    },
++    [dispatch, filters, getReportsHistory],
++  );
++
+   useEffect(() => {
+-    if (currentRequestGuid) setStartReportGuidsListener(true);
+-  }, [currentRequestGuid]);
++    const pendingGuid = sessionStorage.getItem(PENDING_REPORT_GUID);
++    if (!pendingGuid || currentRequestGuid) return;
++
++    dispatch(setCurrentRequestGuid(pendingGuid));
++    getReportStatus(pendingGuid)
++      .unwrap()
++      .then((status) => {
++        if (status) patchReportFromStatus(pendingGuid, status);
++      })
++      .catch(() => undefined);
++  }, [currentRequestGuid, dispatch, getReportStatus, patchReportFromStatus]);
+ 
+   useEffect(() => {
+-    if (!startReportGuidsListener) return;
+     const listener = (data: ReportsReadyNotificatorResponse) => {
+       const list = data.response.AsyncProcessList || [];
+       setReadyReportGuids((oldList) => {
+         const newGuids = list.filter((guid) => !oldList.includes(guid));
+         return [...oldList, ...newGuids];
+       });
+-      getReportsHistory(filters);
++      list.forEach((guid) => {
++        getReportStatus(guid)
++          .unwrap()
++          .then((status) => {
++            if (status) patchReportFromStatus(guid, status);
++          })
++          .catch(() => undefined);
++      });
+     };
+     const unsubscribe = Notifications.subscribe('ReportReady', listener);
+     return () => {
+       unsubscribe();
+     };
+-  }, [filters, getReportsHistory, startReportGuidsListener]);
++  }, [getReportStatus, patchReportFromStatus]);
+ 
+   const handleResetAllFilters = useCallback(() => {
+     setSelectPeriod(defaultFilterPeriod);
+@@ -200,7 +241,6 @@ const ReportsHistory = () => {
+                       isReady={readyReportGuids.includes(item.requestGuid)}
+                       onParametersError={() => setIsErrorReportParameters(true)}
+                       onParametersErrorClear={() => setIsErrorReportParameters(false)}
+-                      isMobile={isMobile}
+                     />
+                   ))}
+                 </>
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -1,4 +1,4 @@
+-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
++import React, { useCallback, useEffect, useMemo, useState } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ 
+ import BottomSheet from '@aurora/bottom-sheet';
+@@ -9,25 +9,26 @@ import { saveAs } from 'file-saver';
+ 
+ import { API_REQUEST_REPORT_FILE } from 'core/api/apiConstants';
+ import { getDefaultHeaders } from 'core/api/common';
+-import { useLazyGetReportParametersQuery, useLazyGetReportStatusQuery } from 'core/api/reports';
++import { useLazyGetReportParametersQuery } from 'core/api/reports';
+ import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
+ 
+ import { useAppDispatch } from 'hooks';
+ 
+ import { orderDateReformat } from 'modules/OrderHistory/helpers';
+-import { visualDateFormatter } from 'modules/PersonalInformation/components/Passport/helper';
+ import {
+   reportBadge,
+   reportColors,
+   testStatusNames,
+   textStatusColors,
+ } from 'modules/ReportsPage/components/ReportsHistory/constants';
+-import { visualIsoPeriodFormatter } from 'modules/ReportsPage/components/ReportsOrder/helper';
+-
+-import { ReactComponent as PdfSvg } from 'images/raw-icons/history/filePdf.svg';
++import {
++  visualIsoDateFormatter,
++  visualIsoPeriodFormatter,
++} from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
+ import { ReportItem } from 'types/reports';
+ 
++import { getReportIcon } from '../../helpers';
+ import DetailsItem from '../DetailsItem';
+ import styles from './BottomSheetDetails.module.pcss';
+ 
+@@ -35,27 +36,24 @@ type BottomSheetDetailsProps = {
+   openDetails: boolean;
+   setOpenDetails: (openDetails: boolean) => void;
+   report: ReportItem;
+-  askStatus: boolean;
+   onParametersError: () => void;
+   onParametersErrorClear: () => void;
+-  isMobile: boolean;
+ };
+ 
+ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   openDetails,
+   setOpenDetails,
+   report,
+-  askStatus,
+   onParametersError,
+   onParametersErrorClear,
+-  isMobile,
+ }) => {
+-  const [isReportStatusCheck, setIsReportStatusCheck] = useState(false);
+-  const [getReportStatus, { data: currentReportStatus }] = useLazyGetReportStatusQuery();
+   const dispatch = useAppDispatch();
++  const Icon = getReportIcon(report.hasSign, report.multifile);
++  const fileId =
++    report.fileList?.find((file) => !file.downloadOnly)?.fileId ?? report.fileList?.[0]?.fileId;
+   const fileUrl = useMemo(
+-    () => `${API_REQUEST_REPORT_FILE}?file_Id=${report.fileList?.[0]?.fileId}`,
+-    [report],
++    () => (fileId ? `${API_REQUEST_REPORT_FILE}?file_Id=${fileId}` : ''),
++    [fileId],
+   );
+   const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
+     useLazyGetReportParametersQuery();
+@@ -63,6 +61,7 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   const [isFileError, setIsFileError] = useState<boolean>(false);
+ 
+   const handleDownloadFile = async () => {
++    if (!fileUrl) return;
+     try {
+       const response = await httpCommunicator(fileUrl, {
+         method: 'get',
+@@ -91,48 +90,8 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   useEffect(() => {
+     if (openDetails && report.requestGuid) {
+       getReportParameters(report.requestGuid);
+-      setIsReportStatusCheck(askStatus);
+-    }
+-  }, [askStatus, getReportParameters, openDetails, report.requestGuid]);
+-
+-  useEffect(() => {
+-    let intervalId: NodeJS.Timeout | null = null;
+-
+-    if (isReportStatusCheck) {
+-      // Функция для проверки статуса
+-      const checkStatus = () => {
+-        if (currentReportStatus === 'completed' || currentReportStatus === 'error') {
+-          setIsReportStatusCheck(false);
+-          getReportParameters(report.requestGuid);
+-          if (intervalId) {
+-            clearInterval(intervalId);
+-            intervalId = null;
+-          }
+-          return;
+-        }
+-
+-        getReportStatus(report.requestGuid).unwrap();
+-      };
+-
+-      // Запускаем интервал
+-      intervalId = setInterval(checkStatus, 3000);
+-
+-      // Выполняем первую проверку сразу
+-      checkStatus();
+     }
+-
+-    return () => {
+-      if (intervalId) {
+-        clearInterval(intervalId);
+-      }
+-    };
+-  }, [
+-    isReportStatusCheck,
+-    currentReportStatus,
+-    getReportParameters,
+-    getReportStatus,
+-    report.requestGuid,
+-  ]);
++  }, [getReportParameters, openDetails, report.requestGuid, report.requestStatusCode]);
+ 
+   const onDismiss = useCallback(() => {
+     dispatch(setReorderData(null));
+@@ -146,13 +105,19 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+     navigate(ROUTE_REPORTS);
+   }, [dispatch, navigate, reportParameters]);
+ 
+-  const statusColorName = textStatusColors[currentReportStatus || report.requestStatusCode];
+-  const isCompleted =
+-    currentReportStatus === 'completed' || report.requestStatusCode === 'completed';
+-  const isNew = currentReportStatus === 'new' || report.requestStatusCode === 'new';
++  const statusColorName = textStatusColors[report.requestStatusCode];
++  const isCompleted = report.requestStatusCode === 'completed';
++  const isNew = report.requestStatusCode === 'new';
+   const showReorderButton = isCompleted || isNew;
+-
+-  const canDownload = report.downloadable && !isFileError && isCompleted;
++  const canDownload = !isFileError && isCompleted && Boolean(fileId);
++  const periodTitle =
++    report.toDate && report.fromDate && report.fromDate !== report.toDate ? 'За период' : 'Дата';
++  const periodContent =
++    report.toDate && report.fromDate && report.fromDate !== report.toDate
++      ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
++      : report.fromDate || report.date
++      ? visualIsoDateFormatter(report.fromDate || report.date || '')
++      : undefined;
+ 
+   return (
+     <BottomSheet
+@@ -164,11 +129,9 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+         <CheckHeader
+           variant={reportColors[statusColorName]}
+           orderTypeName={report.reportTypeName}
+-          instrumentIcon={<PdfSvg />}
++          instrumentIcon={<Icon />}
+           indicator={reportBadge[statusColorName]}
+-          title={
+-            currentReportStatus ? testStatusNames[currentReportStatus] : report.requestStatusName
+-          }
++          title={testStatusNames[report.requestStatusCode] || report.requestStatusName}
+         />
+       }
+       footer={
+@@ -199,16 +162,9 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+           <DetailsItem title={'Инвестиционный счёт'} content={report.productName} />
+           <DetailsItem title={'Лицевой счёт'} content={report.portfolioName} />
+           <DetailsItem title={'Договор'} content={report.agreementName} />
+-          <DetailsItem
+-            title={'За период'}
+-            content={
+-              report.toDate && report.fromDate
+-                ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
+-                : report.fromDate
+-                ? visualDateFormatter(report.fromDate)
+-                : '-'
+-            }
+-          />
++          <DetailsItem title={'Счёт депо'} content={report.depoAccountName} />
++          <DetailsItem title={'Инструмент'} content={report.instrumentName} />
++          <DetailsItem title={periodTitle} content={periodContent} />
+           <DetailsItem title={'Дата заказа'} content={orderDateReformat(report.requestTime)} />
+         </div>
+       </div>
+@@ -217,4 +173,3 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+ };
+ 
+ export default BottomSheetDetails;
+-
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
+@@ -6,13 +6,3 @@
+     display: flex;
+     justify-content: space-between;
+ }
+-
+-.pdfIcon {
+-    :nth-child(1), :nth-child(2) {
+-        fill: #E9564C;
+-    }
+-
+-    :nth-child(3), :nth-child(4) {
+-        fill: $colorFixedWhite;
+-    }
+-}
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
+@@ -12,10 +12,9 @@ import {
+   visualIsoPeriodFormatter,
+ } from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
+-import { ReactComponent as PdfSvg } from 'images/icons/file-icon-pdf.svg';
+-
+ import { ReportItem, ReportStatus } from 'types/reports';
+ 
++import { getReportIcon, getReportParamLines } from '../../helpers';
+ import BottomSheetDetails from '../BottomSheetDetails';
+ import styles from './ReportListItem.module.pcss';
+ 
+@@ -24,7 +23,6 @@ interface ReportListItemProps {
+   isReady: boolean;
+   onParametersError: () => void;
+   onParametersErrorClear: () => void;
+-  isMobile: boolean;
+ }
+ 
+ const statuses: { [K in ReportStatus]: StatusHistory | undefined } = {
+@@ -34,14 +32,26 @@ const statuses: { [K in ReportStatus]: StatusHistory | undefined } = {
+   processing: 'attension',
+ };
+ 
++const getPeriodTitle = (item: ReportItem) =>
++  item.toDate && item.fromDate && item.toDate !== item.fromDate ? 'Период' : 'Дата';
++
++const getPeriodValue = (item: ReportItem) => {
++  if (item.toDate && item.fromDate && item.toDate !== item.fromDate) {
++    return visualIsoPeriodFormatter(item.fromDate, item.toDate);
++  }
++  const date = item.fromDate || item.date;
++  return date ? visualIsoDateFormatter(date) : '-';
++};
++
+ const ReportListItem = ({
+   item,
+   isReady,
+-  isMobile,
+   onParametersError,
+   onParametersErrorClear,
+ }: ReportListItemProps) => {
+   const [openDetails, setOpenDetails] = useState(false);
++  const Icon = getReportIcon(item.hasSign, item.multifile);
++  const paramLines = getReportParamLines(item);
+ 
+   const { currentRequestGuid } = useAppSelector(reportsSelector);
+ 
+@@ -55,8 +65,6 @@ const ReportListItem = ({
+     }
+   }, [item.requestGuid, currentRequestGuid, handleDetails]);
+ 
+-  const title = item.toDate && item.fromDate && item.toDate === item.fromDate ? 'Дата' : 'Период';
+-
+   return (
+     <>
+       <ActionCell
+@@ -65,24 +73,19 @@ const ReportListItem = ({
+         addonBottom={
+           <div className={styles.addonBottom}>
+             <Text type="labelMedium" color="colorForeground2">
+-              {title}
+-            </Text>
+-            <Text type="labelMedium">
+-              {item.toDate && item.fromDate && item.toDate !== item.fromDate
+-                ? visualIsoPeriodFormatter(item.fromDate, item.toDate)
+-                : item.fromDate
+-                ? visualIsoDateFormatter(item.fromDate)
+-                : '-'}
++              {getPeriodTitle(item)}
+             </Text>
++            <Text type="labelMedium">{getPeriodValue(item)}</Text>
+           </div>
+         }
+         description={
+           <>
+-            <p>{item.productName}</p>
+-            <p>{item.portfolioName}</p>
++            {paramLines.map((line) => (
++              <p key={line}>{line}</p>
++            ))}
+           </>
+         }
+-        iconLeft={<PdfSvg className={styles.pdfIcon} />}
++        iconLeft={<Icon />}
+         statusData={orderDateReformat(item.requestTime)}
+         statusText={isReady ? 'Готово' : item.requestStatusName}
+         status={isReady ? 'suscess' : statuses[item.requestStatusCode]}
+@@ -94,14 +97,11 @@ const ReportListItem = ({
+         openDetails={openDetails}
+         setOpenDetails={setOpenDetails}
+         report={item}
+-        askStatus={!!currentRequestGuid && currentRequestGuid === item.requestGuid}
+         onParametersError={onParametersError}
+         onParametersErrorClear={onParametersErrorClear}
+-        isMobile={isMobile}
+       />
+     </>
+   );
+ };
+ 
+ export default ReportListItem;
+-
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/constants.ts b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+--- a/src/modules/ReportsPage/components/ReportsHistory/constants.ts
++++ b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+@@ -4,6 +4,7 @@ import { ReportType } from 'types/reports';
+ 
+ export const REPORT_HISTORY_FILTER_TYPE_KEY = 'ReportHistoryTypeFilter';
+ export const REPORT_HISTORY_FILTER_PERIOD_KEY = 'ReportHistoryPeriodFilter';
++export const PENDING_REPORT_GUID = 'PENDING_REPORT_GUID';
+ 
+ export type ReportsPeriodTypes = 'day' | 'month' | 'quarter' | 'year';
+ 
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+new file mode 100644
+--- /dev/null
++++ b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+@@ -0,0 +1,43 @@
++import { ReactComponent as ReportMany } from 'images/icons/reports/ReportMany.svg';
++import { ReactComponent as ReportManySign } from 'images/icons/reports/ReportManySign.svg';
++import { ReactComponent as ReportOne } from 'images/icons/reports/ReportOne.svg';
++import { ReactComponent as ReportOneSign } from 'images/icons/reports/ReportOneSign.svg';
++
++import { ReportItem, ReportStatusPayload } from 'types/reports';
++
++const REPORT_PARAM_KEYS = [
++  'productName',
++  'portfolioName',
++  'agreementName',
++  'depoAccountName',
++  'instrumentName',
++] as const;
++
++export const getReportIcon = (hasSign?: boolean, multifile?: boolean) => {
++  if (multifile && hasSign) return ReportManySign;
++  if (multifile) return ReportMany;
++  if (hasSign) return ReportOneSign;
++  return ReportOne;
++};
++
++export const getReportParamLines = (item: ReportItem) =>
++  REPORT_PARAM_KEYS.map((key) => item[key]).filter((value): value is string => Boolean(value));
++
++export const applyReportStatus = (item: ReportItem, status: ReportStatusPayload) => {
++  const code = status.requestStatusCode || status.status;
++  const name = status.requestStatusName || status.statusName;
++  if (code) item.requestStatusCode = code;
++  if (name) item.requestStatusName = name;
++  if (status.hasSign !== undefined) item.hasSign = status.hasSign;
++  if (status.multifile !== undefined) item.multifile = status.multifile;
++  if (status.fileList !== undefined) item.fileList = status.fileList;
++  if (status.errorText !== undefined) item.errorText = status.errorText;
++  REPORT_PARAM_KEYS.forEach((key) => {
++    if (status[key] !== undefined) item[key] = status[key];
++  });
++};
++
++export const isReportFinished = (status?: ReportStatusPayload) => {
++  const code = status?.requestStatusCode || status?.status;
++  return code === 'completed' || code === 'error';
++};
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -59,8 +59,7 @@ const ReportsOrder = () => {
+     parameters,
+     isLoading,
+     isErrorParameters,
+-    isStatusLoading,
+-    isStatusError,
++    isCreateLoading,
+     isCreateReportError,
+     periodErrorText,
+     clearPeriodError,
+@@ -242,7 +241,7 @@ const ReportsOrder = () => {
+     );
+   }
+ 
+-  if ((isCreateReportError && !periodErrorText) || isStatusError) {
++  if (isCreateReportError && !periodErrorText) {
+     return (
+       <Placeholder
+         title={'Что-то пошло не так'}
+@@ -393,11 +392,11 @@ const ReportsOrder = () => {
+ 
+       <div className={styles.buttonWrapper}>
+         <Button
+-          loading={isStatusLoading}
+-          disabled={!isFormValid || isStatusLoading}
++          loading={isCreateLoading}
++          disabled={!isFormValid || isCreateLoading}
+           onClick={handleFormSubmit}
+         >
+-          {isStatusLoading ? 'Отправка...' : 'Заказать отчёт'}
++          {isCreateLoading ? 'Отправка...' : 'Заказать отчёт'}
+         </Button>
+       </div>
+ 
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -5,11 +5,7 @@ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+ import { ROUTE_REPORTS_HISTORY } from 'const/routes';
+ import { DateTime } from 'luxon';
+ 
+-import {
+-  useCreateReportMutation,
+-  useGetReportsParametersQuery,
+-  useLazyGetReportStatusQuery,
+-} from 'core/api/reports';
++import { useCreateReportMutation, useGetReportsParametersQuery } from 'core/api/reports';
+ import { isError } from 'core/helpers/isError';
+ import { getReportsParametersWithData } from 'core/reports/helpers';
+ import { reportsSelector } from 'core/reports/reportsSelector';
+@@ -17,6 +13,8 @@ import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice
+ 
+ import { useAppDispatch, useAppSelector } from 'hooks';
+ 
++import { PENDING_REPORT_GUID } from 'modules/ReportsPage/components/ReportsHistory/constants';
++
+ import {
+   CreateReportRequest,
+   DepoInstrumentItem,
+@@ -42,10 +40,10 @@ export const useReportOrder = () => {
+   );
+   const [formData, setFormData] = useState<CreateReportRequest | null>(null);
+   const { data, isLoading, isError } = useGetReportsParametersQuery();
+-  const [getReportStatus, { isLoading: isStatusLoading, isError: isStatusError }] =
+-    useLazyGetReportStatusQuery();
+-  const [createReport, { isError: isCreateReportError, error: createReportError, reset }] =
+-    useCreateReportMutation();
++  const [
++    createReport,
++    { isLoading: isCreateLoading, isError: isCreateReportError, error: createReportError, reset },
++  ] = useCreateReportMutation();
+ 
+   const reportTypes = useMemo(() => data?.reportTypes || [], [data?.reportTypes]);
+ 
+@@ -185,11 +183,9 @@ export const useReportOrder = () => {
+         const createResult = await createReport(formData).unwrap();
+         const guid = createResult?.reportRequest?.[0]?.requestGuid;
+         if (guid) {
++          sessionStorage.setItem(PENDING_REPORT_GUID, guid);
+           dispatch(setCurrentRequestGuid(guid));
+-          const statusResult = await getReportStatus(guid).unwrap();
+-          if (statusResult) {
+-            navigate(ROUTE_REPORTS_HISTORY);
+-          }
++          navigate(ROUTE_REPORTS_HISTORY);
+         }
+       } catch (err) {
+         if (!getPeriodTooLongMessage(err)) {
+@@ -197,7 +193,7 @@ export const useReportOrder = () => {
+         }
+       }
+     }
+-  }, [createReport, dispatch, formData, getReportStatus, navigate]);
++  }, [createReport, dispatch, formData, navigate]);
+ 
+   const periodErrorText = isCreateReportError ? getPeriodTooLongMessage(createReportError) : '';
+ 
+@@ -224,8 +220,7 @@ export const useReportOrder = () => {
+     reportPeriodEnable,
+     email: data?.eMail?.[0]?.eMail,
+     handleFormSubmit,
+-    isStatusLoading,
+-    isStatusError,
++    isCreateLoading,
+     isCreateReportError,
+     periodErrorText,
+     clearPeriodError: reset,
+diff --git a/src/types/reports/responses.ts b/src/types/reports/responses.ts
+--- a/src/types/reports/responses.ts
++++ b/src/types/reports/responses.ts
+@@ -36,17 +36,33 @@ export interface CreateReportResponse {
+ 
+ export type ReportStatus = 'new' | 'processing' | 'completed' | 'error';
+ 
+-export interface ReportStatusResponse {
+-  reportRequestStatus: {
+-    status: ReportStatus;
+-    statusName: string;
+-  }[];
+-}
+-
+ export interface ReportFile {
+-  createTime: string;
+-  fileName: string;
+   fileId: number;
++  fileType?: string;
++  fileName: string;
++  downloadOnly?: boolean;
++  createTime: string;
++}
++
++export interface ReportStatusPayload {
++  requestGuid?: string;
++  status?: ReportStatus;
++  statusName?: string;
++  requestStatusCode?: ReportStatus;
++  requestStatusName?: string;
++  hasSign?: boolean;
++  multifile?: boolean;
++  fileList?: ReportFile[];
++  errorText?: string;
++  productName?: string;
++  portfolioName?: string;
++  agreementName?: string;
++  depoAccountName?: string;
++  instrumentName?: string;
++}
++
++export interface ReportStatusResponse {
++  reportRequestStatus: ReportStatusPayload[];
+ }
+ 
+ export interface ReportItem {
+@@ -56,17 +72,21 @@ export interface ReportItem {
+   reportTypeName: string;
+   productName?: string;
+   portfolioName?: string;
++  agreementName?: string;
++  depoAccountName?: string;
++  instrumentName?: string;
+   fromDate?: string;
+   toDate?: string;
++  date?: string;
+   year?: number;
+   requestStatusCode: ReportStatus;
+   requestStatusName: string;
+   requestStatusTime: string;
+   hasResponse?: boolean;
+-  downloadable?: boolean;
++  hasSign?: boolean;
++  multifile?: boolean;
++  errorText?: string;
+   fileList?: ReportFile[];
+-  depoAccountName?: string;
+-  agreementName?: string;
+ }
+ 
+ export interface ReportHistoryResponse {
