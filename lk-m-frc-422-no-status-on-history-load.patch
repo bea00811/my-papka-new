@@ -1,0 +1,18 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -97,13 +97,7 @@ const ReportsHistory = () => {
+     if (!pendingGuid) return;
+ 
+     dispatch(setCurrentRequestGuid(pendingGuid));
+-    getReportStatus(pendingGuid)
+-      .unwrap()
+-      .then((status) => {
+-        if (status) patchReportFromStatus(pendingGuid, status);
+-      })
+-      .catch(() => undefined);
+-  }, [dispatch, getReportStatus, patchReportFromStatus]);
++  }, [dispatch]);
+ 
+   useEffect(() => {
+     const listener = (data: ReportsReadyNotificatorResponse) => {
