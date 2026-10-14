@@ -1,0 +1,8 @@
+PS C:\Users\kozlova.ip\Desktop\test project\lk_m> git apply lk-m-frc-422-report-icons-and-status.patch
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx:217
+error: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss:6
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss: patch does not apply
+error: patch failed: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx:94
+error: src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx: patch does not apply
+PS C:\Users\kozlova.ip\Desktop\test project\lk_m> 
