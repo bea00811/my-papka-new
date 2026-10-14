@@ -1,0 +1,14 @@
+✔ Cleaning up temporary files...
+
+✖ npx eslint --fix:
+
+C:\Users\kozlova.ip\Desktop\test project\lk_m\src\modules\ReportsPage\components\ReportsHistory\ReportsHistory.tsx
+  115:24  error  Unexpected empty arrow function  no-empty-function
+  115:24  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+C:\Users\kozlova.ip\Desktop\test project\lk_m\src\types\reports\responses.ts
+  20:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 3 problems (2 errors, 1 warning)
+
+husky - pre-commit hook exited with code 1 (error)
