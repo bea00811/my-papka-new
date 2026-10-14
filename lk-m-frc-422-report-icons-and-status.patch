@@ -375,28 +375,6 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
            <DetailsItem title={'Дата заказа'} content={orderDateReformat(report.requestTime)} />
          </div>
        </div>
-@@ -217,4 +173,3 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
- };
- 
- export default BottomSheetDetails;
--
-diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
---- a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
-+++ b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.module.pcss
-@@ -6,13 +6,3 @@
-     display: flex;
-     justify-content: space-between;
- }
--
--.pdfIcon {
--    :nth-child(1), :nth-child(2) {
--        fill: #E9564C;
--    }
--
--    :nth-child(3), :nth-child(4) {
--        fill: $colorFixedWhite;
--    }
--}
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
@@ -488,7 +466,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Report
          statusData={orderDateReformat(item.requestTime)}
          statusText={isReady ? 'Готово' : item.requestStatusName}
          status={isReady ? 'suscess' : statuses[item.requestStatusCode]}
-@@ -94,14 +97,11 @@ const ReportListItem = ({
+@@ -94,13 +97,11 @@ const ReportListItem = ({
          openDetails={openDetails}
          setOpenDetails={setOpenDetails}
          report={item}
@@ -500,9 +478,8 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Report
      </>
    );
  };
- 
+
  export default ReportListItem;
--
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/constants.ts b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
 --- a/src/modules/ReportsPage/components/ReportsHistory/constants.ts
 +++ b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
