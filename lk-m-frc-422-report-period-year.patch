@@ -1,0 +1,161 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -21,14 +21,9 @@ import {
+   testStatusNames,
+   textStatusColors,
+ } from 'modules/ReportsPage/components/ReportsHistory/constants';
+-import {
+-  visualIsoDateFormatter,
+-  visualIsoPeriodFormatter,
+-} from 'modules/ReportsPage/components/ReportsOrder/helper';
+-
+ import { ReportItem } from 'types/reports';
+ 
+-import { getReportIcon } from '../../helpers';
++import { getReportIcon, getReportTimeTitle, getReportTimeValue } from '../../helpers';
+ import DetailsItem from '../DetailsItem';
+ import styles from './BottomSheetDetails.module.pcss';
+ 
+@@ -110,14 +105,8 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   const isNew = report.requestStatusCode === 'new';
+   const showReorderButton = isCompleted || isNew;
+   const canDownload = !isFileError && isCompleted && Boolean(fileId);
+-  const periodTitle =
+-    report.toDate && report.fromDate && report.fromDate !== report.toDate ? 'За период' : 'Дата';
+-  const periodContent =
+-    report.toDate && report.fromDate && report.fromDate !== report.toDate
+-      ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
+-      : report.fromDate || report.date
+-      ? visualIsoDateFormatter(report.fromDate || report.date || '')
+-      : undefined;
++  const periodTitle = getReportTimeTitle(report, 'За период');
++  const periodContent = getReportTimeValue(report);
+ 
+   return (
+     <BottomSheet
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/ReportListItem/ReportListItem.tsx
+@@ -7,14 +7,15 @@ import { reportsSelector } from 'core/reports/reportsSelector';
+ import { useAppSelector } from 'hooks';
+ 
+ import { orderDateReformat } from 'modules/OrderHistory/helpers';
+-import {
+-  visualIsoDateFormatter,
+-  visualIsoPeriodFormatter,
+-} from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
+ import { ReportItem, ReportStatus } from 'types/reports';
+ 
+-import { getReportIcon, getReportParamLines } from '../../helpers';
++import {
++  getReportIcon,
++  getReportParamLines,
++  getReportTimeTitle,
++  getReportTimeValue,
++} from '../../helpers';
+ import BottomSheetDetails from '../BottomSheetDetails';
+ import styles from './ReportListItem.module.pcss';
+ 
+@@ -32,17 +33,6 @@ const statuses: { [K in ReportStatus]: StatusHistory | undefined } = {
+   processing: 'attension',
+ };
+ 
+-const getPeriodTitle = (item: ReportItem) =>
+-  item.toDate && item.fromDate && item.toDate !== item.fromDate ? 'Период' : 'Дата';
+-
+-const getPeriodValue = (item: ReportItem) => {
+-  if (item.toDate && item.fromDate && item.toDate !== item.fromDate) {
+-    return visualIsoPeriodFormatter(item.fromDate, item.toDate);
+-  }
+-  const date = item.fromDate || item.date;
+-  return date ? visualIsoDateFormatter(date) : '-';
+-};
+-
+ const ReportListItem = ({
+   item,
+   isReady,
+@@ -52,6 +42,8 @@ const ReportListItem = ({
+   const [openDetails, setOpenDetails] = useState(false);
+   const Icon = getReportIcon(item.hasSign, item.multifile);
+   const paramLines = getReportParamLines(item);
++  const timeTitle = getReportTimeTitle(item);
++  const timeValue = getReportTimeValue(item);
+ 
+   const { currentRequestGuid } = useAppSelector(reportsSelector);
+ 
+@@ -71,12 +63,14 @@ const ReportListItem = ({
+         onClick={handleDetails}
+         className={styles.cell}
+         addonBottom={
+-          <div className={styles.addonBottom}>
+-            <Text type="labelMedium" color="colorForeground2">
+-              {getPeriodTitle(item)}
+-            </Text>
+-            <Text type="labelMedium">{getPeriodValue(item)}</Text>
+-          </div>
++          timeTitle && timeValue ? (
++            <div className={styles.addonBottom}>
++              <Text type="labelMedium" color="colorForeground2">
++                {timeTitle}
++              </Text>
++              <Text type="labelMedium">{timeValue}</Text>
++            </div>
++          ) : undefined
+         }
+         description={
+           <>
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+@@ -1,3 +1,8 @@
++import {
++  visualIsoDateFormatter,
++  visualIsoPeriodFormatter,
++} from 'modules/ReportsPage/components/ReportsOrder/helper';
++
+ import { ReactComponent as ReportMany } from 'images/raw-icons/reports/ReportMany.svg';
+ import { ReactComponent as ReportManySign } from 'images/raw-icons/reports/ReportManySign.svg';
+ import { ReactComponent as ReportOne } from 'images/raw-icons/reports/ReportOne.svg';
+@@ -23,6 +28,21 @@ export const getReportIcon = (hasSign?: boolean, multifile?: boolean) => {
+ export const getReportParamLines = (item: ReportItem) =>
+   REPORT_PARAM_KEYS.map((key) => item[key]).filter((value): value is string => Boolean(value));
+ 
++export const getReportTimeTitle = (item: ReportItem, periodLabel = 'Период') => {
++  if (item.fromDate && item.toDate) return periodLabel;
++  if (item.fromDate || item.date) return 'Дата';
++  if (item.year) return 'Год';
++  return undefined;
++};
++
++export const getReportTimeValue = (item: ReportItem) => {
++  if (item.fromDate && item.toDate) return visualIsoPeriodFormatter(item.fromDate, item.toDate);
++  const date = item.fromDate || item.date;
++  if (date) return visualIsoDateFormatter(date);
++  if (item.year) return String(item.year);
++  return undefined;
++};
++
+ export const applyReportStatus = (item: ReportItem, status: ReportStatusPayload) => {
+   const code = status.requestStatusCode || status.status;
+   const name = status.requestStatusName || status.statusName;
+@@ -32,6 +52,7 @@ export const applyReportStatus = (item: ReportItem, status: ReportStatusPayload)
+   if (status.multifile !== undefined) item.multifile = status.multifile;
+   if (status.fileList !== undefined) item.fileList = status.fileList;
+   if (status.errorText !== undefined) item.errorText = status.errorText;
++  if (status.year !== undefined) item.year = status.year;
+   REPORT_PARAM_KEYS.forEach((key) => {
+     if (status[key] !== undefined) item[key] = status[key];
+   });
+diff --git a/src/types/reports/responses.ts b/src/types/reports/responses.ts
+--- a/src/types/reports/responses.ts
++++ b/src/types/reports/responses.ts
+@@ -59,6 +59,7 @@ export interface ReportStatusPayload {
+   agreementName?: string;
+   depoAccountName?: string;
+   instrumentName?: string;
++  year?: number;
+ }
+ 
+ export interface ReportStatusResponse {
