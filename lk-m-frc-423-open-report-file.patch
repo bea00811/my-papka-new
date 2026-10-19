@@ -1,0 +1,36 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -53,6 +53,20 @@ const fileTypeIcon = (fileType?: string) => {
+   return FileOther;
+ };
+ 
++const fileMimeType = (fileType?: string) => {
++  const type = fileType?.toUpperCase();
++  if (type === 'PDF') return 'application/pdf';
++  if (type === 'SIG') return 'application/pgp-signature';
++  return 'application/octet-stream';
++};
++
++const fileNameWithType = (file: ReportFile) => {
++  const name = file.fileName || 'report';
++  const extension = file.fileType?.toLowerCase();
++  if (!extension || name.toLowerCase().endsWith(`.${extension}`)) return name;
++  return `${name}.${extension}`;
++};
++
+ const reportFileUrl = (file: ReportFile, download: boolean) => {
+   const params = new URLSearchParams({
+     file_Id: String(file.fileId),
+@@ -84,9 +98,9 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+       });
+       if (response.data?.Error) return;
+ 
+-      const blob = new Blob([response.data]);
++      const blob = new Blob([response.data], { type: fileMimeType(file.fileType) });
+       if (download) {
+-        saveAs(blob, file.fileName || 'report');
++        saveAs(blob, fileNameWithType(file));
+         return;
+       }
+ 
