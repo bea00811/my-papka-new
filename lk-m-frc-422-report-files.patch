@@ -88,11 +88,10 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  import { useNavigate } from 'react-router-dom';
  
  import BottomSheet from '@aurora/bottom-sheet';
-@@ -21,9 +21,20 @@ import {
+@@ -21,10 +21,20 @@ import {
    testStatusNames,
    textStatusColors,
  } from 'modules/ReportsPage/components/ReportsHistory/constants';
--import { ReportItem } from 'types/reports';
 +import {
 +  visualIsoDateFormatter,
 +  visualIsoPeriodFormatter,
@@ -103,7 +102,8 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 +import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
 +import { ReactComponent as FileSig } from 'images/raw-icons/reports/FileSig.svg';
 +import { ReactComponent as FileView } from 'images/raw-icons/reports/FileView.svg';
-+
+ 
+-import { ReportItem } from 'types/reports';
 +import { ReportFile, ReportItem } from 'types/reports';
  
 -import { getReportIcon, getReportTimeTitle, getReportTimeValue } from '../../helpers';
@@ -111,7 +111,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  import DetailsItem from '../DetailsItem';
  import styles from './BottomSheetDetails.module.pcss';
  
-@@ -35,6 +46,22 @@ type BottomSheetDetailsProps = {
+@@ -36,6 +46,22 @@ type BottomSheetDetailsProps = {
    onParametersErrorClear: () => void;
  };
  
@@ -134,7 +134,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
    openDetails,
    setOpenDetails,
-@@ -44,35 +71,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -45,35 +71,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
  }) => {
    const dispatch = useAppDispatch();
    const Icon = getReportIcon(report.hasSign, report.multifile);
@@ -183,7 +183,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
      }
    };
  
-@@ -104,9 +125,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -105,9 +125,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
    const isCompleted = report.requestStatusCode === 'completed';
    const isNew = report.requestStatusCode === 'new';
    const showReorderButton = isCompleted || isNew;
@@ -216,7 +216,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  
    return (
      <BottomSheet
-@@ -125,12 +166,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -126,12 +166,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
        }
        footer={
          <div className={styles.footer}>
@@ -229,7 +229,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
            <div className={styles.buttons}>
              {showReorderButton && (
                <Button
-@@ -148,14 +183,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -149,14 +183,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
      >
        <div className={styles.container}>
          <div className={styles.border}>
