@@ -1,0 +1,32 @@
+diff --git a/src/images/raw-icons/reports/FileView.svg b/src/images/raw-icons/reports/FileView.svg
+deleted file mode 100644
+--- a/src/images/raw-icons/reports/FileView.svg
++++ /dev/null
+@@ -1,3 +0,0 @@
+-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+-  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C8.5 5 5.4 6.4 3.2 8.2 2.2 9 1.4 10 1 11c-.2.4-.2.8 0 1.2.4 1 1.2 2 2.2 2.8C5.4 16.6 8.5 18 12 18s6.6-1.4 8.8-3.2c1-0.8 1.8-1.8 2.2-2.8.2-.4.2-.8 0-1.2-.4-1-1.2-2-2.2-2.8C18.6 6.4 15.5 5 12 5zm0 11c-2.8 0-5.4-.9-7.2-2.2-.6-.4-1.1-.9-1.4-1.3.3-.4.8-.9 1.4-1.3C6.6 9.9 9.2 9 12 9s5.4.9 7.2 2.2c.6.4 1.1.9 1.4 1.3-.3.4-.8.9-1.4 1.3C17.4 15.1 14.8 16 12 16zm0-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="#6673E9"/>
+-</svg>
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -27,10 +27,10 @@ import {
+ } from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
+ import { ReactComponent as FileDownload } from 'images/raw-icons/download.svg';
++import { ReactComponent as FileView } from 'images/raw-icons/open-eye-blue.svg';
+ import { ReactComponent as FileOther } from 'images/raw-icons/reports/FileOther.svg';
+ import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
+ import { ReactComponent as FileSig } from 'images/raw-icons/reports/FileSig.svg';
+-import { ReactComponent as FileView } from 'images/raw-icons/reports/FileView.svg';
+ 
+ import { ReportFile, ReportItem } from 'types/reports';
+ 
+@@ -203,7 +203,7 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+                         aria-label="Просмотреть файл"
+                         onClick={() => openReportFile(file, false)}
+                       >
+-                        <FileView />
++                        <FileView width={24} height={24} />
+                       </button>
+                     )}
+                     <button
