@@ -38,10 +38,9 @@ new file mode 100644
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
-@@ -45,3 +45,42 @@
+@@ -45,2 +45,40 @@
    padding-bottom: $spacing3;
  }
- 
 +.files {
 +  border-top: $border1 solid $colorForeground4;
 +  padding-top: $spacing3;
@@ -80,7 +79,6 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 +  background: none;
 +  cursor: pointer;
 +}
-+
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
@@ -90,16 +88,11 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  import { useNavigate } from 'react-router-dom';
  
  import BottomSheet from '@aurora/bottom-sheet';
-@@ -21,9 +21,20 @@ import {
-   testStatusNames,
-   textStatusColors,
- } from 'modules/ReportsPage/components/ReportsHistory/constants';
+@@ -26,7 +26,13 @@ import {
+   visualIsoPeriodFormatter,
+ } from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
 -import { ReportItem } from 'types/reports';
-+import {
-+  visualIsoDateFormatter,
-+  visualIsoPeriodFormatter,
-+} from 'modules/ReportsPage/components/ReportsOrder/helper';
-+
 +import { ReactComponent as FileDownload } from 'images/raw-icons/download.svg';
 +import { ReactComponent as FileOther } from 'images/raw-icons/reports/FileOther.svg';
 +import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
@@ -108,12 +101,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 +
 +import { ReportFile, ReportItem } from 'types/reports';
  
--import { getReportIcon, getReportTimeTitle, getReportTimeValue } from '../../helpers';
-+import { getReportIcon } from '../../helpers';
+ import { getReportIcon } from '../../helpers';
  import DetailsItem from '../DetailsItem';
- import styles from './BottomSheetDetails.module.pcss';
- 
-@@ -35,6 +46,22 @@ type BottomSheetDetailsProps = {
+@@ -40,6 +46,22 @@ type BottomSheetDetailsProps = {
    onParametersErrorClear: () => void;
  };
  
@@ -136,7 +126,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
    openDetails,
    setOpenDetails,
-@@ -44,35 +71,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -49,35 +71,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
  }) => {
    const dispatch = useAppDispatch();
    const Icon = getReportIcon(report.hasSign, report.multifile);
@@ -185,13 +175,19 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
      }
    };
  
-@@ -104,9 +125,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -109,15 +125,29 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
    const isCompleted = report.requestStatusCode === 'completed';
    const isNew = report.requestStatusCode === 'new';
    const showReorderButton = isCompleted || isNew;
 -  const canDownload = !isFileError && isCompleted && Boolean(fileId);
--  const periodTitle = getReportTimeTitle(report, 'За период');
--  const periodContent = getReportTimeValue(report);
+-  const periodTitle =
+-    report.toDate && report.fromDate && report.fromDate !== report.toDate ? 'За период' : 'Дата';
+-  const periodContent =
+-    report.toDate && report.fromDate && report.fromDate !== report.toDate
+-      ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
+-      : report.fromDate || report.date
+-      ? visualIsoDateFormatter(report.fromDate || report.date || '')
+-      : undefined;
 +  const detailRows = [
 +    { title: 'Инвестиционный счёт', content: report.productName },
 +    { title: 'Лицевой счёт', content: report.portfolioName },
@@ -218,7 +214,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  
    return (
      <BottomSheet
-@@ -125,12 +166,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -136,12 +166,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
        }
        footer={
          <div className={styles.footer}>
@@ -231,7 +227,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
            <div className={styles.buttons}>
              {showReorderButton && (
                <Button
-@@ -148,14 +183,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -159,14 +183,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
      >
        <div className={styles.container}>
          <div className={styles.border}>
@@ -240,7 +236,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 -          <DetailsItem title={'Договор'} content={report.agreementName} />
 -          <DetailsItem title={'Счёт депо'} content={report.depoAccountName} />
 -          <DetailsItem title={'Инструмент'} content={report.instrumentName} />
--          {periodTitle ? <DetailsItem title={periodTitle} content={periodContent} /> : null}
+-          <DetailsItem title={periodTitle} content={periodContent} />
 -          <DetailsItem title={'Дата заказа'} content={orderDateReformat(report.requestTime)} />
 +          {detailRows.map((row) => (
 +            <DetailsItem key={row.title} title={row.title} content={row.content} />
