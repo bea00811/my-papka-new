@@ -1,13 +1,3 @@
-diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
---- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
-+++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
-@@ -82,5 +82,6 @@
-   border: 0;
-   background: none;
-   cursor: pointer;
-+  line-height: 0;
- }
- 
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
@@ -24,28 +14,19 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  import { useLazyGetReportParametersQuery } from 'core/api/reports';
  import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
  
-@@ -53,20 +50,6 @@ const fileTypeIcon = (fileType?: string) => {
-   return FileOther;
- };
+@@ -27,10 +24,10 @@ import {
+ } from 'modules/ReportsPage/components/ReportsOrder/helper';
  
--const fileMimeType = (fileType?: string) => {
--  const type = fileType?.toUpperCase();
--  if (type === 'PDF') return 'application/pdf';
--  if (type === 'SIG') return 'application/pgp-signature';
--  return 'application/octet-stream';
--};
--
--const fileNameWithType = (file: ReportFile) => {
--  const name = file.fileName || 'report';
--  const extension = file.fileType?.toLowerCase();
--  if (!extension || name.toLowerCase().endsWith(`.${extension}`)) return name;
--  return `${name}.${extension}`;
--};
--
- const reportFileUrl = (file: ReportFile, download: boolean) => {
-   const params = new URLSearchParams({
-     file_Id: String(file.fileId),
-@@ -88,29 +71,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+ import { ReactComponent as FileDownload } from 'images/raw-icons/download.svg';
++import { ReactComponent as FileView } from 'images/raw-icons/open-eye-blue.svg';
+ import { ReactComponent as FileOther } from 'images/raw-icons/reports/FileOther.svg';
+ import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
+ import { ReactComponent as FileSig } from 'images/raw-icons/reports/FileSig.svg';
+-import { ReactComponent as FileView } from 'images/raw-icons/reports/FileView.svg';
+ 
+ import { ReportFile, ReportItem } from 'types/reports';
+ 
+@@ -74,29 +71,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
    const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
      useLazyGetReportParametersQuery();
  
@@ -59,9 +40,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 -      });
 -      if (response.data?.Error) return;
 -
--      const blob = new Blob([response.data], { type: fileMimeType(file.fileType) });
+-      const blob = new Blob([response.data]);
 -      if (download) {
--        saveAs(blob, fileNameWithType(file));
+-        saveAs(blob, file.fileName || 'report');
 -        return;
 -      }
 -
@@ -75,7 +56,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
    const navigate = useNavigate();
  
    useEffect(() => {
-@@ -211,23 +171,23 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -197,23 +171,23 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
                    <span className={styles.fileName}>{file.fileName}</span>
                    <span className={styles.fileActions}>
                      {file.downloadOnly === false && (
@@ -89,8 +70,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
                          aria-label="Просмотреть файл"
 -                        onClick={() => openReportFile(file, false)}
                        >
-                         <FileView width={24} height={24} />
+-                        <FileView />
 -                      </button>
++                        <FileView width={24} height={24} />
 +                      </a>
                      )}
 -                    <button
@@ -107,3 +89,13 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
                    </span>
                  </div>
                );
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
+@@ -82,5 +82,6 @@
+   border: 0;
+   background: none;
+   cursor: pointer;
++  line-height: 0;
+ }
+ 
