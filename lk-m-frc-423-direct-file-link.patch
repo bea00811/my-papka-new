@@ -1,7 +1,7 @@
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
-@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
+@@ -3,12 +3,9 @@
  
  import BottomSheet from '@aurora/bottom-sheet';
  import { Button, CheckHeader } from '@aurora/components';
@@ -14,19 +14,28 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
  import { useLazyGetReportParametersQuery } from 'core/api/reports';
  import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
  
-@@ -27,10 +24,10 @@ import {
- } from 'modules/ReportsPage/components/ReportsOrder/helper';
+@@ -53,20 +50,6 @@
+   return FileOther;
+ };
  
- import { ReactComponent as FileDownload } from 'images/raw-icons/download.svg';
-+import { ReactComponent as FileView } from 'images/raw-icons/open-eye-blue.svg';
- import { ReactComponent as FileOther } from 'images/raw-icons/reports/FileOther.svg';
- import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
- import { ReactComponent as FileSig } from 'images/raw-icons/reports/FileSig.svg';
--import { ReactComponent as FileView } from 'images/raw-icons/reports/FileView.svg';
- 
- import { ReportFile, ReportItem } from 'types/reports';
- 
-@@ -74,29 +71,6 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+-const fileMimeType = (fileType?: string) => {
+-  const type = fileType?.toUpperCase();
+-  if (type === 'PDF') return 'application/pdf';
+-  if (type === 'SIG') return 'application/pgp-signature';
+-  return 'application/octet-stream';
+-};
+-
+-const fileNameWithType = (file: ReportFile) => {
+-  const name = file.fileName || 'report';
+-  const extension = file.fileType?.toLowerCase();
+-  if (!extension || name.toLowerCase().endsWith(`.${extension}`)) return name;
+-  return `${name}.${extension}`;
+-};
+-
+ const reportFileUrl = (file: ReportFile, download: boolean) => {
+   const params = new URLSearchParams({
+     file_Id: String(file.fileId),
+@@ -88,29 +71,6 @@
    const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
      useLazyGetReportParametersQuery();
  
@@ -40,9 +49,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 -      });
 -      if (response.data?.Error) return;
 -
--      const blob = new Blob([response.data]);
+-      const blob = new Blob([response.data], { type: fileMimeType(file.fileType) });
 -      if (download) {
--        saveAs(blob, file.fileName || 'report');
+-        saveAs(blob, fileNameWithType(file));
 -        return;
 -      }
 -
@@ -56,7 +65,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
    const navigate = useNavigate();
  
    useEffect(() => {
-@@ -197,23 +171,23 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+@@ -211,23 +171,23 @@
                    <span className={styles.fileName}>{file.fileName}</span>
                    <span className={styles.fileActions}>
                      {file.downloadOnly === false && (
@@ -70,9 +79,8 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
                          aria-label="Просмотреть файл"
 -                        onClick={() => openReportFile(file, false)}
                        >
--                        <FileView />
+                         <FileView width={24} height={24} />
 -                      </button>
-+                        <FileView width={24} height={24} />
 +                      </a>
                      )}
 -                    <button
@@ -92,10 +100,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
 --- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
 +++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.module.pcss
-@@ -82,5 +82,6 @@
+@@ -3,4 +3,5 @@
    border: 0;
    background: none;
    cursor: pointer;
 +  line-height: 0;
  }
- 
