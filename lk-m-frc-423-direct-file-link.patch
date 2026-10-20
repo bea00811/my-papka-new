@@ -58,7 +58,7 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
 -      const objectUrl = URL.createObjectURL(blob);
 -      window.open(objectUrl);
 -    } catch {
--      return undefined;
+-      return;
 -    }
 -  };
 -
@@ -79,8 +79,9 @@ diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/Bottom
                          aria-label="Просмотреть файл"
 -                        onClick={() => openReportFile(file, false)}
                        >
-                         <FileView width={24} height={24} />
+-                        <FileView />
 -                      </button>
++                        <FileView width={24} height={24} />
 +                      </a>
                      )}
 -                    <button
