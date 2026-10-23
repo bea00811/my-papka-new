@@ -1,36 +1,32 @@
 diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
 --- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
 +++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
-@@ -243,6 +243,17 @@ const ReportsOrder = () => {
-     [formData, parameters],
-   );
+@@ -6,6 +6,7 @@ import {
+   DatePicker,
+   Headline,
+   Input,
++  Month,
+   Placeholder,
+   Text,
+ } from '@aurora/components';
+@@ -251,7 +252,11 @@ const ReportsOrder = () => {
+       ? DateTime.fromFormat(formData.toDate, DEFAULT_DATE_VIEW_FORMAT)
+       : undefined;
+     if (!from?.isValid || !to?.isValid) return undefined;
+-    return { dates: [from.toJSDate(), to.toJSDate()], year: from.year };
++    return {
++      dates: [from.toJSDate(), to.toJSDate()],
++      year: from.year,
++      month: (from.month - 1) as Month,
++    };
+   }, [formData?.fromDate, formData?.toDate]);
  
-+  const periodDates = useMemo(() => {
-+    const from = formData?.fromDate
-+      ? DateTime.fromFormat(formData.fromDate, DEFAULT_DATE_VIEW_FORMAT)
-+      : undefined;
-+    const to = formData?.toDate
-+      ? DateTime.fromFormat(formData.toDate, DEFAULT_DATE_VIEW_FORMAT)
-+      : undefined;
-+    if (!from?.isValid || !to?.isValid) return undefined;
-+    return { dates: [from.toJSDate(), to.toJSDate()], year: from.year };
-+  }, [formData?.fromDate, formData?.toDate]);
-+
    if (isErrorParameters) {
-     return (
-       <Placeholder
-@@ -500,11 +511,14 @@ const ReportsOrder = () => {
-         </div>
- 
-         <DatePicker
-+          key={periodDates ? `${formData?.fromDate}-${formData?.toDate}` : 'empty-period'}
-           periodPreset
-           customOptionsPeriodPreset={['day', 'month', 'year']}
-           onSetOptionPeriodPreset={(p) => setSelectPeriod(p)}
-           defaultOptionPeriodPreset={selectPeriod}
+@@ -519,6 +524,7 @@ const ReportsOrder = () => {
            onSubmit={onPeriodSubmit}
-+          dates={periodDates?.dates}
-+          currentYear={periodDates?.year}
+           dates={periodDates?.dates}
+           currentYear={periodDates?.year}
++          currentMonth={periodDates?.month}
            minDate={
              paramsData.dates?.[0]?.minFromDate
                ? DateTime.fromISO(paramsData.dates[0].minFromDate).toJSDate()
