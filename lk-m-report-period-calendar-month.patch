@@ -1,0 +1,36 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -243,6 +243,17 @@ const ReportsOrder = () => {
+     [formData, parameters],
+   );
+ 
++  const periodDates = useMemo(() => {
++    const from = formData?.fromDate
++      ? DateTime.fromFormat(formData.fromDate, DEFAULT_DATE_VIEW_FORMAT)
++      : undefined;
++    const to = formData?.toDate
++      ? DateTime.fromFormat(formData.toDate, DEFAULT_DATE_VIEW_FORMAT)
++      : undefined;
++    if (!from?.isValid || !to?.isValid) return undefined;
++    return { dates: [from.toJSDate(), to.toJSDate()], year: from.year };
++  }, [formData?.fromDate, formData?.toDate]);
++
+   if (isErrorParameters) {
+     return (
+       <Placeholder
+@@ -500,11 +511,14 @@ const ReportsOrder = () => {
+         </div>
+ 
+         <DatePicker
++          key={periodDates ? `${formData?.fromDate}-${formData?.toDate}` : 'empty-period'}
+           periodPreset
+           customOptionsPeriodPreset={['day', 'month', 'year']}
+           onSetOptionPeriodPreset={(p) => setSelectPeriod(p)}
+           defaultOptionPeriodPreset={selectPeriod}
+           onSubmit={onPeriodSubmit}
++          dates={periodDates?.dates}
++          currentYear={periodDates?.year}
+           minDate={
+             paramsData.dates?.[0]?.minFromDate
+               ? DateTime.fromISO(paramsData.dates[0].minFromDate).toJSDate()
