@@ -1,0 +1,57 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -499,12 +499,16 @@ const ReportsOrder = () => {
+ 
+         {bottomSheetDateOpen && (
+           <DatePicker
+-            withPeriod={false}
+-            withOptions={false}
++            periodPreset
++            defaultOptionPeriodPreset="day"
++            customOptionsPeriodPreset={['day']}
++            onSetOptionPeriodPreset={() => {
++              return undefined;
++            }}
+             onSubmit={onDateSubmit}
+             minDate={reportMinDate?.toJSDate()}
+             maxDate={reportMaxDate?.toJSDate()}
+-            dates={reportMaxDate ? [reportMaxDate.toJSDate()] : undefined}
++            dates={reportMaxDate ? [reportMaxDate.toJSDate(), reportMaxDate.toJSDate()] : undefined}
+             currentYear={reportMaxDate?.year}
+             currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+           />
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -73,15 +73,22 @@ export const useReportOrder = () => {
+     [formData, data],
+   );
+ 
+-  const reportDateList = useMemo(
+-    () =>
++  const reportDateList = useMemo(() => {
++    const sameId = (left?: number | string, right?: number | string) =>
++      left != null && right != null && String(left) === String(right);
++    const depoId = formData?.depoAccountId ?? selectedDepoAccount?.depoAccountId;
++
++    return (
+       data?.reportDates?.filter((item) => {
+-        if (item.reportTypeId !== formData?.reportTypeId) return false;
+-        if (item.depoAccountId != null) return item.depoAccountId === formData?.depoAccountId;
+-        return item.productId === formData?.productId && item.portfolioId === formData?.portfolioId;
+-      }) || [],
+-    [formData, data],
+-  );
++        if (!sameId(item.reportTypeId, formData?.reportTypeId)) return false;
++        if (item.depoAccountId != null) return sameId(item.depoAccountId, depoId);
++        return (
++          sameId(item.productId, formData?.productId) &&
++          sameId(item.portfolioId, formData?.portfolioId)
++        );
++      }) || []
++    );
++  }, [formData, data, selectedDepoAccount?.depoAccountId]);
+ 
+   const reportPeriodEnable = useMemo(
+     () =>
