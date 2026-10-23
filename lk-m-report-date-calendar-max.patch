@@ -1,0 +1,32 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -497,16 +497,18 @@ const ReportsOrder = () => {
+           <Text type={'bodySemiBold'}>Выберите дату</Text>
+         </div>
+ 
+-        <DatePicker
+-          key={reportMaxDate ? reportMaxDate.toISODate() : 'report-date'}
+-          withPeriod={false}
+-          withOptions={false}
+-          onSubmit={onDateSubmit}
+-          minDate={reportMinDate?.toJSDate()}
+-          maxDate={reportMaxDate?.toJSDate()}
+-          currentYear={reportMaxDate?.year}
+-          currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+-        />
++        {bottomSheetDateOpen && (
++          <DatePicker
++            withPeriod={false}
++            withOptions={false}
++            onSubmit={onDateSubmit}
++            minDate={reportMinDate?.toJSDate()}
++            maxDate={reportMaxDate?.toJSDate()}
++            dates={reportMaxDate ? [reportMaxDate.toJSDate()] : undefined}
++            currentYear={reportMaxDate?.year}
++            currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
++          />
++        )}
+       </BottomSheet>
+ 
+       <BottomSheet
