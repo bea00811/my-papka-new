@@ -1,0 +1,68 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -255,8 +255,8 @@ const ReportsOrder = () => {
+     if (!from?.isValid || !to?.isValid) return undefined;
+     return {
+       dates: [from.toJSDate(), to.toJSDate()],
+-      year: from.year,
+-      month: (from.month - 1) as Month,
++      year: to.year,
++      month: (to.month - 1) as Month,
+     };
+   }, [formData?.fromDate, formData?.toDate]);
+ 
+@@ -508,7 +508,11 @@ const ReportsOrder = () => {
+             onSubmit={onDateSubmit}
+             minDate={reportMinDate?.toJSDate()}
+             maxDate={reportMaxDate?.toJSDate()}
+-            dates={reportMaxDate ? [reportMaxDate.toJSDate(), reportMaxDate.toJSDate()] : undefined}
++            dates={
++              reportMinDate && reportMaxDate
++                ? [reportMinDate.toJSDate(), reportMaxDate.toJSDate()]
++                : undefined
++            }
+             currentYear={reportMaxDate?.year}
+             currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+           />
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -99,6 +99,7 @@ export const useReportOrder = () => {
+     [formData],
+   );
+ 
++  const minFromDate = reportDateList[0]?.minFromDate;
+   const maxToDate = reportDateList[0]?.maxToDate;
+ 
+   const reportAgreementList = useMemo(
+@@ -122,16 +123,25 @@ export const useReportOrder = () => {
+   useEffect(() => {
+     if (reOrderData?.reportTypeId || isDepoDateReport(reportTypeSelected?.code)) return;
+ 
+-    const formatted = maxToDate
++    const fromFormatted = minFromDate
++      ? DateTime.fromISO(minFromDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
++      : undefined;
++    const toFormatted = maxToDate
+       ? DateTime.fromISO(maxToDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
+       : undefined;
+ 
+     setFormData((old) => {
+       if (!old) return old;
+-      if (old.fromDate === formatted && old.toDate === formatted) return old;
+-      return { ...old, fromDate: formatted, toDate: formatted };
++      if (old.fromDate === fromFormatted && old.toDate === toFormatted) return old;
++      return { ...old, fromDate: fromFormatted, toDate: toFormatted };
+     });
+-  }, [isDepoDateReport, maxToDate, reOrderData?.reportTypeId, reportTypeSelected?.code]);
++  }, [
++    isDepoDateReport,
++    minFromDate,
++    maxToDate,
++    reOrderData?.reportTypeId,
++    reportTypeSelected?.code,
++  ]);
+ 
+   useEffect(() => {
+     const repTypesData = data?.reportTypes || [];
