@@ -1,0 +1,53 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -30,6 +30,8 @@
+ } from 'modules/ReportsPage/components/ReportsHistory/constants';
+ import { visualIsoPeriodFormatter } from 'modules/ReportsPage/components/ReportsOrder/helper';
+ 
++import { createAlertNotification } from 'components';
++
+ import { ReactComponent as PdfSvg } from 'images/raw-icons/history/filePdf.svg';
+ 
+ import { ErrorData } from 'types/auth/models';
+@@ -68,8 +70,6 @@
+     useLazyGetReportParametersQuery();
+ 
+   const [checkReportFile, { data: fileData }] = useLazyGetReportFileQuery();
+-  const [isFileError, setIsFileError] = useState<boolean>(false);
+-
+   const handleDownloadFile = async () => {
+     try {
+       const response = await httpCommunicator(fileUrl, {
+@@ -78,7 +78,10 @@
+         headers: getDefaultHeaders(fileUrl),
+       });
+       if (response.data?.Error) {
+-        setIsFileError(true);
++        createAlertNotification({
++          text: 'Что-то пошло не так, повторите попытку или попробуйте позднее',
++          status: 'error',
++        });
+       } else {
+         const blob = new Blob([response.data], { type: 'application/pdf' });
+         const fileName = `${report.reportTypeName}-${report.requestTime}.pdf`;
+@@ -86,7 +89,10 @@
+         saveAs(blob, fileName);
+       }
+     } catch {
+-      setIsFileError(true);
++      createAlertNotification({
++        text: 'Что-то пошло не так, повторите попытку или попробуйте позднее',
++        status: 'error',
++      });
+     }
+   };
+ 
+@@ -169,7 +175,6 @@
+ 
+   const canDownload =
+     report.downloadable &&
+-    !isFileError &&
+     !isErrorResponseType(fileData) &&
+     !(fileData as ErrorData)?.error &&
+     isCompleted;
