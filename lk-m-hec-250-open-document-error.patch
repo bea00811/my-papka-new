@@ -1,0 +1,60 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -1,4 +1,4 @@
+-import React, { useCallback, useEffect, useMemo, useState } from 'react';
++import React, { useCallback, useEffect, useMemo } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ 
+ import BottomSheet from '@aurora/bottom-sheet';
+@@ -14,6 +14,8 @@
+ 
+ import { useAppDispatch } from 'hooks';
+ 
++import { createAlertNotification } from 'components';
++
+ import { orderDateReformat } from 'modules/OrderHistory/helpers';
+ import {
+   reportBadge,
+@@ -53,8 +55,6 @@
+   const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
+     useLazyGetReportParametersQuery();
+ 
+-  const [isFileError, setIsFileError] = useState<boolean>(false);
+-
+   const handleDownloadFile = async () => {
+     if (!fileUrl) return;
+     try {
+@@ -64,7 +64,10 @@
+         headers: getDefaultHeaders(fileUrl),
+       });
+       if (response.data?.Error) {
+-        setIsFileError(true);
++        createAlertNotification({
++          text: 'Что-то пошло не так, повторите попытку или попробуйте позднее',
++          status: 'error',
++        });
+       } else {
+         const blob = new Blob([response.data], { type: 'application/pdf' });
+         const fileName = `${report.reportTypeName}-${report.requestTime}.pdf`;
+@@ -72,7 +75,10 @@
+         saveAs(blob, fileName);
+       }
+     } catch {
+-      setIsFileError(true);
++      createAlertNotification({
++        text: 'Что-то пошло не так, повторите попытку или попробуйте позднее',
++        status: 'error',
++      });
+     }
+   };
+ 
+@@ -104,7 +110,7 @@
+   const isCompleted = report.requestStatusCode === 'completed';
+   const isNew = report.requestStatusCode === 'new';
+   const showReorderButton = isCompleted || isNew;
+-  const canDownload = !isFileError && isCompleted && Boolean(fileId);
++  const canDownload = isCompleted && Boolean(fileId);
+   const periodTitle = getReportTimeTitle(report, 'За период');
+   const periodContent = getReportTimeValue(report);
+ 
