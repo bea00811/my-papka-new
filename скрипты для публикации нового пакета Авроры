@@ -14,3 +14,8 @@ grep '"version"' src/packages/components/package.json
 yarn lerna
 # или точечно, если так делаете:
 # yarn lerna version patch --yes --force-publish=@aurora/components
+
+Посмотреть что в nexus лежит какая версия
+npm view @aurora/components version --registry https://nexus.investpalata.tech/repository/npm/
+
+npm view @aurora/components@1.161.0 version --registry https://nexus.investpalata.tech/repository/npm/
