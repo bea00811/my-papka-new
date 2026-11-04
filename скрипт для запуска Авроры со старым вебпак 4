@@ -1,0 +1,4 @@
+NODE_OPTIONS=--openssl-legacy-provider yarn dev
+
+export NODE_OPTIONS=--openssl-legacy-provider
+yarn dev
