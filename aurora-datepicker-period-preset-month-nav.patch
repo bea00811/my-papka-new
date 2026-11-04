@@ -1,0 +1,19 @@
+diff --git a/src/packages/components/src/DatePicker/DatePicker.tsx b/src/packages/components/src/DatePicker/DatePicker.tsx
+--- a/src/packages/components/src/DatePicker/DatePicker.tsx
++++ b/src/packages/components/src/DatePicker/DatePicker.tsx
+@@ -211,7 +211,7 @@
+     const handleSelectMonth = useCallback(
+       (month: Month, year: number) => {
+-        if (periodPreset) {
++        if (periodPreset && withPeriod) {
+           const currentDate = new Date(year, month);
+           const startDayMonth = startOfMonth(currentDate);
+           const lastDayMonth = lastDayOfMonth(currentDate);
+@@ -247,7 +247,7 @@
+     const handleSelectYear = useCallback(
+       (year: number) => {
+-        if (periodPreset) {
++        if (periodPreset && withPeriod) {
+           const startDayYear = new Date(year, 0);
+           const lastDayYear = new Date(year, 11, 31);
+           setFirstSelectedDate(startDayYear);
