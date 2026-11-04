@@ -1,11 +1,11 @@
 diff --git a/src/packages/components/src/DatePicker/DatePicker.stories.tsx b/src/packages/components/src/DatePicker/DatePicker.stories.tsx
 --- a/src/packages/components/src/DatePicker/DatePicker.stories.tsx
 +++ b/src/packages/components/src/DatePicker/DatePicker.stories.tsx
-@@ -129,6 +129,22 @@ WithMinMaxDate.args = {
+@@ -129,6 +129,20 @@ WithMinMaxDate.args = {
    withOptions: false,
  };
  
-+/** Like lk-m «Дата» on depo statements: open on maxDate month, single day, periodPreset on */
++/** lk-m single Date field: open on maxDate month with periodPreset */
 +export const SingleDatePeriodPreset = Template.bind({});
 +SingleDatePeriodPreset.args = {
 +  currentMonth: 1,
