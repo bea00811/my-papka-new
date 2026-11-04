@@ -1,0 +1,16 @@
+# посмотрите текущую
+grep '"version"' src/packages/components/package.json
+
+# поднять (как принято у вас)
+yarn lerna
+# или точечно, если так делаете:
+# yarn lerna version patch --yes --force-publish=@aurora/components
+
+Сборка и Nexus:
+# посмотрите текущую
+grep '"version"' src/packages/components/package.json
+
+# поднять (как принято у вас)
+yarn lerna
+# или точечно, если так делаете:
+# yarn lerna version patch --yes --force-publish=@aurora/components
