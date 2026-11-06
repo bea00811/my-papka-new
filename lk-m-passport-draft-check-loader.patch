@@ -1,0 +1,84 @@
+diff --git a/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts b/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
+--- a/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
++++ b/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
+@@ -38,7 +38,7 @@
+   const [savePassport, { isError: savePassportError, isLoading: isSavePassportLoading }] =
+     useSaveFormPassportMutation();
+   const [saveFormDraft, { isLoading: isSaveFormDraftLoading }] = useSaveFormDraftMutation();
+-  const [checkForm, { isLoading: isCheckFormLoading }] = useLazyCheckFormQuery();
++  const [checkForm, { isFetching: isCheckFormFetching }] = useLazyCheckFormQuery();
+   const { isFioChanged, isPassportDataChanged } = useIsPassportDataChanged(state);
+   const saveError = saveFioError || savePassportError;
+ 
+@@ -126,7 +126,7 @@
+   return {
+     saveData,
+     isSaving:
+-      isCheckFormLoading || isSaveFioLoading || isSavePassportLoading || isSaveFormDraftLoading,
++      isCheckFormFetching || isSaveFioLoading || isSavePassportLoading || isSaveFormDraftLoading,
+   };
+ };
+ 
+diff --git a/src/modules/PersonalInformation/components/HDO/hooks/useSaveHdoData.ts b/src/modules/PersonalInformation/components/HDO/hooks/useSaveHdoData.ts
+--- a/src/modules/PersonalInformation/components/HDO/hooks/useSaveHdoData.ts
++++ b/src/modules/PersonalInformation/components/HDO/hooks/useSaveHdoData.ts
+@@ -34,7 +34,7 @@
+   const [saveBusinessRelations, { isLoading: isSaveBusinessRelationsLoading }] =
+     useSaveFormBusinessRelationsMutation();
+   const [saveFormDraft, { isLoading: isSaveFormDraftLoading }] = useSaveFormDraftMutation();
+-  const [checkForm, { isLoading: isCheckFormLoading }] = useLazyCheckFormQuery();
++  const [checkForm, { isFetching: isCheckFormFetching }] = useLazyCheckFormQuery();
+   const [savePersonData, { isLoading: isSavePersonDataLoading }] = useSaveFormPersonDataMutation();
+ 
+   const showSaveError = useCallback(
+@@ -166,7 +166,7 @@
+       isSaveBusinessRelationsLoading ||
+       isSaveFormDraftLoading ||
+       isSavePersonDataLoading ||
+-      isCheckFormLoading,
++      isCheckFormFetching,
+   };
+ }
+ 
+diff --git a/src/modules/PersonalInformation/components/Address/hooks/useFormSave.ts b/src/modules/PersonalInformation/components/Address/hooks/useFormSave.ts
+--- a/src/modules/PersonalInformation/components/Address/hooks/useFormSave.ts
++++ b/src/modules/PersonalInformation/components/Address/hooks/useFormSave.ts
+@@ -40,7 +40,7 @@
+   const [saveFormAddressPostal, { isLoading: isSaveFormAddressPostalLoading }] =
+     useSaveFormAddressPostalMutation();
+   const [saveFormDraft, { isLoading: isSaveFormDraftLoading }] = useSaveFormDraftMutation();
+-  const [checkForm, { isLoading: isCheckFormLoading }] = useLazyCheckFormQuery();
++  const [checkForm, { isFetching: isCheckFormFetching }] = useLazyCheckFormQuery();
+   const { isLivingDataChanged, isRegDataChanged } = useIsAddressDataChanged(state);
+   const [saveError, setSaveError] = useState(false);
+ 
+@@ -212,7 +212,7 @@
+   return {
+     saveData,
+     isSaving:
+-      isCheckFormLoading ||
++      isCheckFormFetching ||
+       isSaveFormAddressLoading ||
+       isSaveFormAddressPostalLoading ||
+       isSaveFormDraftLoading,
+diff --git a/src/modules/PersonalInformation/components/TaxesResidence/hooks/useFormSave.ts b/src/modules/PersonalInformation/components/TaxesResidence/hooks/useFormSave.ts
+--- a/src/modules/PersonalInformation/components/TaxesResidence/hooks/useFormSave.ts
++++ b/src/modules/PersonalInformation/components/TaxesResidence/hooks/useFormSave.ts
+@@ -41,7 +41,7 @@
+   ] = useSaveResidencesStatusDataMutation();
+   const [saveFormDraft, { isError: isSaveFormError, isLoading: isSaveFormDraftLoading }] =
+     useSaveFormDraftMutation();
+-  const [checkForm, { isError: isCheckFormError, isLoading: isCheckFormLoading }] =
++  const [checkForm, { isError: isCheckFormError, isFetching: isCheckFormFetching }] =
+     useLazyCheckFormQuery();
+ 
+   const [saveSrc, { isError: isSaveSrcError, error: saveSrcError, isLoading: isSaveSrcLoading }] =
+@@ -137,7 +137,7 @@
+     isSaving:
+       isSaveFormDraftLoading ||
+       isSaveResidenceStatusLoading ||
+-      isCheckFormLoading ||
++      isCheckFormFetching ||
+       isSaveSrcLoading,
+   };
+ };
