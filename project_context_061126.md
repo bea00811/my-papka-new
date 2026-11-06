@@ -20,44 +20,6 @@ last 2 safari version
 
 
 
---- FILE: .cursor/rules/ponytail.mdc ---
----
-description: Ponytail, lazy senior dev mode. Always pick the simplest solution that works.
-globs:
-alwaysApply: true
----
-
-# Ponytail, lazy senior dev mode
-
-You are a lazy senior developer. Lazy means efficient, not careless. The best code is the code never written.
-
-Before writing any code, stop at the first rung that holds:
-
-1. Does this need to be built at all? (YAGNI)
-2. Does it already exist in this codebase? Reuse the helper, util, or pattern that's already here, don't re-write it.
-3. Does the standard library already do this? Use it.
-4. Does a native platform feature cover it? Use it.
-5. Does an already-installed dependency solve it? Use it.
-6. Can this be one line? Make it one line.
-7. Only then: write the minimum code that works.
-
-The ladder runs after you understand the problem, not instead of it: read the task and the code it touches, trace the real flow end to end, then climb.
-
-Bug fix = root cause, not symptom: a report names a symptom. Grep every caller of the function you touch and fix the shared function once — one guard there is a smaller diff than one per caller, and patching only the path the ticket names leaves a sibling caller still broken.
-
-Rules:
-
-- No abstractions that weren't explicitly requested.
-- No new dependency if it can be avoided.
-- No boilerplate nobody asked for.
-- Deletion over addition. Boring over clever. Fewest files possible.
-- Shortest working diff wins, but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.
-- Question complex requests: "Do you actually need X, or does Y cover it?"
-- Pick the edge-case-correct option when two stdlib approaches are the same size, lazy means less code, not the flimsier algorithm.
-- Mark deliberate simplifications that cut a real corner with a known ceiling (global lock, O(n²) scan, naive heuristic) with a `ponytail:` comment naming the ceiling and upgrade path.
-
-Not lazy about: understanding the problem (read it fully and trace the real flow before picking a rung, a small diff you don't understand is just laziness dressed up as efficiency), input validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs (the platform is never the spec ideal, a clock drifts, a sensor reads off), anything explicitly requested. Lazy code without its check is unfinished: non-trivial logic leaves ONE runnable check behind, the smallest thing that fails if the logic breaks (an assert-based demo/self-check or one small test file; no frameworks, no fixtures). Trivial one-liners need no test.
-
 --- FILE: .editorconfig ---
 # top-most EditorConfig file
 root = true
@@ -1906,620 +1868,567 @@ WORKDIR /usr/share/nginx/html
 COPY --chown=nginx build .
 
 
---- FILE: lk-m-writeoff-nonsbp-fields.patch ---
-diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
---- a/src/modules/Transfers/types/securitiesWriteOff.ts
-+++ b/src/modules/Transfers/types/securitiesWriteOff.ts
-@@ -53,6 +53,28 @@ export type SecuritiesContractor = {
-   name: string;
-   id?: number | string;
-   isSBP?: boolean;
-+  contractorID?: string;
-+  contractorId?: string;
-+  depoIdentifier?: string;
-+  depoNumber?: string;
-+  depoDivision?: string;
-+};
+--- FILE: lk-m-nkd-banner-colors.patch ---
+diff --git a/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx b/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
+--- a/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
++++ b/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
+@@ -231,7 +231,12 @@
+                 hints={data.hints}
+                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
+                 text={acceptBannerSlug.text}
+-                className={styles.banner}
++                className={
++                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
++                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
++                    ? `${styles.banner} ${styles.nkdBanner}`
++                    : styles.banner
++                }
+                 variant="accent"
+               />
+             )}
+diff --git a/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss b/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
+--- a/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
++++ b/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
+@@ -35,3 +35,12 @@
+   padding: $spacing3 $spacing7;
+ }
+ 
++.nkd-banner {
++  background-color: #f2f1ff !important;
++  color: #6673e9 !important;
++}
 +
-+export type WriteOffCreditType = 'WITH_RIGHTS' | 'WITHOUT_RIGHTS';
++.nkd-banner * {
++  color: #6673e9 !important;
++}
 +
-+export type SecuritiesWriteOffNonSbpDetails = {
-+  contractorID: string;
-+  depoNumber: string;
-+  depoDivision: string;
-+  creditType: WriteOffCreditType | '';
-+  supplierName: string;
-+  dealAmount: string;
-+  dealDate: string;
-+  settlementDate: string;
-+  reference: string;
-+  contractNumber: string;
-+  contractDate: string;
-+  comment: string;
- };
+diff --git a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
+--- a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
++++ b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
+@@ -268,7 +268,12 @@
+                 hints={data.hints}
+                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
+                 text={acceptBannerSlug.text}
+-                className={styles.banner}
++                className={
++                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
++                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
++                    ? `${styles.banner} ${styles.nkdBanner}`
++                    : styles.banner
++                }
+                 variant="accent"
+               />
+             </div>
+diff --git a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
+--- a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
++++ b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
+@@ -71,3 +71,12 @@
+   margin-bottom: $spacing5;
+ }
  
- export type SecuritiesContractorsRequestParams = {
-@@ -94,6 +116,7 @@ export type SecuritiesWriteOffFormPayload = {
-   } | null;
-   transferExpensesInfo: boolean;
-   documentId?: string;
-+  nonSbp?: SecuritiesWriteOffNonSbpDetails;
- };
++.nkd-banner {
++  background-color: #f2f1ff !important;
++  color: #6673e9 !important;
++}
++
++.nkd-banner * {
++  color: #6673e9 !important;
++}
++
+
+
+--- FILE: lk-m-report-reorder-instrument.patch ---
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -91,9 +91,15 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   }, [dispatch, setOpenDetails, onParametersErrorClear]);
  
- export type SecuritiesWriteOffRequestParams = {
-@@ -104,6 +127,18 @@ export type SecuritiesWriteOffRequestParams = {
-   sbp: boolean | null;
-   sendCosts: boolean;
-   personalDataAgreement: boolean;
-+  contractorID?: string | null;
-+  depoNumber?: string | null;
-+  depoDivision?: string | null;
-+  withRightsTransfer?: boolean | null;
-+  supplierName?: string | null;
-+  dealAmount?: number | null;
-+  dealDate?: string | null;
-+  settlementDate?: string | null;
-+  reference?: string | null;
-+  contractNumber?: string | null;
-+  contractDate?: string | null;
-+  comment?: string | null;
- };
+   const handleReOrder = useCallback(() => {
+-    dispatch(setReorderData(reportParameters));
++    if (!reportParameters) return;
++    dispatch(
++      setReorderData({
++        ...reportParameters,
++        instrumentName: reportParameters.instrumentName || report.instrumentName,
++      }),
++    );
+     navigate(ROUTE_REPORTS);
+-  }, [dispatch, navigate, reportParameters]);
++  }, [dispatch, navigate, report.instrumentName, reportParameters]);
  
- export type SecuritiesWriteOffResponse = {
-diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
---- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
-+++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
-@@ -10,7 +10,19 @@ export type WriteOffFormField =
-   | 'mode'
-   | 'quantity'
-   | 'contractor'
--  | 'personalDataAgreement';
-+  | 'personalDataAgreement'
-+  | 'contractorID'
-+  | 'depoNumber'
-+  | 'depoDivision'
-+  | 'creditType'
-+  | 'supplierName'
-+  | 'dealAmount'
-+  | 'dealDate'
-+  | 'settlementDate'
-+  | 'reference'
-+  | 'contractNumber'
-+  | 'contractDate'
-+  | 'comment';
+   const statusColorName = textStatusColors[report.requestStatusCode];
+   const isCompleted = report.requestStatusCode === 'completed';
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -5,6 +5,7 @@ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+ import { ROUTE_REPORTS_HISTORY } from 'const/routes';
+ import { DateTime } from 'luxon';
  
- export type WriteOffFieldErrors = Partial<Record<WriteOffFormField, string>>;
++import { useLazyGetDepoInstrumentsQuery } from 'core/api/instrumentDepo';
+ import { useCreateReportMutation, useGetReportsParametersQuery } from 'core/api/reports';
+ import { isError } from 'core/helpers/isError';
+ import { getReportsParametersWithData } from 'core/reports/helpers';
+@@ -23,6 +24,32 @@ import {
+   ReportType,
+ } from 'types/reports';
  
-@@ -33,6 +45,19 @@ const FIELD_NAME_MAP: Record<string, WriteOffFormField> = {
-   sbp: 'mode',
-   mode: 'mode',
-   personaldataagreement: 'personalDataAgreement',
-+  contractorid: 'contractorID',
-+  deponumber: 'depoNumber',
-+  depodivision: 'depoDivision',
-+  withrightstransfer: 'creditType',
-+  credittype: 'creditType',
-+  suppliername: 'supplierName',
-+  dealamount: 'dealAmount',
-+  dealdate: 'dealDate',
-+  settlementdate: 'settlementDate',
-+  reference: 'reference',
-+  contractnumber: 'contractNumber',
-+  contractdate: 'contractDate',
-+  comment: 'comment',
- };
++const buildReorderInstrument = (
++  instrumentId: number,
++  name?: string,
++  isin?: string | null,
++  issuerName?: string | null,
++): DepoInstrumentItem => ({
++  guid: '',
++  instrumentId,
++  depoInstrumentId: 0,
++  name: name || '',
++  fullName: null,
++  issuerName: issuerName ?? null,
++  instrumentType: null,
++  instrumentShortType: null,
++  regNum: null,
++  isin: isin ?? null,
++  gosReg: null,
++  nominal: null,
++  nominalCurrency: null,
++  issueMode: null,
++  registrationType: null,
++  instrumentImageName: null,
++  instrumentImageTime: null,
++  allowed: true,
++});
++
+ const getPeriodTooLongMessage = (error: unknown): string => {
+   if (!isError(error)) return '';
+   const item = error.data.error[0];
+@@ -41,6 +68,7 @@ export const useReportOrder = () => {
+   );
+   const [formData, setFormData] = useState<CreateReportRequest | null>(null);
+   const { data, isLoading, isError } = useGetReportsParametersQuery();
++  const [getDepoInstruments] = useLazyGetDepoInstrumentsQuery();
+   const [
+     createReport,
+     { isLoading: isCreateLoading, isError: isCreateReportError, error: createReportError, reset },
+@@ -157,12 +185,32 @@ export const useReportOrder = () => {
+           const toDate = reOrderData.toDate
+             ? DateTime.fromISO(reOrderData.toDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
+             : undefined;
++          const depoAccount =
++            data?.reportDepoAccountParameters?.find(
++              (item) =>
++                item.reportTypeId === reOrderData.reportTypeId &&
++                item.depoAccountId === reOrderData.depoAccountId,
++            ) || null;
++          setSelectedDepoAccount(depoAccount);
++          if (reOrderData.instrumentId) {
++            setSelectedInstrument(
++              buildReorderInstrument(
++                reOrderData.instrumentId,
++                reOrderData.instrumentName,
++                reOrderData.isin,
++                reOrderData.issuerName,
++              ),
++            );
++          } else {
++            setSelectedInstrument(null);
++          }
+           setFormData({
+             reportTypeId: reOrderData.reportTypeId,
+             productId: reOrderData.productId,
+             portfolioId: reOrderData.portfolioId,
+             depoAccountId: reOrderData.depoAccountId,
+             agreementId: reOrderData.agreementId,
++            instrumentId: reOrderData.instrumentId,
+             fromDate: fromDate,
+             toDate: toDate,
+           });
+@@ -194,6 +242,32 @@ export const useReportOrder = () => {
+     }
+   }, [reOrderData, data]);
  
- type RawCheckResultItem = {
-diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
---- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
-+++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
-@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
- import { NumberFormatValues } from 'react-number-format';
- import { useNavigate } from 'react-router-dom';
++  useEffect(() => {
++    const instrumentId = reOrderData?.instrumentId;
++    const searchText = reOrderData?.instrumentName?.trim();
++    if (!searchText || searchText.length < 3) return;
++    if (instrumentId && reOrderData.isin && reOrderData.issuerName) return;
++
++    let cancelled = false;
++    getDepoInstruments({ searchText, maxCount: 16 })
++      .unwrap()
++      .then((instruments) => {
++        if (cancelled) return;
++        const found =
++          (instrumentId
++            ? instruments.find((item) => item.instrumentId === instrumentId)
++            : undefined) || instruments.find((item) => item.name === searchText);
++        if (!found) return;
++        setSelectedInstrument(found);
++        setFormData((old) => (old ? { ...old, instrumentId: found.instrumentId } : old));
++      })
++      .catch(() => undefined);
++
++    return () => {
++      cancelled = true;
++    };
++  }, [getDepoInstruments, reOrderData]);
++
+   const handleFormSubmit = useCallback(async () => {
+     if (formData) {
+       dispatch(setReorderData(null));
+diff --git a/src/types/reports/models.ts b/src/types/reports/models.ts
+--- a/src/types/reports/models.ts
++++ b/src/types/reports/models.ts
+@@ -83,6 +83,10 @@ export interface ReportParameterData {
+   subAccountId?: number;
+   depoAccountId?: number;
+   agreementId?: number;
++  instrumentId?: number;
++  instrumentName?: string;
++  isin?: string;
++  issuerName?: string;
+   fromDate?: string;
+   toDate?: string;
+ }
+
+
+--- FILE: lk-m-reports-history-all-pages.patch ---
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -5,7 +5,7 @@
+ import cx from 'classnames';
  
--import { Button, Checkbox, CircleLoader, Input, SearchSelect, Text } from '@aurora/components';
-+import { BottomSheet, Button, Checkbox, CircleLoader, DatePicker, Input, SearchSelect, Text } from '@aurora/components';
- import { APP_TITLE, CDN_BASE_URL } from 'const/app';
-+import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
- import { ROUTE_SECURITIES_WRITEOFF_ORDER, ROUTE_TRANSFERS } from 'const/routes';
-+import { DateTime } from 'luxon';
- 
- import { isMobileDevice } from 'core/DeviceDetector';
  import {
-@@ -23,16 +25,19 @@ import {
-   SecuritiesContractor,
-   SecuritiesWriteOffAccount,
-   SecuritiesWriteOffMode,
-+  SecuritiesWriteOffNonSbpDetails,
-   SecuritiesWriteOffParameter,
-   SecuritiesWriteOffRequestParams,
-   SecuritiesWriteOffResponse,
-   SecuritiesWriteOffStatus,
-+  WriteOffCreditType,
- } from 'modules/Transfers/types';
+-  reportsApi,
++  REPORTS_PAGE_SIZE,
+   useGetReportsParametersQuery,
+   useLazyGetReportStatusQuery,
+ } from 'core/api/reports';
+@@ -13,6 +13,7 @@
+ import { setCurrentRequestGuid } from 'core/reports/reportsSlice';
  
- import { HeaderPage } from 'components';
- import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
+ import { useAppDispatch } from 'hooks';
++import useViewOnScreen from 'hooks/useViewOnScreen';
  
- import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
-+import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+ import CommonHeadSheet from 'modules/OrderHistory/components/CommonHeadSheet';
+ import OrderSkeleton from 'modules/OrderHistory/components/OrderSkeleton';
+@@ -60,7 +61,17 @@
+   const [readyReportGuids, setReadyReportGuids] = useState<string[]>([]);
+   const [isErrorReportParameters, setIsErrorReportParameters] = useState(false);
  
- import BlockedContent from '../../components/BlockedContent';
- import WriteOffFailed from '../SecuritiesWriteOffOrder/WriteOffFailed';
-@@ -56,6 +61,45 @@ import {
- } from './writeOffStatus';
+-  const { data: reportRequests, isLoading, getReportsHistory } = useReportHistory(filters);
++  const {
++    data: reportRequests,
++    setItems: setReportRequests,
++    isLoading,
++    isFetching,
++    hasLoaded,
++    hasMore,
++  } = useReportHistory(filters);
++  const sentinelRef = useRef<HTMLDivElement>(null);
++  const listEndOptions = useMemo(() => ({ threshold: 0 }), [hasLoaded]);
++  const isListEnd = useViewOnScreen(sentinelRef, listEndOptions);
+   const { data: reportParams } = useGetReportsParametersQuery();
+   const [getReportStatus] = useLazyGetReportStatusQuery();
  
- const ACCOUNT_HINT = 'Счёт депо (депозитарий, номер договора)';
-+const LATIN_DIGIT_RE = /[^A-Za-z0-9]/g;
-+const EMPTY_NON_SBP: SecuritiesWriteOffNonSbpDetails = {
-+  contractorID: '',
-+  depoNumber: '',
-+  depoDivision: '',
-+  creditType: '',
-+  supplierName: '',
-+  dealAmount: '',
-+  dealDate: '',
-+  settlementDate: '',
-+  reference: '',
-+  contractNumber: '',
-+  contractDate: '',
-+  comment: '',
-+};
-+const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
-+  { id: 'WITH_RIGHTS', value: 'С переходом прав' },
-+  { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
-+];
-+const DATE_FIELD_TITLES: Record<'dealDate' | 'settlementDate' | 'contractDate', string> = {
-+  dealDate: 'Выберите дату сделки',
-+  settlementDate: 'Выберите дату расчётов',
-+  contractDate: 'Выберите дату договора',
-+};
-+
-+const sanitizeLatin = (value: string, max: number) =>
-+  value.replace(LATIN_DIGIT_RE, '').slice(0, max);
-+
-+const parseFormDate = (value: string) => {
-+  if (!value) {
-+    return null;
-+  }
-+
-+  const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
-+  return parsed.isValid ? parsed : null;
-+};
-+
-+const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
-+  contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
+@@ -74,19 +85,22 @@
  
- const getInstrumentIconSrc = (instrumentImageName?: string) =>
-   instrumentImageName ? getSrc(CDN_BASE_URL, instrumentImageName) : undefined;
-@@ -269,12 +313,18 @@ const SecuritiesWriteOff = () => {
-   const [contractorValue, setContractorValue] = useState('');
-   const [selectedContractor, setSelectedContractor] = useState<SecuritiesContractor | null>(null);
-   const [transferExpensesInfo, setTransferExpensesInfo] = useState(false);
-+  const [nonSbp, setNonSbp] = useState<SecuritiesWriteOffNonSbpDetails>(EMPTY_NON_SBP);
-+  const [openDateField, setOpenDateField] = useState<
-+    'dealDate' | 'settlementDate' | 'contractDate' | null
-+  >(null);
-   const {
-     data: writeOffParams,
-     isLoading,
-     isError: isParamsError,
-   } = useGetSecuritiesWriteOffParamsQuery(undefined, { refetchOnMountOrArgChange: true });
-   const isSbpMode = selectedMode?.code === 'SBP';
-+  const isNonSbpMode = Boolean(selectedMode) && !isSbpMode;
-+  const isWithRights = nonSbp.creditType === 'WITH_RIGHTS';
-   const {
-     data: contractorsData,
-     isLoading: isContractorsLoading,
-@@ -437,6 +487,10 @@ const SecuritiesWriteOff = () => {
-     setCommissionValue('');
-   };
- 
-+  const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {
-+    setNonSbp((prev) => ({ ...prev, ...patch }));
-+  };
-+
-   const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {
-     clearFieldError('instrument');
-     setSelectedInstrument(instrument);
-@@ -463,12 +517,25 @@ const SecuritiesWriteOff = () => {
-     setSelectedMode(mode);
-     setModeValue(mode?.name ?? '');
-     setCommissionValue(getDisplayCommission(mode, transferExpensesInfo));
-+    if (!mode || mode.code === 'SBP') {
-+      setNonSbp(EMPTY_NON_SBP);
-+    }
-   };
- 
-   const selectContractor = (contractor: SecuritiesContractor | null) => {
-     clearFieldError('contractor');
-     setSelectedContractor(contractor);
-     setContractorValue(contractor?.name ?? '');
-+    if (contractor) {
-+      clearFieldError('contractorID');
-+      clearFieldError('depoNumber');
-+      clearFieldError('depoDivision');
-+      patchNonSbp({
-+        contractorID: getContractorIdentifier(contractor),
-+        depoNumber: contractor.depoNumber ?? '',
-+        depoDivision: contractor.depoDivision ?? '',
-+      });
-+    }
-   };
+   const patchReportFromStatus = useCallback(
+     (guid: string, status: ReportStatusPayload) => {
+-      let found = false;
+-      dispatch(
+-        reportsApi.util.updateQueryData('getReportsHistory', filters, (draft) => {
+-          const item = draft.find((report) => report.requestGuid === guid);
+-          if (!item) return;
+-          found = true;
+-          applyReportStatus(item, status);
+-        }),
+-      );
+-      if (!found) getReportsHistory(filters);
++      const current = reportRequests?.find((report) => report.requestGuid === guid);
++      if (!current) {
++        setFilters((oldFilters) => ({ ...oldFilters, offset: undefined }));
++      } else {
++        setReportRequests((prev) =>
++          prev.map((item) => {
++            if (item.requestGuid !== guid) return item;
++            const next = { ...item };
++            applyReportStatus(next, status);
++            return next;
++          }),
++        );
++      }
+       if (isReportFinished(status)) sessionStorage.removeItem(PENDING_REPORT_GUID);
+     },
+-    [dispatch, filters, getReportsHistory],
++    [reportRequests, setReportRequests],
+   );
  
    useEffect(() => {
-@@ -595,6 +662,7 @@ const SecuritiesWriteOff = () => {
-           }
-         : null,
-       transferExpensesInfo,
-+      nonSbp: isNonSbpMode ? nonSbp : undefined,
-     }),
-     [
-       selectedInstrument,
-@@ -605,6 +673,8 @@ const SecuritiesWriteOff = () => {
-       commissionValue,
-       selectedContractor,
-       transferExpensesInfo,
-+      isNonSbpMode,
-+      nonSbp,
-     ],
+@@ -131,6 +145,12 @@
+ 
+   const handleResetPeriodFilter = useCallback(() => {
+     setSelectPeriod(defaultFilterPeriod);
++    setFilters((oldFilters) => ({
++      ...oldFilters,
++      fromDate: undefined,
++      toDate: undefined,
++      offset: undefined,
++    }));
+     setPeriodBottomSheet(false);
+   }, []);
+ 
+@@ -140,6 +160,7 @@
+       ...oldFilters,
+       fromDate: startDate,
+       toDate: endDate,
++      offset: undefined,
+     }));
+     setPeriodBottomSheet(false);
+   }, []);
+@@ -150,6 +171,7 @@
+       ...oldFilters,
+       reportTypeId: item.reportTypeId,
+       reportTypeCode: item.code,
++      offset: undefined,
+     }));
+     setTypeBottomSheet(false);
+   };
+@@ -168,19 +190,34 @@
+     />
+   ));
+ 
++  const hasPeriodFilter = Boolean(filters.fromDate && filters.toDate);
++
+   const datePickerFormat = useMemo(
+-    () => getDatePickerFormat(filters.fromDate, filters.toDate),
++    () =>
++      filters.fromDate && filters.toDate
++        ? getDatePickerFormat(filters.fromDate, filters.toDate)
++        : undefined,
+     [filters.fromDate, filters.toDate],
    );
  
-@@ -612,18 +682,80 @@ const SecuritiesWriteOff = () => {
-     navigate(ROUTE_TRANSFERS);
-   };
+-  const yearFromJSDate = useMemo(() => getYearFromJSDate(filters.toDate), [filters.toDate]);
++  const yearFromJSDate = useMemo(
++    () => (filters.toDate ? getYearFromJSDate(filters.toDate) : undefined),
++    [filters.toDate],
++  );
  
-+  const handleLatinChange =
-+    (field: 'contractorID' | 'depoNumber' | 'depoDivision' | 'reference', max: number) =>
-+    (event: { target: { value: string } }) => {
-+      clearFieldError(field);
-+      patchNonSbp({ [field]: sanitizeLatin(event.target.value, max) });
-+    };
-+
-+  const handleDateSubmit = (dates: Date[]) => {
-+    if (!openDateField || !dates?.[0]) {
+-  const isActivePeriodReset = defaultFilterPeriod !== selectPeriod;
++  useEffect(() => {
++    if (!hasLoaded || !isListEnd || !hasMore || isFetching) return;
++    if (!reportRequests || reportRequests.length < (filters.offset ?? 0) + REPORTS_PAGE_SIZE) {
 +      return;
 +    }
-+
-+    const formatted = DateTime.fromJSDate(new Date(dates[0])).toFormat(DEFAULT_DATE_VIEW_FORMAT);
-+    clearFieldError(openDateField);
-+    if (openDateField === 'dealDate') {
-+      clearFieldError('settlementDate');
-+    }
-+    patchNonSbp({ [openDateField]: formatted });
-+    setOpenDateField(null);
-+  };
-+
-+  const validateNonSbpFields = (): WriteOffFieldErrors => {
-+    if (!isNonSbpMode) {
-+      return {};
-+    }
-+
-+    const errors: WriteOffFieldErrors = {};
-+    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {
-+      errors.contractorID = 'От 3 до 12 знаков, латинские буквы и цифры';
-+    }
-+    if (nonSbp.depoDivision && nonSbp.depoDivision.length < 6) {
-+      errors.depoDivision = 'От 6 до 17 знаков, латинские буквы и цифры';
-+    }
-+
-+    const dealDate = parseFormDate(nonSbp.dealDate);
-+    const settlementDate = parseFormDate(nonSbp.settlementDate);
-+    if (dealDate && settlementDate && settlementDate < dealDate) {
-+      errors.settlementDate = 'Не может быть раньше даты сделки';
-+    }
-+
-+    return errors;
-+  };
-+
-   const buildWriteOffRequest = (): SecuritiesWriteOffRequestParams => {
-     const quantity = toQuantityNumber(formPayload.quantity);
-     const contractorId = Number(formPayload.contractor?.id);
-+    const sbp = formPayload.mode == null ? null : formPayload.mode.code === 'SBP';
-+    const dealAmount = toQuantityNumber(nonSbp.dealAmount);
++    setFilters((oldFilters) => ({
++      ...oldFilters,
++      offset: (oldFilters.offset ?? 0) + REPORTS_PAGE_SIZE,
++    }));
++  }, [filters.offset, hasLoaded, hasMore, isFetching, isListEnd, reportRequests]);
  
-     return {
-       depoInstrument_Id: formPayload.instrument?.depoInstrumentId ?? null,
-       depoSubAccount_Id: formPayload.account?.depoSubAccountId ?? null,
-       quantity: quantity != null && quantity > 0 ? quantity : null,
-       contractor_Id: Number.isFinite(contractorId) ? contractorId : null,
--      sbp: formPayload.mode == null ? null : formPayload.mode.code === 'SBP',
-+      sbp,
-       sendCosts: formPayload.transferExpensesInfo,
-       personalDataAgreement: true,
-+      // ponytail: extra POST keys from the mockup; rename if backend contract differs
-+      ...(sbp === false
-+        ? {
-+            contractorID: nonSbp.contractorID || null,
-+            depoNumber: nonSbp.depoNumber || null,
-+            depoDivision: nonSbp.depoDivision || null,
-+            withRightsTransfer: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
-+            supplierName: isWithRights ? nonSbp.supplierName || null : null,
-+            dealAmount: isWithRights && dealAmount != null ? dealAmount : null,
-+            dealDate: nonSbp.dealDate || null,
-+            settlementDate: nonSbp.settlementDate || null,
-+            reference: nonSbp.reference || null,
-+            contractNumber: nonSbp.contractNumber || null,
-+            contractDate: nonSbp.contractDate || null,
-+            comment: nonSbp.comment || null,
-+          }
-+        : {}),
-     };
-   };
+   const showResetFilters =
+-    defaultFilters.fromDate !== filters.fromDate ||
+-    defaultFilters.toDate !== filters.toDate ||
+-    defaultFilters.reportTypeCode !== filters.reportTypeCode;
++    hasPeriodFilter || defaultFilters.reportTypeCode !== filters.reportTypeCode;
  
-@@ -651,6 +783,12 @@ const SecuritiesWriteOff = () => {
-       return;
-     }
- 
-+    const nonSbpErrors = validateNonSbpFields();
-+    if (hasWriteOffFieldErrors(nonSbpErrors)) {
-+      setFieldErrors(nonSbpErrors);
-+      return;
-+    }
-+
-     const requestParams = buildWriteOffRequest();
- 
-     console.log('[SecuritiesWriteOff] POST /v1/nontrade/securities/writeoff', requestParams);
-@@ -995,7 +1133,10 @@ const SecuritiesWriteOff = () => {
-             }
-             separatorActionCells={false}
-             status={fieldErrors.contractor ? 'error' : null}
--            description={fieldErrors.contractor}
-+            description={
-+              fieldErrors.contractor ??
-+              (isNonSbpMode ? 'Наименование контрагента' : undefined)
+   if (isErrorReportParameters) {
+     return (
+@@ -210,12 +247,12 @@
+           {showResetFilters && <Filter shape={'reset'} onClick={handleResetAllFilters} />}
+           <Filter
+             shape={'select'}
+-            active={isActivePeriodReset}
+-            text={getNTPDateName(
+-              filters.fromDate || defaultFilters.fromDate,
+-              filters.toDate || defaultFilters.toDate,
+-              selectPeriod,
+-            )}
++            active={hasPeriodFilter}
++            text={
++              filters.fromDate && filters.toDate
++                ? getNTPDateName(filters.fromDate, filters.toDate, selectPeriod)
++                : 'Все'
 +            }
-             onChange={(event) => {
-               clearFieldError('contractor');
-               setContractorValue(event.target.value);
-@@ -1011,6 +1152,222 @@ const SecuritiesWriteOff = () => {
-               selectContractor(selected);
-             }}
+             onClick={() => setPeriodBottomSheet(!periodBottomSheet)}
+             onClose={handleResetPeriodFilter}
            />
-+          {isNonSbpMode && (
-+            <>
-+              <Input
-+                label="Идентификатор:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Идентификатор или код"
-+                scale="small"
-+                value={nonSbp.contractorID}
-+                status={fieldErrors.contractorID ? 'error' : null}
-+                description={
-+                  fieldErrors.contractorID ??
-+                  'Идентификатор или код. От 3 до 12 знаков, латинские буквы и цифры'
-+                }
-+                onChange={handleLatinChange('contractorID', 12)}
-+              />
-+              <Input
-+                label="Номер счета:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Номер счета депо"
-+                scale="small"
-+                value={nonSbp.depoNumber}
-+                status={fieldErrors.depoNumber ? 'error' : null}
-+                description={
-+                  fieldErrors.depoNumber ??
-+                  'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
-+                }
-+                onChange={handleLatinChange('depoNumber', 12)}
-+              />
-+              <Input
-+                label="Раздел счета:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Раздел счета депо"
-+                scale="small"
-+                value={nonSbp.depoDivision}
-+                status={fieldErrors.depoDivision ? 'error' : null}
-+                description={
-+                  fieldErrors.depoDivision ??
-+                  'Раздел счета депо. От 6 до 17 знаков, латинские буквы и цифры'
-+                }
-+                onChange={handleLatinChange('depoDivision', 17)}
-+              />
-+              <SearchSelect
-+                label="Тип зачисления:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNamePopover={styles.searchSelectPopover}
-+                classNameContent={styles.searchSelectDropdown}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Выберите тип зачисления"
-+                scale="small"
-+                clearable
-+                list={CREDIT_TYPE_OPTIONS}
-+                value={CREDIT_TYPE_OPTIONS.find((item) => item.id === nonSbp.creditType)?.value ?? ''}
-+                minChar={0}
-+                emptyMessage="Ничего не найдено"
-+                separatorActionCells={false}
-+                status={fieldErrors.creditType ? 'error' : null}
-+                description={fieldErrors.creditType}
-+                onChange={() => undefined}
-+                onClear={clearSearchSelect(() => {
-+                  clearFieldError('creditType');
-+                  patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
-+                })}
-+                onSelect={(item) => {
-+                  const creditType = item.id as WriteOffCreditType;
-+                  clearFieldError('creditType');
-+                  patchNonSbp({
-+                    creditType,
-+                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
-+                  });
-+                }}
-+              />
-+              <Input
-+                label="Поставщик:"
-+                className={`${styles.sideField} ${styles.fieldMax400}`}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="ФИО поставщика ценных бумаг"
-+                scale="small"
-+                value={nonSbp.supplierName}
-+                disabled={!isWithRights}
-+                status={fieldErrors.supplierName ? 'error' : null}
-+                description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
-+                onChange={(event) => {
-+                  clearFieldError('supplierName');
-+                  patchNonSbp({ supplierName: event.target.value });
-+                }}
-+              />
-+              <Text className={styles.sectionTitle}>Данные для зачисления</Text>
-+              <Input
-+                label="Сумма сделки:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="0"
-+                scale="small"
-+                variant="number"
-+                precision={2}
-+                decimalSeparator="."
-+                allowedDecimalSeparators={['.', ',']}
-+                thousandSeparator=""
-+                disabled={!isWithRights}
-+                status={fieldErrors.dealAmount ? 'error' : null}
-+                description={
-+                  fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
-+                }
-+                value={nonSbp.dealAmount}
-+                onValueChange={(values) => {
-+                  clearFieldError('dealAmount');
-+                  patchNonSbp({ dealAmount: values.value ?? '' });
-+                }}
-+              />
-+              <div onClick={() => setOpenDateField('dealDate')}>
-+                <Input
-+                  label="Дата сделки:"
-+                  className={styles.sideField}
-+                  classNameLabel={styles.sideFieldLabel}
-+                  classNameDescription={styles.fieldHint}
-+                  placeholder="Выберите дату"
-+                  scale="small"
-+                  value={nonSbp.dealDate}
-+                  addonAfter={<Calendar />}
-+                  status={fieldErrors.dealDate ? 'error' : null}
-+                  description={
-+                    fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
-+                  }
-+                  onChange={() => undefined}
-+                />
-+              </div>
-+              <div onClick={() => setOpenDateField('settlementDate')}>
-+                <Input
-+                  label="Дата расчетов:"
-+                  className={styles.sideField}
-+                  classNameLabel={styles.sideFieldLabel}
-+                  classNameDescription={styles.fieldHint}
-+                  placeholder="Выберите дату"
-+                  scale="small"
-+                  value={nonSbp.settlementDate}
-+                  addonAfter={<Calendar />}
-+                  status={fieldErrors.settlementDate ? 'error' : null}
-+                  description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
-+                  onChange={() => undefined}
-+                />
-+              </div>
-+              <Input
-+                label="Референс:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Референс"
-+                scale="small"
-+                value={nonSbp.reference}
-+                status={fieldErrors.reference ? 'error' : null}
-+                description={fieldErrors.reference ?? 'До 16 знаков, латинские буквы и цифры'}
-+                onChange={handleLatinChange('reference', 16)}
-+              />
-+              <Text className={styles.sectionTitle}>Основание для зачисления</Text>
-+              <Input
-+                label="Номер договора:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Номер договора"
-+                scale="small"
-+                value={nonSbp.contractNumber}
-+                status={fieldErrors.contractNumber ? 'error' : null}
-+                description={
-+                  fieldErrors.contractNumber ?? 'Номер депозитарного договора с контрагентом'
-+                }
-+                onChange={(event) => {
-+                  clearFieldError('contractNumber');
-+                  patchNonSbp({ contractNumber: event.target.value });
-+                }}
-+              />
-+              <div onClick={() => setOpenDateField('contractDate')}>
-+                <Input
-+                  label="Дата договора:"
-+                  className={styles.sideField}
-+                  classNameLabel={styles.sideFieldLabel}
-+                  classNameDescription={styles.fieldHint}
-+                  placeholder="Выберите дату"
-+                  scale="small"
-+                  value={nonSbp.contractDate}
-+                  addonAfter={<Calendar />}
-+                  status={fieldErrors.contractDate ? 'error' : null}
-+                  description={
-+                    fieldErrors.contractDate ?? 'Дата депозитарного договора с контрагентом'
-+                  }
-+                  onChange={() => undefined}
-+                />
-+              </div>
-+              <Text className={styles.sectionTitle}>Прочее</Text>
-+              <Input
-+                label="Примечание:"
-+                className={styles.sideField}
-+                classNameLabel={styles.sideFieldLabel}
-+                classNameDescription={styles.fieldHint}
-+                placeholder="Примечание"
-+                scale="small"
-+                value={nonSbp.comment}
-+                maxLength={250}
-+                status={fieldErrors.comment ? 'error' : null}
-+                description={fieldErrors.comment ?? 'До 250 символов'}
-+                onChange={(event) => {
-+                  clearFieldError('comment');
-+                  patchNonSbp({ comment: event.target.value.slice(0, 250) });
-+                }}
-+              />
-+            </>
-+          )}
-           <Checkbox
-             className={styles.expensesCheckbox}
-             classNameLabel={styles.expensesCheckboxLabel}
-@@ -1046,6 +1403,24 @@ const SecuritiesWriteOff = () => {
-           </Button>
+@@ -226,7 +263,7 @@
+           />
+         </FilterBar>
+         <div className={styles.content} onTouchMove={(e) => e.stopPropagation()}>
+-          {isLoading ? (
++          {!hasLoaded && !filters.offset ? (
+             <OrderSkeleton count={4} />
+           ) : (
+             <div>
+@@ -252,6 +289,7 @@
+               )}
+             </div>
+           )}
++          {hasLoaded && <div ref={sentinelRef} />}
          </div>
        </div>
-+
-+      <BottomSheet
-+        open={Boolean(openDateField)}
-+        onDismiss={() => setOpenDateField(null)}
-+        onTouchMove={(event) => event.stopPropagation()}
-+      >
-+        <Text type="subtitleBold">{openDateField ? DATE_FIELD_TITLES[openDateField] : ''}</Text>
-+        <DatePicker
-+          withPeriod={false}
-+          withOptions={false}
-+          minDate={
-+            openDateField === 'settlementDate'
-+              ? parseFormDate(nonSbp.dealDate)?.toJSDate()
-+              : undefined
-+          }
-+          onSubmit={handleDateSubmit}
-+        />
-+      </BottomSheet>
-     </div>
+ 
+@@ -281,18 +319,20 @@
+           <CommonHeadSheet
+             name="Период"
+             handleSubmit={handleResetPeriodFilter}
+-            activeBtn={selectPeriod !== defaultFilterPeriod}
++            activeBtn={hasPeriodFilter || selectPeriod !== defaultFilterPeriod}
+           />
+         </div>
+-        <DatePicker
+-          onSubmit={handleSubmitFilterDates}
+-          periodPreset
+-          dates={datePickerFormat}
+-          currentYear={yearFromJSDate}
+-          customOptionsPeriodPreset={['month', 'quarter', 'year']}
+-          onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
+-          defaultOptionPeriodPreset={selectPeriod}
+-        />
++        {periodBottomSheet && (
++          <DatePicker
++            onSubmit={handleSubmitFilterDates}
++            periodPreset
++            dates={datePickerFormat}
++            currentYear={yearFromJSDate}
++            customOptionsPeriodPreset={['month', 'quarter', 'year']}
++            onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
++            defaultOptionPeriodPreset={hasPeriodFilter ? selectPeriod : 'year'}
++          />
++        )}
+       </BottomSheetComponent>
+     </>
    );
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/constants.ts b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+--- a/src/modules/ReportsPage/components/ReportsHistory/constants.ts
++++ b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+@@ -1,5 +1,3 @@
+-import { getFilterDateFormat } from 'modules/OrderHistory/helpers';
+-
+ import { ReportType } from 'types/reports';
+ 
+ export const REPORT_HISTORY_FILTER_TYPE_KEY = 'ReportHistoryTypeFilter';
+@@ -16,14 +14,7 @@
+   reportTypeId: 0,
  };
+ 
+-const defaultFilterDates = getFilterDateFormat([
+-  new Date(new Date().getFullYear() - 1, new Date().getMonth(), new Date().getDate()),
+-  new Date(),
+-]);
+-
+ export const defaultFilters = {
+-  fromDate: defaultFilterDates.startDate,
+-  toDate: defaultFilterDates.endDate,
+   reportTypeCode: 'all',
+ };
+ 
+diff --git a/src/modules/ReportsPage/hooks/useReportHistory.ts b/src/modules/ReportsPage/hooks/useReportHistory.ts
+--- a/src/modules/ReportsPage/hooks/useReportHistory.ts
++++ b/src/modules/ReportsPage/hooks/useReportHistory.ts
+@@ -1,18 +1,41 @@
+-import { useEffect } from 'react';
++import { useEffect, useState } from 'react';
+ 
+-import { useLazyGetReportsHistoryQuery } from 'core/api/reports';
++import { REPORTS_PAGE_SIZE, useLazyGetReportsHistoryQuery } from 'core/api/reports';
+ 
+ import { createAlertNotification } from 'components';
+ 
+-import { ReportHistoryFilters } from 'types/reports';
++import { ReportHistoryFilters, ReportItem } from 'types/reports';
+ 
+ import { DEFAULT_QUERY_ERROR_MESSAGE } from '../constants';
+ 
+ export const useReportHistory = (filters: ReportHistoryFilters) => {
+-  const [getReportsHistory, { data, isLoading, isError }] = useLazyGetReportsHistoryQuery();
++  const [getReportsHistory, { isLoading, isFetching, isError }] = useLazyGetReportsHistoryQuery();
++  const [items, setItems] = useState<ReportItem[]>([]);
++  const [hasMore, setHasMore] = useState(false);
++  const [hasLoaded, setHasLoaded] = useState(false);
+ 
+   useEffect(() => {
+-    getReportsHistory(filters);
++    let active = true;
++    if (!filters.offset) {
++      setItems([]);
++      setHasLoaded(false);
++    }
++    const request = getReportsHistory(filters);
++    request
++      .unwrap()
++      .then((page) => {
++        if (!active) return;
++        setHasLoaded(true);
++        setHasMore(page.length === REPORTS_PAGE_SIZE);
++        setItems((prev) => (filters.offset ? [...prev, ...page] : page));
++      })
++      .catch(() => {
++        return;
++      });
++    return () => {
++      active = false;
++      request.abort();
++    };
+   }, [filters, getReportsHistory]);
+ 
+   useEffect(() => {
+@@ -24,8 +47,12 @@
+   }, [isError]);
+ 
+   return {
+-    data,
++    data: items,
++    setItems,
+     isLoading,
++    isFetching,
++    hasLoaded,
++    hasMore,
+     getReportsHistory,
+   };
+ };
+diff --git a/src/core/api/reports.ts b/src/core/api/reports.ts
+--- a/src/core/api/reports.ts
++++ b/src/core/api/reports.ts
+@@ -18,6 +18,8 @@
+ 
+ import { fetchBaseQueryWithCamelize } from './common';
+ 
++export const REPORTS_PAGE_SIZE = 20;
++
+ export const reportsApi = createApi({
+   reducerPath: 'reportsApi',
+   baseQuery: fetchBaseQueryWithCamelize({ baseUrl: '/rs/v2' }),
+@@ -41,6 +43,8 @@
+           fromDate: filters.fromDate,
+           toDate: filters.toDate,
+           codes: filters.reportTypeCode === 'all' ? undefined : filters.reportTypeCode,
++          count: REPORTS_PAGE_SIZE,
++          offset: filters.offset || undefined,
+         },
+       }),
+       transformResponse: (response: ReportHistoryResponse) => response.reportRequests || [],
+diff --git a/src/types/reports/models.ts b/src/types/reports/models.ts
+--- a/src/types/reports/models.ts
++++ b/src/types/reports/models.ts
+@@ -70,9 +70,10 @@
+ export type ReportTypesWithParams = { [K in ReportTypeCode]: ReportParameter[] };
+ 
+ export interface ReportHistoryFilters {
+-  fromDate: string;
+-  toDate: string;
++  fromDate?: string;
++  toDate?: string;
+   reportTypeCode?: string;
++  offset?: number;
+ }
+ 
+ export interface ReportParameterData {
 
 
 --- FILE: package.json ---
@@ -2540,7 +2449,7 @@ diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.t
     "@aurora/checkbox-form-group": "^1.66.0",
     "@aurora/circle-loader": "^1.42.0",
     "@aurora/compact-table": "^1.70.0",
-    "@aurora/components": "1.160.5",
+    "@aurora/components": "1.161.0",
     "@aurora/currency": "^1.73.0",
     "@aurora/disclaimer": "^1.96.0",
     "@aurora/fi-cell": "^1.93.0",
@@ -33785,6 +33694,8 @@ import {
   ROUTE_HELP,
   ROUTE_LOGIN,
   ROUTE_MY_INFORMATION,
+  ROUTE_REPORTS,
+  ROUTE_REPORTS_HISTORY,
   ROUTE_REQUISITES_VIEW,
   ROUTE_SECURITIES_REQUISITES,
   ROUTE_SECURITIES_WRITEOFF,
@@ -33802,6 +33713,7 @@ import { useAppSelector } from 'hooks';
 
 import { LOGOUT_CONFIRM_TITLE } from 'modules/MyInformation/constants';
 import { useExpiredAnketNeedAcceptAttention } from 'modules/MyInformation/hooks/useExpiredAnketNeedAcceptAttention';
+import { isReportsMenuEnabled } from 'modules/ReportsPage/constants';
 import CollectionCurrency from 'modules/View360/components/CollectionCurrency';
 import { ReactComponent as TransferSvg } from 'modules/View360/icons/transferIcon.svg';
 
@@ -33809,6 +33721,7 @@ import { createAlertNotification } from 'components/Alert/createAlertNotificatio
 
 import { ReactComponent as CatalogSvg } from 'images/icons/catalog.svg';
 import { ReactComponent as IndicatorSvg } from 'images/icons/circle-indicator.svg';
+import { ReactComponent as ReportsSvg } from 'images/icons/copy.svg';
 import { ReactComponent as HomeSvg } from 'images/icons/home.svg';
 import { ReactComponent as LogoutSvg } from 'images/icons/logout.svg';
 import { ReactComponent as HelpSvg } from 'images/icons/question-outline.svg';
@@ -33879,6 +33792,14 @@ const DesktopMenu = () => {
       return;
     }
 
+    const reportsRoutes = [ROUTE_REPORTS, ROUTE_REPORTS_HISTORY];
+    if (reportsRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+      if (activeTab !== 'reports') {
+        sessionStorage.setItem('activeTab', 'reports');
+      }
+      return;
+    }
+
     for (const section of menuItems) {
       const tab = section.find(({ link }) => link === pathname);
       if (tab && activeTab !== tab.id) {
@@ -33903,6 +33824,9 @@ const DesktopMenu = () => {
       { id: 'view360', name: 'Портфель', link: ROUTE_360, icon: <HomeSvg /> },
       // { id: 'catalog', name: 'Каталог', link: ROUTE_CATALOG, icon: <CatalogSvg /> },
       { id: 'transfers', name: 'Переводы', link: ROUTE_TRANSFERS, icon: <TransferSvg /> },
+      ...(isReportsMenuEnabled()
+        ? [{ id: 'reports', name: 'Отчёты', link: ROUTE_REPORTS, icon: <ReportsSvg /> }]
+        : []),
     ],
     //   [
     //    {
@@ -37052,16 +36976,19 @@ const SwipeableInstrumentCard: FC<ISwipeableInstrumentCardProps> = (props) => {
   const closeConfirm = () => setConfirmOpen(false);
 
   const onConfirm = async () => {
-    await updateFavoriteDelete({
+    updateFavoriteDelete({
       instrumentId,
       tradePlaceId,
       ...(groupIdToDelete ? { groupList: `${groupIdToDelete}` } : { favorite: true }),
-    });
+    })
+      .unwrap()
+      .then(() => {
+        createAlertNotification({ status: 'info', text: 'Бумага удалена' });
 
-    createAlertNotification({ status: 'info', text: 'Бумага удалена' });
-
-    closeConfirm();
-    onRefetch?.();
+        closeConfirm();
+        onRefetch?.();
+      })
+      .catch(() => createAlertNotification({ text: 'Не удалось удалить бумагу', status: 'error' }));
   };
 
   const customButton = useMemo(
@@ -37097,12 +37024,13 @@ const SwipeableInstrumentCard: FC<ISwipeableInstrumentCardProps> = (props) => {
             isTouchStart
             onRefetch={onRefetch}
             tradePlaceId={tradePlaceId}
+            mode="move"
           />
 
           {hasDeleteButton && (
             <div
               className={cx(styles.iconWrapper, styles.iconRed)}
-              // onClick иногда не работает из-за react-beautiful-dnd
+              onClick={isDesktopView ? openConfirm : undefined}
               onTouchStart={openConfirm}
             >
               <BinSvg />
@@ -37404,6 +37332,8 @@ import {
   ROUTE_FAVORITE_GROUPS,
   ROUTE_FEED,
   ROUTE_PROFILE,
+  ROUTE_REPORTS,
+  ROUTE_REPORTS_HISTORY,
   ROUTE_REQUISITES_VIEW,
   ROUTE_TRANSFERS,
 } from 'const/routes';
@@ -37412,12 +37342,13 @@ import { RootState } from 'store';
 import { reachGoal } from 'core/helpers/analytics';
 
 import { ECatalogGoal } from 'modules/Catalog/types';
+import { isReportsMenuEnabled } from 'modules/ReportsPage/constants';
 import { ReactComponent as TransferSvg } from 'modules/View360/icons/transferIcon.svg';
 
 import SkeletonMobileMenu from 'components/MobileMenu/components/SkeletonMobileMenu';
 
 import { ReactComponent as CatalogSvg } from 'images/icons/catalog.svg';
-//import { ReactComponent as FeedSvg } from 'images/icons/feed.svg';
+import { ReactComponent as ReportsSvg } from 'images/icons/copy.svg';
 import { ReactComponent as HomeSvg } from 'images/icons/home.svg';
 //import { ReactComponent as MessageSvg } from 'images/icons/message.svg';
 import { ReactComponent as MoreSvg } from 'images/icons/more.svg';
@@ -37429,10 +37360,16 @@ const isTransfersPath = (pathname: string) =>
   pathname.startsWith(`${ROUTE_TRANSFERS}/`) ||
   pathname === ROUTE_REQUISITES_VIEW;
 
+const isReportsPath = (pathname: string) =>
+  pathname === ROUTE_REPORTS ||
+  pathname === ROUTE_REPORTS_HISTORY ||
+  pathname.startsWith(`${ROUTE_REPORTS}/`);
+
 const menuItems = [
   { id: 'view', name: 'Портфель', url: ROUTE_360, icon: HomeSvg },
   // { id: 'catalog', name: 'Каталог', url: ROUTE_CATALOG, icon: CatalogSvg },
   { id: 'transfers', name: 'Переводы', url: ROUTE_TRANSFERS, icon: TransferSvg },
+  { id: 'reports', name: 'Отчёты', url: ROUTE_REPORTS, icon: ReportsSvg },
   // { id: 'feed', name: 'Лента', url: ROUTE_FEED, icon: FeedSvg },
   // { id: 'chat', name: 'Чат', url: ROUTE_CHAT, icon: MessageSvg },
   { id: 'more', name: 'Ещё', url: ROUTE_PROFILE, icon: MoreSvg },
@@ -37449,11 +37386,17 @@ const MobileMenu: FC = () => {
   };
 
   const filteredMenuItems = useMemo(() => {
+    let items = menuItems;
+
     if (!session.data?.chatEnabled) {
-      return menuItems.filter(({ id }) => id !== 'chat');
+      items = items.filter(({ id }) => id !== 'chat');
     }
 
-    return menuItems;
+    if (!isReportsMenuEnabled()) {
+      items = items.filter(({ id }) => id !== 'reports');
+    }
+
+    return items;
   }, [session.data?.chatEnabled]);
 
   const isFavorites = pathname === ROUTE_FAVORITES_360 || pathname === ROUTE_FAVORITE_GROUPS;
@@ -37471,7 +37414,9 @@ const MobileMenu: FC = () => {
                   className={({ isActive }) =>
                     cn(styles.menuItem, {
                       [styles.menuItemActive]:
-                        isActive || (id === 'transfers' && isTransfersPath(pathname)),
+                        isActive ||
+                        (id === 'transfers' && isTransfersPath(pathname)) ||
+                        (id === 'reports' && isReportsPath(pathname)),
                     })
                   }
                   onClick={() => handleClick(url)}
@@ -43718,7 +43663,7 @@ export const ROUTE_ISSUERS_INSTRUMENTS = '/issuers/:issuerId/instruments';
 export const ROUTE_ISSUERS_INSTRUMENTS_GROUP = ROUTE_ISSUERS_INSTRUMENTS + '/:groupId';
 export const ROUTE_ISSUERS_ABOUT = '/issuers/:issuerId/about';
 
-// Отчёты и справки
+// Отчёты
 export const ROUTE_REPORTS = '/reports';
 export const ROUTE_REPORTS_HISTORY = '/reports/history';
 
@@ -47338,12 +47283,14 @@ import {
   ReportItem,
   ReportParameterData,
   ReportParametersResponse,
-  ReportStatus,
+  ReportStatusPayload,
   ReportStatusResponse,
   ReportsParametersResponse,
 } from 'types/reports';
 
 import { fetchBaseQueryWithCamelize } from './common';
+
+export const REPORTS_PAGE_SIZE = 20;
 
 export const reportsApi = createApi({
   reducerPath: 'reportsApi',
@@ -47353,9 +47300,9 @@ export const reportsApi = createApi({
     getReportsParameters: builder.query<ReportsParametersResponse, void>({
       query: () => ({ url: '/reports/parameters' }),
     }),
-    getReportStatus: builder.query<ReportStatus, string>({
+    getReportStatus: builder.query<ReportStatusPayload | undefined, string>({
       query: (reportRequestGuid) => ({ url: `/reports/${reportRequestGuid}/status` }),
-      transformResponse: (resp: ReportStatusResponse) => resp?.reportRequestStatus?.[0]?.status,
+      transformResponse: (resp: ReportStatusResponse) => resp?.reportRequestStatus?.[0],
     }),
     getReportParameters: builder.query<ReportParameterData, string>({
       query: (reportRequestGuid) => ({ url: `/reports/${reportRequestGuid}/parameters` }),
@@ -47368,6 +47315,8 @@ export const reportsApi = createApi({
           fromDate: filters.fromDate,
           toDate: filters.toDate,
           codes: filters.reportTypeCode === 'all' ? undefined : filters.reportTypeCode,
+          count: REPORTS_PAGE_SIZE,
+          offset: filters.offset || undefined,
         },
       }),
       transformResponse: (response: ReportHistoryResponse) => response.reportRequests || [],
@@ -140181,6 +140130,24 @@ h����g�I)�}D,�ysDޠ %���"��ƈ#�0��+�M::ڒ�
 </svg>
 
 
+--- FILE: src/images/raw-icons/open-eye-blue-transp-bg.svg ---
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_802_1631)">
+<g clip-path="url(#clip1_802_1631)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M20.024 13C17.0413 13 14.2627 13.986 12.1626 15.219C11.1103 15.8369 10.2065 16.5294 9.51822 17.2168C8.86321 17.8709 8.31892 18.6041 8.1093 19.3308C8.03955 19.5412 8.00263 19.7611 8.00016 19.9831L8 19.9974L8.00025 20.0117C8.00334 20.188 8.02561 20.3535 8.07312 20.52C8.25192 21.2725 8.78978 22.0267 9.43497 22.6911C10.1171 23.3936 11.0226 24.101 12.0807 24.732C14.1925 25.9913 17.0047 27 20.0264 27C23.1976 27 25.9987 25.9422 28.0624 24.6637C29.0953 24.0238 29.9614 23.3178 30.6092 22.6387C31.2184 22 31.7243 21.2922 31.9055 20.6201C31.9673 20.4226 31.9993 20.2169 32.0001 20.0095L32.0001 19.9982L31.9999 19.9869C31.9967 19.8154 31.9763 19.6566 31.931 19.4949C31.7724 18.8073 31.2701 18.0862 30.6719 17.4442C30.0298 16.7551 29.1637 16.0368 28.1271 15.385C26.056 14.0828 23.2291 13 20.024 13ZM10.0288 19.8929C10.0947 19.6534 10.3561 19.2066 10.9315 18.6319C11.4832 18.081 12.2472 17.4886 13.1753 16.9437C15.0361 15.8512 17.4685 15 20.024 15C22.7822 15 25.2451 15.9354 27.0625 17.0781C27.9703 17.6489 28.6981 18.2597 29.2087 18.8077C29.7506 19.3892 29.9511 19.796 29.9832 19.949L29.9928 19.9947L29.9989 20.0144C29.9983 20.0175 29.9975 20.0205 29.9965 20.0236L29.9848 20.0586L29.9758 20.0944C29.9312 20.2703 29.7082 20.6857 29.162 21.2582C28.6439 21.8013 27.9139 22.403 27.0091 22.9636C25.1973 24.086 22.7563 25 20.0264 25C17.4358 25 14.9737 24.1286 13.105 23.0142C12.1728 22.4583 11.4115 21.8556 10.8698 21.2978C10.302 20.7131 10.0662 20.2714 10.0171 20.0495L10.008 20.0086L10.0014 19.9872C10.0027 19.9775 10.005 19.9677 10.0084 19.958L10.0197 19.9258L10.0288 19.8929ZM20.0001 16C17.791 16 16.0001 17.7909 16.0001 20C16.0001 22.2091 17.791 24 20.0001 24C22.2092 24 24.0001 22.2091 24.0001 20L24.0001 19.9988C23.9975 17.7914 22.2087 16.0026 20.0013 16H20.0001ZM18.0001 20C18.0001 18.8956 18.8952 18.0003 19.9995 18C21.1037 18.0016 21.9984 18.8963 22.0001 20.0005C21.9999 21.1048 21.1045 22 20.0001 22C18.8955 22 18.0001 21.1046 18.0001 20Z" fill="#6673E9"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_802_1631">
+<rect width="40" height="40" fill="white"/>
+</clipPath>
+<clipPath id="clip1_802_1631">
+<rect width="24" height="24" fill="white" transform="translate(8 8)"/>
+</clipPath>
+</defs>
+</svg>
+
+
 --- FILE: src/images/raw-icons/open-eye-blue.svg ---
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_802_1631)">
@@ -141204,6 +141171,47 @@ S�S����ӕ��M5�H�K�R̥!y8����ahki�B�eXz��
 <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 3V2C10.5 1.44772 10.9477 1 11.5 1C12.0523 1 12.5 1.44772 12.5 2V3H18C18.5523 3 19 3.44772 19 4C19 4.55228 18.5523 5 18 5H5C4.44772 5 4 4.55228 4 4C4 3.44772 4.44772 3 5 3H10.5ZM18.5543 10.7629L17.4283 20.1176C17.4015 20.3412 17.3783 20.5346 17.3354 20.7104C17.0392 21.9258 16.0198 22.8298 14.7777 22.9787C14.598 23.0002 14.4033 23.0001 14.1781 23H8.82175C8.59664 23.0001 8.40205 23.0002 8.22249 22.9787C6.98021 22.8299 5.96071 21.9258 5.66453 20.7102C5.62171 20.5345 5.59855 20.3412 5.57175 20.1177L4.46382 10.9133C4.37961 10.2139 4.30753 9.61522 4.29841 9.1243C4.28883 8.60787 4.34336 8.08968 4.60219 7.5994C4.82714 7.17331 5.15141 6.80767 5.54757 6.53341C6.00339 6.21784 6.51136 6.10177 7.02523 6.04957C7.51372 5.99995 8.11671 5.99997 8.82116 6L14.3303 6C14.9656 5.99998 15.5095 5.99996 15.9522 6.04067C16.4168 6.08339 16.8787 6.17803 17.305 6.43759C17.8185 6.75027 18.2263 7.21003 18.4753 7.75726C18.6821 8.21154 18.7208 8.68136 18.7077 9.14775C18.6952 9.59215 18.6302 10.1322 18.5543 10.7629ZM16.7085 9.09156C16.7178 8.76178 16.6806 8.64205 16.655 8.58575C16.572 8.40335 16.4361 8.25009 16.2649 8.14586C16.212 8.1137 16.0976 8.06248 15.7691 8.03227C15.429 8.00099 14.978 8 14.2857 8L8.8707 8C8.10294 8 7.60262 8.00121 7.22736 8.03933C6.86606 8.07603 6.74381 8.13776 6.68597 8.1778C6.55392 8.26922 6.44583 8.3911 6.37085 8.53313C6.33801 8.59534 6.29133 8.72409 6.29807 9.08718C6.30507 9.46432 6.36366 9.9612 6.45541 10.7235L7.55159 19.8302C7.58764 20.1297 7.59706 20.1931 7.60768 20.2367C7.70641 20.6419 8.04624 20.9433 8.46033 20.9929C8.50488 20.9982 8.56902 21 8.87068 21H14.1292C14.431 21 14.4952 20.9982 14.5397 20.9929C14.9538 20.9433 15.2936 20.6419 15.3923 20.2368C15.4029 20.1932 15.4124 20.1297 15.4484 19.83L16.5633 10.5682C16.646 9.88088 16.6989 9.43297 16.7085 9.09156ZM9.02599 9.9409C9.43891 9.90827 9.80602 10.216 9.84595 10.6283L10.5729 18.1353C10.6128 18.5476 10.3105 18.9083 9.89755 18.9409C9.48462 18.9735 9.11751 18.6658 9.07759 18.2535L8.35061 10.7465C8.31069 10.3342 8.61306 9.97354 9.02599 9.9409ZM13.1541 10.6283C13.194 10.216 13.5611 9.90827 13.974 9.9409C14.3869 9.97354 14.6893 10.3342 14.6494 10.7465L13.9224 18.2535C13.8825 18.6658 13.5154 18.9735 13.1025 18.9409C12.6895 18.9083 12.3872 18.5476 12.4271 18.1353L13.1541 10.6283Z" fill="#F94241"/>
 </svg>
 
+
+--- FILE: src/images/raw-icons/reports/FileOther.svg ---
+<svg width="28" height="32" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 1.5h11.2L25 11.2V28a2.5 2.5 0 0 1-2.5 2.5h-18A2.5 2.5 0 0 1 2 28V4A2.5 2.5 0 0 1 4.5 1.5H4z" fill="#8A94A6"/>
+  <path d="M15.2 1.5V9a2.2 2.2 0 0 0 2.2 2.2H25" fill="#fff" fill-opacity=".45"/>
+</svg>
+
+
+--- FILE: src/images/raw-icons/reports/FilePdf.svg ---
+<svg width="28" height="32" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 1.5h11.2L25 11.2V28a2.5 2.5 0 0 1-2.5 2.5h-18A2.5 2.5 0 0 1 2 28V4A2.5 2.5 0 0 1 4.5 1.5H4z" fill="#E9564C"/>
+  <path d="M15.2 1.5V9a2.2 2.2 0 0 0 2.2 2.2H25" fill="#fff" fill-opacity=".45"/>
+  <text x="13.5" y="22.5" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial, sans-serif" font-weight="700">PDF</text>
+</svg>
+
+
+--- FILE: src/images/raw-icons/reports/FileSig.svg ---
+<svg width="28" height="32" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 1.5h11.2L25 11.2V28a2.5 2.5 0 0 1-2.5 2.5h-18A2.5 2.5 0 0 1 2 28V4A2.5 2.5 0 0 1 4.5 1.5H4z" fill="#1FBA66"/>
+  <path d="M15.2 1.5V9a2.2 2.2 0 0 0 2.2 2.2H25" fill="#fff" fill-opacity=".45"/>
+  <text x="13.5" y="22.5" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial, sans-serif" font-weight="700">SIG</text>
+</svg>
+
+
+--- FILE: src/images/raw-icons/reports/FileView.svg ---
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C8.5 5 5.4 6.4 3.2 8.2 2.2 9 1.4 10 1 11c-.2.4-.2.8 0 1.2.4 1 1.2 2 2.2 2.8C5.4 16.6 8.5 18 12 18s6.6-1.4 8.8-3.2c1-0.8 1.8-1.8 2.2-2.8.2-.4.2-.8 0-1.2-.4-1-1.2-2-2.2-2.8C18.6 6.4 15.5 5 12 5zm0 11c-2.8 0-5.4-.9-7.2-2.2-.6-.4-1.1-.9-1.4-1.3.3-.4.8-.9 1.4-1.3C6.6 9.9 9.2 9 12 9s5.4.9 7.2 2.2c.6.4 1.1.9 1.4 1.3-.3.4-.8.9-1.4 1.3C17.4 15.1 14.8 16 12 16zm0-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="#6673E9"/>
+</svg>
+
+
+--- FILE: src/images/raw-icons/reports/ReportMany.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2-9" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M25.524 11.127h-8c-1.885 0-2.828 0-3.414.586s-.586 1.529-.586 3.414v12c0 1.886 0 2.829.586 3.414.586.586 1.529.586 3.414.586h8c1.886 0 2.829 0 3.415-.586.585-.585.585-1.528.585-3.414v-12c0-1.885 0-2.828-.585-3.414-.586-.586-1.529-.586-3.415-.586z" style="fill:#fff;fill-opacity:1"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M22.854 8.506h-8c-1.885 0-2.828 0-3.414.585-.586.586-.586 1.529-.586 3.415v12c0 1.885 0 2.828.586 3.414s1.529.586 3.414.586h8c1.886 0 2.829 0 3.414-.586.586-.586.586-1.529.586-3.414v-12c0-1.886 0-2.829-.586-3.415-.585-.585-1.528-.585-3.414-.585z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M14.864 18.506h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M14.945 22.506h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.854 14.506h8"/></svg>
+
+--- FILE: src/images/raw-icons/reports/ReportManySign.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2-9" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M25.524 11.127h-8c-1.885 0-2.828 0-3.414.586s-.586 1.529-.586 3.414v12c0 1.886 0 2.829.586 3.414.586.586 1.529.586 3.414.586h8c1.886 0 2.829 0 3.415-.586.585-.585.585-1.528.585-3.414v-12c0-1.885 0-2.828-.585-3.414-.586-.586-1.529-.586-3.415-.586z" style="fill:#fff;fill-opacity:1"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M22.854 8.506h-8c-1.885 0-2.828 0-3.414.585-.586.586-.586 1.529-.586 3.415v12c0 1.885 0 2.828.586 3.414s1.529.586 3.414.586h8c1.886 0 2.829 0 3.414-.586.586-.586.586-1.529.586-3.414v-12c0-1.886 0-2.829-.586-3.415-.585-.585-1.528-.585-3.414-.585z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M14.864 18.506h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M14.945 22.506h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.854 14.506h8"/><path id="rect1" d="M19.442 20.964h10.315v10.253H19.442z" style="fill:#fff;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:1.871;stroke-dasharray:none;stroke-opacity:1"/><path id="path6" d="m21.631 25.22.875.5-.375 2 1.875-3.375 1.125 2 .125-2.5 1.25 4.125.625-3h.75" style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:.971;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"/></svg>
+
+--- FILE: src/images/raw-icons/reports/ReportOne.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M24 10h-8c-1.886 0-2.828 0-3.414.586S12 12.114 12 14v12c0 1.886 0 2.828.586 3.414S14.114 30 16 30h8c1.886 0 2.828 0 3.414-.586S28 27.886 28 26V14c0-1.886 0-2.828-.586-3.414S25.886 10 24 10Z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M16.01 20h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M16.091 24h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16h8"/></svg>
+
+--- FILE: src/images/raw-icons/reports/ReportOneSign.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" id="svg5" width="40" height="40" fill="none" viewBox="0 0 40 40"><path id="path1" fill="#f2f1ff" d="M20 0C4.444 0 0 4.444 0 20s4.456 20 20 20 20-4.444 20-20S35.544 0 20 0"/><path id="path2" stroke="#6673e9" stroke-linecap="round" stroke-width="2" d="M24 10h-8c-1.886 0-2.828 0-3.414.586S12 12.114 12 14v12c0 1.886 0 2.828.586 3.414S14.114 30 16 30h8c1.886 0 2.828 0 3.414-.586S28 27.886 28 26V14c0-1.886 0-2.828-.586-3.414S25.886 10 24 10Z" style="fill:#fff;fill-opacity:1"/><path id="path3" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.235" d="M16.01 20h8.065"/><path id="path4" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.213" d="M16.091 24h7.903"/><path id="path5" stroke="#6673e9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16h8"/><path id="rect1" d="M19.436 21.869h10.315v10.253H19.436z" style="fill:#fff;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:1.871;stroke-opacity:1;stroke-dasharray:none"/><path id="path1-4" fill="#4a4a4a" d="M24.14 25.7a.3.3 0 0 0 .212-.08l2.026-1.863a.3.276 0 1 0-.424-.39l-2.027 1.862a.3.276 0 0 0 .213.472m3.642-.609-2.017 1.854-.8-.736 2.017-1.853a.62.62 0 0 1 .8 0 .567.52 0 0 1 0 .735m-5.133 4.718-1.073.251.273-.986 2.692-2.474.8.735zm5.558-5.844a1.159 1.065 0 0 0-.825-.313 1.158 1.065 0 0 0-.825.313l-5.19 4.772a.27.27 0 0 0-.08.127l-.418 1.51a.3.276 0 0 0 .365.336l1.643-.384a.3.3 0 0 0 .138-.073l5.192-4.772a1.168 1.074 0 0 0 0-1.516" style="display:none;overflow:hidden;fill:#434348;fill-opacity:1;stroke:none;stroke-width:.137302;stroke-dasharray:none;stroke-opacity:1"/><path id="path6" d="m21.625 26.125.875.5-.375 2L24 25.25l1.125 2 .125-2.5 1.25 4.125.625-3h.75" style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1fba66;stroke-width:.971;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"/></svg>
 
 --- FILE: src/images/raw-icons/ruble-icon.svg ---
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -144415,6 +144423,7 @@ export { default } from './AuthorizationPage';
   &-desktop {
     background: none;
     padding: 0;
+    max-width: 856px;
   }
 }
 
@@ -144533,7 +144542,8 @@ const CatalogWrapper: FC<ICatalogWrapper> = ({ children }) => {
 
   const title = TITLE[pathname] || NAV_NAMES.catalog;
 
-  const { handleNavigate, handleSearch, isActiveSearch, isFavorites, tabs } = useCatalog(pathname);
+  const { handleNavigate, handleSearch, handleCloseSearch, isActiveSearch, isFavorites, tabs } =
+    useCatalog(pathname);
 
   const disableSwipe =
     pathname === ROUTE_TURNKEY_SOLUTIONS ||
@@ -144553,8 +144563,10 @@ const CatalogWrapper: FC<ICatalogWrapper> = ({ children }) => {
           addonRight={
             <Search
               handleClick={handleSearch}
+              handleCloseSearch={handleCloseSearch}
               isActiveSearch={isActiveSearch}
               showIcon={!isMainPageCatalog}
+              isDesktop={isDesktop}
             />
           }
           className={cn(styles.headerPage, {
@@ -144899,6 +144911,7 @@ import { allowedEmojis } from 'modules/Catalog/constants';
 
 import { createAlertNotification } from 'components/Alert/createAlertNotification';
 
+import { ReactComponent as CloseSvg } from 'images/icons/search/close.svg';
 import { ReactComponent as SquircleWithPenSvg } from 'images/raw-icons/catalog/squircle-with-pen.svg';
 
 import { FavoriteGroup } from 'types/catalog';
@@ -144934,6 +144947,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
   );
 
   useEffect(() => {
+    if (isOpen && isEdit) {
+      setValue(groupName);
+      setEmojiIconGroup(groupTitle);
+    }
+  }, [isOpen, isEdit, groupName, groupTitle]);
+
+  useEffect(() => {
     if (value.length > 64) {
       setValue(value.slice(0, value.length - 1));
     }
@@ -144953,9 +144973,10 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
         }
 
         onCreateOrEditGroup(data.favoriteGroup[0]);
+        createAlertNotification({ status: 'info', text: 'Изменения сохранены' });
         onClose();
       })
-      .catch(() => createAlertNotification({ text: 'Что-то пошло не так', status: 'error' }));
+      .catch(() => createAlertNotification({ text: 'Изменения не сохранились', status: 'error' }));
   };
 
   return (
@@ -144971,7 +144992,11 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
             {isEdit ? 'Редактировать группу' : 'Создание группы'}
           </Text>
 
-          <div className={styles.iconWrapper} onClick={() => setChooseEmojiBottomSheetOpen(true)}>
+          <div
+            className={styles.iconWrapper}
+            style={{ cursor: 'pointer' }}
+            onClick={() => setChooseEmojiBottomSheetOpen(true)}
+          >
             <SquircleWithPenSvg className={styles.iconMask} />
             <div className={styles.icon}>{emojiIconGroup}</div>
           </div>
@@ -144980,6 +145005,13 @@ const CreateOrEditFavoriteGroupBottomSheet = ({
             placeholder="Мой список"
             value={value}
             label={<Text type="lineRegular">Название группы</Text>}
+            addonAfter={
+              value ? (
+                <div style={{ cursor: 'pointer' }} onClick={() => setValue('')}>
+                  <CloseSvg />
+                </div>
+              ) : undefined
+            }
             onChange={(e) => setValue(e.target.value)}
           />
 
@@ -145355,10 +145387,10 @@ export default memo(ErrorOrEmpty);
 --- FILE: src/modules/Catalog/components/FavoriteButtonWithBottomSheet/FavoriteBottomSheet.module.pcss ---
 .bottomSheet {
   [data-rsbs-backdrop] {
-    z-index: 1050;
+    z-index: 9001;
   }
   [data-rsbs-overlay] {
-    z-index: 1100;
+    z-index: 9002;
     max-height: 90%;
   }
 
@@ -145470,6 +145502,7 @@ const FavoriteBottomSheet: FC<IFavoriteBottomSheetProps> = ({
   instrumentId,
   tradePlaceId,
   createdGroup,
+  mode,
   onCreateGroup,
   onRefetch,
   onDismiss,
@@ -145551,24 +145584,22 @@ const FavoriteBottomSheet: FC<IFavoriteBottomSheetProps> = ({
     [checkedGroups],
   );
 
-  if (isInstrumentInfoError || isFavoriteGroupError) {
-    return null;
-  }
+  const isApplyDisabled = !(
+    initialIsFavoriteChecked ||
+    isFavoriteChecked ||
+    initialCheckedGroups?.length ||
+    checkedGroups?.length
+  );
 
-  const handleApply = async () => {
-    if (
-      initialIsFavoriteChecked === null ||
-      isFavoriteChecked === null ||
-      !initialCheckedGroups ||
-      !checkedGroups
-    ) {
+  const handleApply = useCallback(async () => {
+    if (isApplyDisabled) {
       return;
     }
 
-    const addedGroups = checkedGroups.filter((groupId) => !initialCheckedGroups.includes(groupId));
-    const deletedGroups = initialCheckedGroups.filter(
-      (groupId) => !checkedGroups.includes(groupId),
-    );
+    const addedGroups =
+      checkedGroups?.filter((groupId) => !initialCheckedGroups?.includes(groupId)) || [];
+    const deletedGroups =
+      initialCheckedGroups?.filter((groupId) => !checkedGroups?.includes(groupId)) || [];
 
     const isFavoritePost = initialIsFavoriteChecked !== isFavoriteChecked && isFavoriteChecked;
     const isFavoriteDelete = initialIsFavoriteChecked !== isFavoriteChecked && !isFavoriteChecked;
@@ -145608,13 +145639,29 @@ const FavoriteBottomSheet: FC<IFavoriteBottomSheetProps> = ({
 
       onRefetch?.();
     }
-  };
+  }, [
+    checkedGroups,
+    initialCheckedGroups,
+    initialIsFavoriteChecked,
+    instrumentId,
+    isApplyDisabled,
+    isFavoriteChecked,
+    onDismiss,
+    onRefetch,
+    tradePlaceId,
+    updateFavoriteDelete,
+    updateFavoritePost,
+  ]);
+
+  if (isInstrumentInfoError || isFavoriteGroupError) {
+    return null;
+  }
 
   const getHeader = () => {
     return (
       <>
         <Text type="subtitleBold" className={styles.moveToGroup}>
-          Переместить в группу
+          {mode === 'add' ? 'Добавление в избранное' : 'Переместить в группу'}
         </Text>
 
         <Option
@@ -145644,7 +145691,7 @@ const FavoriteBottomSheet: FC<IFavoriteBottomSheetProps> = ({
           </Text>
         </div>
 
-        <Button className={styles.button} onClick={handleApply}>
+        <Button disabled={isApplyDisabled} className={styles.button} onClick={handleApply}>
           Применить
         </Button>
       </>
@@ -145688,6 +145735,8 @@ export default memo(FavoriteBottomSheet);
 --- FILE: src/modules/Catalog/components/FavoriteButtonWithBottomSheet/FavoriteButtonWithBottomSheet.tsx ---
 import { FC, cloneElement, memo, useCallback, useMemo, useState } from 'react';
 
+import { isMobileDevice } from 'core/DeviceDetector';
+
 import { CreateOrEditFavoriteGroupBottomSheet } from 'modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet';
 
 import { ReactComponent as StarFillSvg } from 'images/raw-icons/search/star-fill.svg';
@@ -145705,11 +145754,15 @@ const FavoriteButtonWithBottomSheet: FC<IFavoriteButtonWithBottomSheet> = ({
   isTouchStart,
   onRefetch,
   tradePlaceId,
+  mode,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateFavoriteGroupBottomSheetOpen, setCreateFavoriteGroupBottomSheetOpen] =
     useState(false);
   const [createdGroup, setCreatedGroup] = useState<FavoriteGroup | null>(null);
+
+  const isMobile = isMobileDevice();
+  const isDesktopView = !isMobile;
 
   const handleFavoriteBottomSheetOpen = useCallback(() => setIsOpen(true), []);
   const handleFavoriteBottomSheetClose = useCallback(() => setIsOpen(false), []);
@@ -145718,13 +145771,13 @@ const FavoriteButtonWithBottomSheet: FC<IFavoriteButtonWithBottomSheet> = ({
   const onCreateGroup = useCallback(() => setCreateFavoriteGroupBottomSheetOpen(true), []);
   const onCreateOrEditGroup = useCallback((event) => setCreatedGroup(event), []);
 
-  const buttonProps = useMemo(
-    () =>
-      isTouchStart
-        ? { onTouchStart: handleFavoriteBottomSheetOpen }
-        : { onClick: handleFavoriteBottomSheetOpen },
-    [handleFavoriteBottomSheetOpen, isTouchStart],
-  );
+  const buttonProps = useMemo(() => {
+    if (isDesktopView) return { onClick: handleFavoriteBottomSheetOpen };
+
+    if (isTouchStart) return { onTouchStart: handleFavoriteBottomSheetOpen };
+
+    return { onClick: handleFavoriteBottomSheetOpen };
+  }, [handleFavoriteBottomSheetOpen, isDesktopView, isTouchStart]);
 
   const defaultButton = (
     <button type="button" {...buttonProps}>
@@ -145734,7 +145787,7 @@ const FavoriteButtonWithBottomSheet: FC<IFavoriteButtonWithBottomSheet> = ({
 
   return (
     <>
-      {cloneElement(customButton ? customButton : defaultButton, buttonProps)}
+      {cloneElement(customButton || defaultButton, buttonProps)}
 
       <FavoriteBottomSheet
         isOpen={isOpen}
@@ -145744,6 +145797,7 @@ const FavoriteButtonWithBottomSheet: FC<IFavoriteButtonWithBottomSheet> = ({
         onCreateGroup={onCreateGroup}
         onRefetch={onRefetch}
         onDismiss={handleFavoriteBottomSheetClose}
+        mode={mode}
       />
 
       <CreateOrEditFavoriteGroupBottomSheet
@@ -145865,6 +145919,7 @@ export interface IFavoriteButtonWithBottomSheet {
   instrumentId: number;
   isFavorite?: boolean;
   isTouchStart?: boolean;
+  mode: 'add' | 'move';
   onRefetch?: () => void;
   tradePlaceId: number;
 }
@@ -145874,6 +145929,7 @@ export interface IFavoriteBottomSheetProps {
   instrumentId: number;
   tradePlaceId: number;
   createdGroup: FavoriteGroup | null;
+  mode: 'add' | 'move';
   onCreateGroup: () => void;
   onRefetch?: () => void;
   onDismiss: () => void;
@@ -146136,17 +146192,25 @@ const AddInstrumentsBottomSheet = ({
       '',
     );
 
-    await addInstrumentsToFavoriteGroup({ group_Id: createdGroupId, instrumentArray });
+    addInstrumentsToFavoriteGroup({ group_Id: createdGroupId, instrumentArray })
+      .unwrap()
+      .then(() => {
+        createAlertNotification({
+          status: 'info',
+          text: `${numberOfSelectedInstruments === 1 ? 'Бумага' : 'Бумаги'} добавлена`,
+        });
 
-    createAlertNotification({
-      status: 'info',
-      text: numberOfSelectedInstruments === 1 ? 'Бумага добавлена' : 'Бумаги добавлены',
-    });
+        setSearchValue('');
+        setSelectedInstruments([]);
 
-    setSearchValue('');
-    setSelectedInstruments([]);
-
-    onFinish();
+        onFinish();
+      })
+      .catch(() =>
+        createAlertNotification({
+          text: `Не удалось добавить ${numberOfSelectedInstruments === 1 ? 'бумагу' : 'бумаги'}`,
+          status: 'error',
+        }),
+      );
   };
 
   const getContent = () => {
@@ -146488,36 +146552,6 @@ const useDebounceSearchValue = (value: string) => {
 export { useDebounceSearchValue };
 
 
---- FILE: src/modules/Catalog/components/Favorites/components/Error/Error.module.pcss ---
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  height: 100%;
-
-  background-color: $colorBackground2
-}
-
-
---- FILE: src/modules/Catalog/components/Favorites/components/Error/Error.tsx ---
-import { memo } from 'react';
-
-import { Text } from '@aurora/components';
-
-import styles from './Error.module.pcss';
-
-const Error = () => (
-  <div className={styles.container}>
-    <Text type={'bodyRegular'} color={'colorForeground2'}>
-      Не удалось загрузить данные
-    </Text>
-  </div>
-);
-
-export default memo(Error);
-
-
 --- FILE: src/modules/Catalog/components/Favorites/components/FavoriteEmptyPlug/FavoriteEmptyPlug.tsx ---
 import { memo } from 'react';
 
@@ -146542,7 +146576,7 @@ export default memo(FavoriteEmptyPlug);
 --- FILE: src/modules/Catalog/components/Favorites/components/FavoriteEmptyPlug/store.ts ---
 export const TITLE = 'Список инструментов пуст';
 
-export const BODY = 'Воспользуйтесь списком, чтобы добавить инструмент';
+export const BODY = 'Воспользуйтесь поиском, чтобы добавить инструмент';
 
 
 --- FILE: src/modules/Catalog/components/Favorites/components/FavoritesGroups/components/FavoriteGroup.module.pcss ---
@@ -146693,6 +146727,8 @@ import { useSwipeable } from 'hooks/useSwipeable';
 
 import { CreateOrEditFavoriteGroupBottomSheet } from 'modules/Catalog/components/CreateOrEditFavoriteGroupBottomSheet';
 
+import { createAlertNotification } from 'components/Alert/createAlertNotification';
+
 import { ReactComponent as BinSvg } from 'images/icons/bin.svg';
 import { ReactComponent as EditSvg } from 'images/icons/edit.svg';
 
@@ -146707,6 +146743,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
   instrumentCount,
   isDragging = false,
   onRefetch,
+  onGroupUpdated,
 }) => {
   const [deleteFavoriteGroup] = useDeleteFavoriteGroupMutation();
 
@@ -146731,6 +146768,14 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
     setCreateOrEditFavoriteGroupBottomSheetOpen(false);
   };
   const closeConfirm = () => setConfirmOpen(false);
+  const openEdit = () => setCreateOrEditFavoriteGroupBottomSheetOpen(true);
+  const openDeleteConfirm = () => setConfirmOpen(true);
+  // react-beautiful-dnd вешает dragHandle на всю строку и съедает click; touch — для мобилки
+  const actionButtonProps = (action: () => void) => ({
+    onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
+    onClick: action,
+    onTouchStart: action,
+  });
 
   return (
     <div
@@ -146754,18 +146799,13 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
 
       {isContainerDimensionsCalculated && (
         <div ref={buttonsWrapperRef} className={styles.buttonsWrapper}>
-          <div
-            className={cx(styles.iconWrapper, styles.iconBlue)}
-            // onClick иногда не работает из-за react-beautiful-dnd
-            onTouchStart={() => setCreateOrEditFavoriteGroupBottomSheetOpen(true)}
-          >
+          <div className={cx(styles.iconWrapper, styles.iconBlue)} {...actionButtonProps(openEdit)}>
             <EditSvg />
           </div>
 
           <div
             className={cx(styles.iconWrapper, styles.iconRed)}
-            // onClick иногда не работает из-за react-beautiful-dnd
-            onTouchStart={() => setConfirmOpen(true)}
+            {...actionButtonProps(openDeleteConfirm)}
           >
             <BinSvg />
           </div>
@@ -146777,9 +146817,9 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
         groupId={groupId}
         groupTitle={title}
         groupName={name}
-        onCreateOrEditGroup={() => {
+        onCreateOrEditGroup={(group) => {
           closeCreateOrEditFavoriteGroupBottomSheet();
-          onRefetch();
+          onGroupUpdated(group);
         }}
         onClose={closeCreateOrEditFavoriteGroupBottomSheet}
       />
@@ -146791,6 +146831,7 @@ const SwipeableFavoriteGroup: FC<ISwipeableFavoriteGroupProps> = ({
         onCancel={closeConfirm}
         onConfirm={async () => {
           await deleteFavoriteGroup({ group_Id: groupId });
+          createAlertNotification({ status: 'info', text: 'Группа удалена' });
           onRefetch();
           closeConfirm();
         }}
@@ -146816,7 +146857,11 @@ import { FavoriteGroup as FavoriteGroupType } from 'types/catalog/models';
 import SwipeableFavoriteGroup from './SwipeableFavoriteGroup';
 import styles from './SwipeableFavoriteGroupDragDrop.module.pcss';
 
-type Props = FavoriteGroupType & { index: number; onRefetch: () => void };
+type Props = FavoriteGroupType & {
+  index: number;
+  onRefetch: () => void;
+  onGroupUpdated: (group: FavoriteGroupType) => void;
+};
 
 const SwipeableFavoriteGroupDragDrop = (props: Props) => {
   const { groupId, index, indexNumber } = props;
@@ -146850,6 +146895,7 @@ import { FavoriteGroup } from 'types/catalog/models';
 export interface ISwipeableFavoriteGroupProps extends FavoriteGroup {
   isDragging?: boolean;
   onRefetch: () => void;
+  onGroupUpdated: (group: FavoriteGroup) => void;
 }
 
 export interface IFavoriteGroupProps extends Omit<FavoriteGroup, 'indexNumber'> {
@@ -146966,6 +147012,24 @@ const FavoritesGroups = () => {
     return <Skeleton />;
   }
 
+  const upsertFavoriteGroup = (group: FavoriteGroupType) => {
+    setLocalFavoriteGroups((prev) => {
+      if (!prev) {
+        return [group];
+      }
+
+      const index = prev.findIndex(({ groupId }) => groupId === group.groupId);
+
+      if (index === -1) {
+        return [...prev, group];
+      }
+
+      const next = [...prev];
+      next[index] = { ...next[index], ...group };
+      return next;
+    });
+  };
+
   const isAddInstrumentsMode = createdGroupId !== null;
 
   const handleDragEnd = (dropResult: DropResult) => {
@@ -147033,6 +147097,7 @@ const FavoritesGroups = () => {
                             title={title}
                             instrumentCount={instrumentCount}
                             onRefetch={refetch}
+                            onGroupUpdated={upsertFavoriteGroup}
                           />
                         ),
                       )}
@@ -147061,9 +147126,9 @@ const FavoritesGroups = () => {
 
       <CreateOrEditFavoriteGroupBottomSheet
         isOpen={isCreateGroupOpen}
-        onCreateOrEditGroup={({ groupId }) => {
-          setCreatedGroupId(groupId);
-          refetch();
+        onCreateOrEditGroup={(group) => {
+          setCreatedGroupId(group.groupId);
+          upsertFavoriteGroup(group);
         }}
         onClose={() => setIsCreateGroupOpen(false)}
       />
@@ -147096,10 +147161,18 @@ export { default } from './FavoritesGroups';
   justify-content: center;
   flex-direction: column;
   text-align: center;
-  padding: 0 $spacing7;
+  padding: $spacing7;
   & > h3 {
-    margin: $spacing7 0 $spacing5;
+    margin-bottom: $spacing5;
   }
+
+  & > h6 {
+    margin-bottom: $spacing5;
+  }
+}
+
+.img {
+  padding-bottom: $spacing7;
 }
 
 
@@ -147118,7 +147191,7 @@ const ErrorPlug: FC<IErrorPlugProps> = ({
   description = 'Не удалось загрузить данные, проверьте интернет-соединение',
 }) => (
   <div className={styles.error}>
-    <ErrorPhoneSvg />
+    <ErrorPhoneSvg className={styles.img} />
     <Text type="subtitleBold">{title}</Text>
     <Text type="bodyRegular" color="colorForeground2">
       {description}
@@ -148497,7 +148570,6 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { useGetFavoriteQuery, useUpdateMyFavoriteListMutation } from 'core/api/catalog';
 import { getTradeSessionByTradePlaceId } from 'core/tradeSession';
 
-import Error from 'modules/Catalog/components/Favorites/components/Error/Error';
 import FavoriteEmptyPlug from 'modules/Catalog/components/Favorites/components/FavoriteEmptyPlug/FavoriteEmptyPlug';
 import { InstrumentCardDragDrop } from 'modules/Catalog/components/Favorites/components/InstrumentCardDragDrop/InstrumentCardDragDrop';
 import Skeleton from 'modules/Catalog/components/Favorites/components/Skeleton/Skeleton';
@@ -148526,7 +148598,7 @@ import { ReactComponent as WordSvg } from 'images/raw-icons/favorites/word.svg';
 import { ParsedFavoriteInstrument } from 'types/catalog';
 
 import styles from './Favorite.module.pcss';
-import { SORT_BY_DOWN, SORT_BY_LIST, SORT_BY_UP } from './consts';
+import ErrorPlug from './components/FavoritesGroups/pages/ErrorPlug';
 import { SortType } from './types';
 
 import 'swiper/css';
@@ -148705,7 +148777,7 @@ const Favorites = () => {
   }, [allFilters, data?.length, preparedData?.length]);
 
   if (isError) {
-    return <Error />;
+    return <ErrorPlug />;
   }
 
   if (isLoading || !groups) {
@@ -148965,7 +149037,7 @@ export const subscribeFavoriteInstrumentsChanged = (onFavoriteInstrumentsChanged
 
 export const somethingWentWrong = () =>
   createAlertNotification({
-    text: 'Что-то пошло не так',
+    text: 'Изменения не сохранились',
     status: 'error',
   });
 
@@ -156151,10 +156223,7 @@ const useEvents = ({ dispatch, handleClick, inputRef, setParamsCount }: IUseEven
     handleClick?.();
   }, [dispatch, handleClick]);
 
-  const changeInput = useCallback(
-    (event) => dispatch(setTextValue(event.target.value)),
-    [dispatch],
-  );
+  const changeInput = useCallback((value: string) => dispatch(setTextValue(value)), [dispatch]);
 
   const onRefetch = useCallback(() => setFetchCount((prev) => prev + 1), []);
 
@@ -156436,6 +156505,7 @@ const InstrumentItem: FC<IInstrumentItem> = ({ instrument, onRefetch }) => {
           isFavorite={favorite}
           onRefetch={onRefetch}
           tradePlaceId={tradePlaceId}
+          mode="add"
         />
       }
     />
@@ -157149,10 +157219,17 @@ export const reducer = (state: State, update: Action): State => {
   }
 }
 
+.bottomSheet {
+  [data-rsbs-overlay] {
+    padding-left: $spacing1;
+    padding-right: $spacing1;
+  }
+}
 
 --- FILE: src/modules/Catalog/components/Search/Search.tsx ---
-import { FC, memo } from 'react';
+import { FC, ReactNode, memo, useCallback } from 'react';
 
+import { BottomSheet } from '@aurora/components';
 import cx from 'classnames';
 import { ROUTE_FAVORITES_360, ROUTE_FAVORITE_GROUPS } from 'const/routes';
 
@@ -157166,7 +157243,52 @@ import SectionStatistics from './partials/SectionStatistics';
 import { PARAMS_QUERY_STATISTICS, TODAY, getParamsQueryStatisticsCount } from './store';
 import { ISearchProps, InputRefType } from './types';
 
-const Search: FC<ISearchProps> = ({ handleClick, isActiveSearch, showIcon }) => {
+const SearchContainer = ({
+  isDesktop,
+  children,
+  isFavorites,
+  isActiveSearch,
+  passMount,
+  handleCloseSearch,
+}: Omit<ISearchProps, 'handleClick'> & {
+  children: ReactNode;
+  isFavorites: boolean;
+  passMount: boolean;
+}) => {
+  if (isDesktop)
+    return (
+      <BottomSheet
+        open={isActiveSearch}
+        onDismiss={handleCloseSearch}
+        defaultSnap={({ maxHeight }) => maxHeight / 2}
+        snapPoints={({ maxHeight }) => [maxHeight / 2]}
+        className={styles.bottomSheet}
+      >
+        <div className={styles.container}>{children}</div>
+      </BottomSheet>
+    );
+
+  return (
+    <div
+      className={cx(styles.wrapper, {
+        [styles.wrapperFixed]: isFavorites,
+        [styles.wrapperAbsolute]: !isFavorites,
+        [styles.wrapperVisible]: isActiveSearch,
+        [styles.wrapperHidden]: !isActiveSearch && passMount,
+      })}
+    >
+      {children}
+    </div>
+  );
+};
+
+const Search: FC<ISearchProps> = ({
+  handleClick,
+  handleCloseSearch,
+  isActiveSearch,
+  showIcon,
+  isDesktop,
+}) => {
   const {
     dataStatistics,
     dataStatisticsCount,
@@ -157207,46 +157329,52 @@ const Search: FC<ISearchProps> = ({ handleClick, isActiveSearch, showIcon }) => 
 
   const isFavorites = pathname === ROUTE_FAVORITES_360 || pathname === ROUTE_FAVORITE_GROUPS;
 
+  const onChangeSearchMobile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => changeInput(e.target.value || ''),
+    [changeInput],
+  );
+
   return (
     <>
-      <div
-        className={cx(styles.wrapper, {
-          [styles.wrapperFixed]: isFavorites,
-          [styles.wrapperAbsolute]: !isFavorites,
-          [styles.wrapperVisible]: isActiveSearch,
-          [styles.wrapperHidden]: !isActiveSearch && passMount,
-        })}
-      >
-        <SearchHeader
-          addonAfter={addonAfter}
-          addonRight={addonRight}
-          classNameAddonAfter={styles.searchClear}
-          inputRef={inputRef as InputRefType}
-          onChange={changeInput}
-          theme="light"
-          themeSection="White"
-          value={value}
-        />
+      {isActiveSearch && (
+        <SearchContainer
+          isDesktop={isDesktop}
+          isFavorites={isFavorites}
+          isActiveSearch={isActiveSearch}
+          passMount={passMount}
+          handleCloseSearch={handleCloseSearch}
+        >
+          <SearchHeader
+            addonAfter={addonAfter}
+            addonRight={addonRight}
+            classNameAddonAfter={styles.searchClear}
+            inputRef={inputRef as InputRefType}
+            onChange={onChangeSearchMobile}
+            theme="light"
+            themeSection="White"
+            value={value}
+          />
 
-        {value?.length > 2 ? (
-          <ListResult
-            instrumentsList={instrumentsList}
-            isLoading={status === 'loading'}
-            onRefetch={onRefetch}
-          />
-        ) : (
-          <SectionStatistics
-            isError={isError}
-            current={current}
-            isLoading={isLoading}
-            list={dataStatistics?.instrument}
-            listTop={dataStatisticsCount?.instrument}
-            onSort={onSort}
-            setSortBottomSheet={setSortBottomSheet}
-            sortBottomSheet={sortBottomSheet}
-          />
-        )}
-      </div>
+          {value?.length > 2 ? (
+            <ListResult
+              instrumentsList={instrumentsList}
+              isLoading={status === 'loading'}
+              onRefetch={onRefetch}
+            />
+          ) : (
+            <SectionStatistics
+              isError={isError}
+              current={current}
+              isLoading={isLoading}
+              list={dataStatistics?.instrument}
+              listTop={dataStatisticsCount?.instrument}
+              onSort={onSort}
+              setSortBottomSheet={setSortBottomSheet}
+              sortBottomSheet={sortBottomSheet}
+            />
+          )}
+        </SearchContainer>
+      )}
 
       {showIcon && <SearchSvg onClick={onShowSearch} />}
     </>
@@ -157303,8 +157431,10 @@ export type QuerySearchInstruments = { search_text: string; max_count?: number }
 
 export interface ISearchProps {
   handleClick(): void;
+  handleCloseSearch(): void;
   isActiveSearch: boolean;
   showIcon?: boolean;
+  isDesktop?: boolean;
 }
 
 export type InputRefType = RefObject<HTMLInputElement>;
@@ -161353,9 +161483,12 @@ const useCatalog = (pathname: string) => {
 
   const handleSearch = useCallback(() => setIsActiveSearch(!isActiveSearch), [isActiveSearch]);
 
+  const handleCloseSearch = useCallback(() => setIsActiveSearch(false), []);
+
   return {
     handleNavigate,
     handleSearch,
+    handleCloseSearch,
     isActiveSearch,
     isFavorites,
     tabs,
@@ -169128,6 +169261,7 @@ const Header = ({
             tradePlaceId={Number(tradePlaceId)}
             isFavorite={favorite}
             onRefetch={onRefetch}
+            mode="add"
           />
         </div>
       }
@@ -178018,7 +178152,6 @@ import SelectProductBSH from 'modules/MyInformation/components/Services/SelectPr
 import { useRiskGroup } from 'modules/MyInformation/hooks/useRiskGroup';
 import { useTariff } from 'modules/MyInformation/hooks/useTariff';
 import { useUBA } from 'modules/MyInformation/hooks/useUBA';
-import { PERMISSION_PERSON_REPORTING } from 'modules/ReportsPage/constants';
 
 //import { PersonalInfoMappingType } from 'modules/MyInformation/types';
 import { HeaderPage } from 'components';
@@ -178038,7 +178171,6 @@ import { ReactComponent as NegativeUserGlyph } from 'images/raw-icons/more/negat
 import { ReactComponent as PositiveUserGlyph } from 'images/raw-icons/more/positiveUserGlyph.svg';
 
 import styles from './MyInformation.module.pcss';
-import ReportsActionCell from './components/Services/ReportsActionCell';
 import { LOGOUT_CONFIRM_TITLE } from './constants';
 import { useExpiredAnketNeedAcceptAttention } from './hooks/useExpiredAnketNeedAcceptAttention';
 import { useIsPersonProfile } from './hooks/useIsPersonProfile';
@@ -178053,11 +178185,6 @@ const MyInformation = () => {
   const { productIdServices } = useAppSelector(servicesSelector);
 
   const isPersonDocumentManagementGranted = Permissions.granted('PERSON_DOCUMENTMANAGEMENT');
-  const isPersonReportingDenied = Permissions.denied(PERMISSION_PERSON_REPORTING);
-
-  //**TODO: временное ограничение для прода */
-  const isTestMode = !process.env.TIER || process.env.TIER === 'tt';
-  const isReportsEnabled = isTestMode && !isPersonReportingDenied;
 
   const {
     data: { products = [] } = {},
@@ -178319,8 +178446,6 @@ const MyInformation = () => {
               <Text type="bodySemiBold" className={styles.cardTitle}>
                 Обслуживание
               </Text>
-              {isReportsEnabled && <ReportsActionCell />}
-
               <ActionCell
                 disabled={!isPersonDocumentManagementGranted}
                 description={
@@ -207750,46 +207875,83 @@ export const regformSteps = Object.values(EnumRegFormSteps);
 .border {
   padding-bottom: $spacing3;
 }
+.files {
+  border-top: $border1 solid $colorForeground4;
+  padding-top: $spacing3;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: $spacing4;
+  padding: $spacing3 0;
+}
+
+.fileType {
+  flex-shrink: 0;
+}
+
+.fileName {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.fileActions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: $spacing3;
+}
+
+.fileAction {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
 
 
 --- FILE: src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx ---
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BottomSheet from '@aurora/bottom-sheet';
 import { Button, CheckHeader } from '@aurora/components';
-import httpCommunicator from '@aurora/http-communicator';
 import { ROUTE_REPORTS } from 'const/routes';
-import { saveAs } from 'file-saver';
 
 import { API_REQUEST_REPORT_FILE } from 'core/api/apiConstants';
-import { getDefaultHeaders } from 'core/api/common';
-import {
-  useLazyGetReportFileQuery,
-  useLazyGetReportParametersQuery,
-  useLazyGetReportStatusQuery,
-} from 'core/api/reports';
+import { useLazyGetReportParametersQuery } from 'core/api/reports';
 import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
-
-import { isErrorResponseType } from 'utils/errorResponse';
 
 import { useAppDispatch } from 'hooks';
 
 import { orderDateReformat } from 'modules/OrderHistory/helpers';
-import { visualDateFormatter } from 'modules/PersonalInformation/components/Passport/helper';
 import {
   reportBadge,
   reportColors,
   testStatusNames,
   textStatusColors,
 } from 'modules/ReportsPage/components/ReportsHistory/constants';
-import { visualIsoPeriodFormatter } from 'modules/ReportsPage/components/ReportsOrder/helper';
+import {
+  visualIsoDateFormatter,
+  visualIsoPeriodFormatter,
+} from 'modules/ReportsPage/components/ReportsOrder/helper';
 
-import { ReactComponent as PdfSvg } from 'images/raw-icons/history/filePdf.svg';
+import { ReactComponent as FileDownload } from 'images/raw-icons/download.svg';
+import { ReactComponent as FileView } from 'images/raw-icons/open-eye-blue-transp-bg.svg';
+import { ReactComponent as FileOther } from 'images/raw-icons/reports/FileOther.svg';
+import { ReactComponent as FilePdf } from 'images/raw-icons/reports/FilePdf.svg';
+import { ReactComponent as FileSig } from 'images/raw-icons/reports/FileSig.svg';
 
-import { ErrorData } from 'types/auth/models';
-import { ReportItem } from 'types/reports';
+import { ReportFile, ReportItem } from 'types/reports';
 
+import { getReportIcon } from '../../helpers';
 import DetailsItem from '../DetailsItem';
 import styles from './BottomSheetDetails.module.pcss';
 
@@ -207797,53 +207959,37 @@ type BottomSheetDetailsProps = {
   openDetails: boolean;
   setOpenDetails: (openDetails: boolean) => void;
   report: ReportItem;
-  askStatus: boolean;
   onParametersError: () => void;
   onParametersErrorClear: () => void;
-  isMobile: boolean;
+};
+
+const fileTypeIcon = (fileType?: string) => {
+  const type = fileType?.toUpperCase();
+  if (type === 'PDF') return FilePdf;
+  if (type === 'SIG') return FileSig;
+  return FileOther;
+};
+
+const reportFileUrl = (file: ReportFile, download: boolean) => {
+  const params = new URLSearchParams({
+    file_Id: String(file.fileId),
+    type: file.fileType || '',
+  });
+  if (download) params.set('download', 'true');
+  return `${API_REQUEST_REPORT_FILE}?${params.toString()}`;
 };
 
 const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
   openDetails,
   setOpenDetails,
   report,
-  askStatus,
   onParametersError,
   onParametersErrorClear,
-  isMobile,
 }) => {
-  const [isReportStatusCheck, setIsReportStatusCheck] = useState(false);
-  const [getReportStatus, { data: currentReportStatus }] = useLazyGetReportStatusQuery();
   const dispatch = useAppDispatch();
-  const fileUrl = useMemo(
-    () => `${API_REQUEST_REPORT_FILE}?file_Id=${report.fileList?.[0]?.fileId}`,
-    [report],
-  );
+  const Icon = getReportIcon(report.hasSign, report.multifile);
   const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
     useLazyGetReportParametersQuery();
-
-  const [checkReportFile, { data: fileData }] = useLazyGetReportFileQuery();
-  const [isFileError, setIsFileError] = useState<boolean>(false);
-
-  const handleDownloadFile = async () => {
-    try {
-      const response = await httpCommunicator(fileUrl, {
-        method: 'get',
-        responseType: 'blob',
-        headers: getDefaultHeaders(fileUrl),
-      });
-      if (response.data?.Error) {
-        setIsFileError(true);
-      } else {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const fileName = `${report.reportTypeName}-${report.requestTime}.pdf`;
-
-        saveAs(blob, fileName);
-      }
-    } catch {
-      setIsFileError(true);
-    }
-  };
 
   const navigate = useNavigate();
 
@@ -207854,55 +208000,8 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
   useEffect(() => {
     if (openDetails && report.requestGuid) {
       getReportParameters(report.requestGuid);
-      setIsReportStatusCheck(askStatus);
     }
-  }, [askStatus, getReportParameters, openDetails, report.requestGuid]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-
-    if (isReportStatusCheck) {
-      // Функция для проверки статуса
-      const checkStatus = () => {
-        if (currentReportStatus === 'completed' || currentReportStatus === 'error') {
-          setIsReportStatusCheck(false);
-          getReportParameters(report.requestGuid);
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-          return;
-        }
-
-        getReportStatus(report.requestGuid).unwrap();
-      };
-
-      // Запускаем интервал
-      intervalId = setInterval(checkStatus, 3000);
-
-      // Выполняем первую проверку сразу
-      checkStatus();
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [
-    isReportStatusCheck,
-    currentReportStatus,
-    getReportParameters,
-    getReportStatus,
-    report.requestGuid,
-  ]);
-
-  useEffect(() => {
-    const fileId = report.fileList?.[0]?.fileId;
-    if (openDetails && fileId) {
-      checkReportFile(fileId);
-    }
-  }, [checkReportFile, openDetails, report.fileList]);
+  }, [getReportParameters, openDetails, report.requestGuid, report.requestStatusCode]);
 
   const onDismiss = useCallback(() => {
     dispatch(setReorderData(null));
@@ -207912,22 +208011,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
   }, [dispatch, setOpenDetails, onParametersErrorClear]);
 
   const handleReOrder = useCallback(() => {
-    dispatch(setReorderData(reportParameters));
+    if (!reportParameters) return;
+    dispatch(
+      setReorderData({
+        ...reportParameters,
+        instrumentName: reportParameters.instrumentName || report.instrumentName,
+      }),
+    );
     navigate(ROUTE_REPORTS);
-  }, [dispatch, navigate, reportParameters]);
+  }, [dispatch, navigate, report.instrumentName, reportParameters]);
 
-  const statusColorName = textStatusColors[currentReportStatus || report.requestStatusCode];
-  const isCompleted =
-    currentReportStatus === 'completed' || report.requestStatusCode === 'completed';
-  const isNew = currentReportStatus === 'new' || report.requestStatusCode === 'new';
+  const statusColorName = textStatusColors[report.requestStatusCode];
+  const isCompleted = report.requestStatusCode === 'completed';
+  const isNew = report.requestStatusCode === 'new';
   const showReorderButton = isCompleted || isNew;
-
-  const canDownload =
-    report.downloadable &&
-    !isFileError &&
-    !isErrorResponseType(fileData) &&
-    !(fileData as ErrorData)?.error &&
-    isCompleted;
+  const detailRows = [
+    { title: 'Инвестиционный счёт', content: report.productName },
+    { title: 'Лицевой счёт', content: report.portfolioName },
+    { title: 'Договор', content: report.agreementName },
+    { title: 'Счёт депо', content: report.depoAccountName },
+    { title: 'Наименование ЦБ', content: report.instrumentName },
+    {
+      title: 'На дату',
+      content: report.date ? visualIsoDateFormatter(report.date) : undefined,
+    },
+    {
+      title: 'За период',
+      content:
+        report.fromDate && report.toDate
+          ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
+          : undefined,
+    },
+    { title: 'За год', content: report.year ? String(report.year) : undefined },
+    {
+      title: 'Дата заказа',
+      content: report.requestTime ? orderDateReformat(report.requestTime) : undefined,
+    },
+  ];
 
   return (
     <BottomSheet
@@ -207939,21 +208059,13 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
         <CheckHeader
           variant={reportColors[statusColorName]}
           orderTypeName={report.reportTypeName}
-          instrumentIcon={<PdfSvg />}
+          instrumentIcon={<Icon width={70} height={70} />}
           indicator={reportBadge[statusColorName]}
-          title={
-            currentReportStatus ? testStatusNames[currentReportStatus] : report.requestStatusName
-          }
+          title={testStatusNames[report.requestStatusCode] || report.requestStatusName}
         />
       }
       footer={
         <div className={styles.footer}>
-          {canDownload && (
-            <Button variant="link" onClick={handleDownloadFile}>
-              Открыть документ
-            </Button>
-          )}
-
           <div className={styles.buttons}>
             {showReorderButton && (
               <Button
@@ -207971,21 +208083,43 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
     >
       <div className={styles.container}>
         <div className={styles.border}>
-          <DetailsItem title={'Инвестиционный счёт'} content={report.productName} />
-          <DetailsItem title={'Лицевой счёт'} content={report.portfolioName} />
-          <DetailsItem title={'Договор'} content={report.agreementName} />
-          <DetailsItem
-            title={'За период'}
-            content={
-              report.toDate && report.fromDate
-                ? visualIsoPeriodFormatter(report.fromDate, report.toDate)
-                : report.fromDate
-                ? visualDateFormatter(report.fromDate)
-                : '-'
-            }
-          />
-          <DetailsItem title={'Дата заказа'} content={orderDateReformat(report.requestTime)} />
+          {detailRows.map((row) => (
+            <DetailsItem key={row.title} title={row.title} content={row.content} />
+          ))}
         </div>
+        {report.fileList?.length ? (
+          <div className={styles.files}>
+            {report.fileList.map((file, index) => {
+              const TypeIcon = fileTypeIcon(file.fileType);
+              return (
+                <div className={styles.file} key={`${file.fileId}-${file.fileType}-${index}`}>
+                  <TypeIcon className={styles.fileType} />
+                  <span className={styles.fileName}>{file.fileName}</span>
+                  <span className={styles.fileActions}>
+                    {file.downloadOnly === false && (
+                      <a
+                        className={styles.fileAction}
+                        href={reportFileUrl(file, false)}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Просмотреть файл"
+                      >
+                        <FileView />
+                      </a>
+                    )}
+                    <a
+                      className={styles.fileAction}
+                      href={reportFileUrl(file, true)}
+                      aria-label="Сохранить файл"
+                    >
+                      <FileDownload width={24} height={24} />
+                    </a>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </BottomSheet>
   );
@@ -208087,15 +208221,15 @@ import { reportsSelector } from 'core/reports/reportsSelector';
 import { useAppSelector } from 'hooks';
 
 import { orderDateReformat } from 'modules/OrderHistory/helpers';
-import {
-  visualIsoDateFormatter,
-  visualIsoPeriodFormatter,
-} from 'modules/ReportsPage/components/ReportsOrder/helper';
-
-import { ReactComponent as PdfSvg } from 'images/icons/file-icon-pdf.svg';
 
 import { ReportItem, ReportStatus } from 'types/reports';
 
+import {
+  getReportIcon,
+  getReportParamLines,
+  getReportTimeTitle,
+  getReportTimeValue,
+} from '../../helpers';
 import BottomSheetDetails from '../BottomSheetDetails';
 import styles from './ReportListItem.module.pcss';
 
@@ -208104,7 +208238,6 @@ interface ReportListItemProps {
   isReady: boolean;
   onParametersError: () => void;
   onParametersErrorClear: () => void;
-  isMobile: boolean;
 }
 
 const statuses: { [K in ReportStatus]: StatusHistory | undefined } = {
@@ -208117,11 +208250,14 @@ const statuses: { [K in ReportStatus]: StatusHistory | undefined } = {
 const ReportListItem = ({
   item,
   isReady,
-  isMobile,
   onParametersError,
   onParametersErrorClear,
 }: ReportListItemProps) => {
   const [openDetails, setOpenDetails] = useState(false);
+  const Icon = getReportIcon(item.hasSign, item.multifile);
+  const paramLines = getReportParamLines(item);
+  const timeTitle = getReportTimeTitle(item);
+  const timeValue = getReportTimeValue(item);
 
   const { currentRequestGuid } = useAppSelector(reportsSelector);
 
@@ -208135,34 +208271,29 @@ const ReportListItem = ({
     }
   }, [item.requestGuid, currentRequestGuid, handleDetails]);
 
-  const title = item.toDate && item.fromDate && item.toDate === item.fromDate ? 'Дата' : 'Период';
-
   return (
     <>
       <ActionCell
         onClick={handleDetails}
         className={styles.cell}
         addonBottom={
-          <div className={styles.addonBottom}>
-            <Text type="labelMedium" color="colorForeground2">
-              {title}
-            </Text>
-            <Text type="labelMedium">
-              {item.toDate && item.fromDate && item.toDate !== item.fromDate
-                ? visualIsoPeriodFormatter(item.fromDate, item.toDate)
-                : item.fromDate
-                ? visualIsoDateFormatter(item.fromDate)
-                : '-'}
-            </Text>
-          </div>
+          timeTitle && timeValue ? (
+            <div className={styles.addonBottom}>
+              <Text type="labelMedium" color="colorForeground2">
+                {timeTitle}
+              </Text>
+              <Text type="labelMedium">{timeValue}</Text>
+            </div>
+          ) : undefined
         }
         description={
           <>
-            <p>{item.productName}</p>
-            <p>{item.portfolioName}</p>
+            {paramLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
           </>
         }
-        iconLeft={<PdfSvg className={styles.pdfIcon} />}
+        iconLeft={<Icon />}
         statusData={orderDateReformat(item.requestTime)}
         statusText={isReady ? 'Готово' : item.requestStatusName}
         status={isReady ? 'suscess' : statuses[item.requestStatusCode]}
@@ -208174,10 +208305,8 @@ const ReportListItem = ({
         openDetails={openDetails}
         setOpenDetails={setOpenDetails}
         report={item}
-        askStatus={!!currentRequestGuid && currentRequestGuid === item.requestGuid}
         onParametersError={onParametersError}
         onParametersErrorClear={onParametersErrorClear}
-        isMobile={isMobile}
       />
     </>
   );
@@ -208187,12 +208316,11 @@ export default ReportListItem;
 
 
 --- FILE: src/modules/ReportsPage/components/ReportsHistory/constants.ts ---
-import { getFilterDateFormat } from 'modules/OrderHistory/helpers';
-
 import { ReportType } from 'types/reports';
 
 export const REPORT_HISTORY_FILTER_TYPE_KEY = 'ReportHistoryTypeFilter';
 export const REPORT_HISTORY_FILTER_PERIOD_KEY = 'ReportHistoryPeriodFilter';
+export const PENDING_REPORT_GUID = 'PENDING_REPORT_GUID';
 
 export type ReportsPeriodTypes = 'day' | 'month' | 'quarter' | 'year';
 
@@ -208204,14 +208332,7 @@ export const defaultFilterType: ReportType = {
   reportTypeId: 0,
 };
 
-const defaultFilterDates = getFilterDateFormat([
-  new Date(new Date().getFullYear() - 1, new Date().getMonth(), new Date().getDate()),
-  new Date(),
-]);
-
 export const defaultFilters = {
-  fromDate: defaultFilterDates.startDate,
-  toDate: defaultFilterDates.endDate,
   reportTypeCode: 'all',
 };
 
@@ -208241,6 +208362,73 @@ export const reportBadge: Record<string, 'cross' | 'check' | 'clock'> = {
   colorDestructive: 'cross',
   colorConstructive: 'check',
   colorAttention: 'clock',
+};
+
+
+--- FILE: src/modules/ReportsPage/components/ReportsHistory/helpers.tsx ---
+import {
+  visualIsoDateFormatter,
+  visualIsoPeriodFormatter,
+} from 'modules/ReportsPage/components/ReportsOrder/helper';
+
+import { ReactComponent as ReportMany } from 'images/raw-icons/reports/ReportMany.svg';
+import { ReactComponent as ReportManySign } from 'images/raw-icons/reports/ReportManySign.svg';
+import { ReactComponent as ReportOne } from 'images/raw-icons/reports/ReportOne.svg';
+import { ReactComponent as ReportOneSign } from 'images/raw-icons/reports/ReportOneSign.svg';
+
+import { ReportItem, ReportStatusPayload } from 'types/reports';
+
+const REPORT_PARAM_KEYS = [
+  'productName',
+  'portfolioName',
+  'agreementName',
+  'depoAccountName',
+  'instrumentName',
+] as const;
+
+export const getReportIcon = (hasSign?: boolean, multifile?: boolean) => {
+  if (multifile && hasSign) return ReportManySign;
+  if (multifile) return ReportMany;
+  if (hasSign) return ReportOneSign;
+  return ReportOne;
+};
+
+export const getReportParamLines = (item: ReportItem) =>
+  REPORT_PARAM_KEYS.map((key) => item[key]).filter((value): value is string => Boolean(value));
+
+export const getReportTimeTitle = (item: ReportItem, periodLabel = 'Период') => {
+  if (item.fromDate && item.toDate) return periodLabel;
+  if (item.fromDate || item.date) return 'Дата';
+  if (item.year) return 'Год';
+  return;
+};
+
+export const getReportTimeValue = (item: ReportItem) => {
+  if (item.fromDate && item.toDate) return visualIsoPeriodFormatter(item.fromDate, item.toDate);
+  const date = item.fromDate || item.date;
+  if (date) return visualIsoDateFormatter(date);
+  if (item.year) return String(item.year);
+  return;
+};
+
+export const applyReportStatus = (item: ReportItem, status: ReportStatusPayload) => {
+  const code = status.requestStatusCode || status.status;
+  const name = status.requestStatusName || status.statusName;
+  if (code) item.requestStatusCode = code;
+  if (name) item.requestStatusName = name;
+  if (status.hasSign !== undefined) item.hasSign = status.hasSign;
+  if (status.multifile !== undefined) item.multifile = status.multifile;
+  if (status.fileList !== undefined) item.fileList = status.fileList;
+  if (status.errorText !== undefined) item.errorText = status.errorText;
+  if (status.year !== undefined) item.year = status.year;
+  REPORT_PARAM_KEYS.forEach((key) => {
+    if (status[key] !== undefined) item[key] = status[key];
+  });
+};
+
+export const isReportFinished = (status?: ReportStatusPayload) => {
+  const code = status?.requestStatusCode || status?.status;
+  return code === 'completed' || code === 'error';
 };
 
 
@@ -208331,19 +208519,22 @@ export { default } from './ReportsHistory';
 }
 
 --- FILE: src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx ---
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BottomSheetComponent from '@aurora/bottom-sheet';
 import { Button, DatePicker, Filter, FilterBar, Placeholder, Text } from '@aurora/components';
 import cx from 'classnames';
 
-import { isMobileDevice } from 'core/DeviceDetector';
-import { useGetReportsParametersQuery } from 'core/api/reports';
+import {
+  REPORTS_PAGE_SIZE,
+  useGetReportsParametersQuery,
+  useLazyGetReportStatusQuery,
+} from 'core/api/reports';
 import Notifications from 'core/notification/notifications';
-import { reportsSelector } from 'core/reports/reportsSelector';
 import { setCurrentRequestGuid } from 'core/reports/reportsSlice';
 
-import { useAppDispatch, useAppSelector } from 'hooks';
+import { useAppDispatch } from 'hooks';
+import useViewOnScreen from 'hooks/useViewOnScreen';
 
 import CommonHeadSheet from 'modules/OrderHistory/components/CommonHeadSheet';
 import OrderSkeleton from 'modules/OrderHistory/components/OrderSkeleton';
@@ -208358,23 +208549,28 @@ import { useReportHistory } from 'modules/ReportsPage/hooks/useReportHistory';
 import { ReactComponent as EmptySvg } from 'images/birds/birds-empty-content.svg';
 import { ReactComponent as NotConnectedSvg } from 'images/birds/birds-no-connect.svg';
 
-import { ReportHistoryFilters, ReportType, ReportsReadyNotificatorResponse } from 'types/reports';
+import {
+  ReportHistoryFilters,
+  ReportStatusPayload,
+  ReportType,
+  ReportsReadyNotificatorResponse,
+} from 'types/reports';
 
 import Skeleton from '../ReportsOrder/Skeleton';
 import ReportSelectItem from '../ReportsOrder/components/ReportSelectItem';
 import styles from './ReportsHistory.module.pcss';
 import ReportListItem from './components/ReportListItem';
 import {
+  PENDING_REPORT_GUID,
   REPORT_HISTORY_FILTER_PERIOD_KEY,
   ReportsPeriodTypes,
   defaultFilterPeriod,
   defaultFilterType,
   defaultFilters,
 } from './constants';
+import { applyReportStatus, isReportFinished } from './helpers';
 
 const ReportsHistory = () => {
-  const isMobile = isMobileDevice();
-  const { currentRequestGuid } = useAppSelector(reportsSelector);
   const [typeBottomSheet, setTypeBottomSheet] = useState(false);
   const [periodBottomSheet, setPeriodBottomSheet] = useState(false);
   const [selectPeriod, setSelectPeriod] = useState<ReportsPeriodTypes>(
@@ -208383,12 +208579,22 @@ const ReportsHistory = () => {
   const [selectReportType, setSelectReportType] = useState<ReportType>(defaultFilterType);
 
   const [filters, setFilters] = useState<ReportHistoryFilters>(defaultFilters);
-  const [startReportGuidsListener, setStartReportGuidsListener] = useState(false);
   const [readyReportGuids, setReadyReportGuids] = useState<string[]>([]);
   const [isErrorReportParameters, setIsErrorReportParameters] = useState(false);
 
-  const { data: reportRequests, isLoading } = useReportHistory(filters);
+  const {
+    data: reportRequests,
+    setItems: setReportRequests,
+    isLoading,
+    isFetching,
+    hasLoaded,
+    hasMore,
+  } = useReportHistory(filters);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const listEndOptions = useMemo(() => ({ threshold: 0 }), [hasLoaded]);
+  const isListEnd = useViewOnScreen(sentinelRef, listEndOptions);
   const { data: reportParams } = useGetReportsParametersQuery();
+  const [getReportStatus] = useLazyGetReportStatusQuery();
 
   const reportTypeList = useMemo(
     () => [defaultFilterType, ...(reportParams?.reportTypes || [])],
@@ -208396,25 +208602,61 @@ const ReportsHistory = () => {
   );
 
   const dispatch = useAppDispatch();
+  const restoredPendingReport = useRef(false);
+
+  const patchReportFromStatus = useCallback(
+    (guid: string, status: ReportStatusPayload) => {
+      const current = reportRequests?.find((report) => report.requestGuid === guid);
+      if (!current) {
+        setFilters((oldFilters) => ({ ...oldFilters, offset: undefined }));
+      } else {
+        setReportRequests((prev) =>
+          prev.map((item) => {
+            if (item.requestGuid !== guid) return item;
+            const next = { ...item };
+            applyReportStatus(next, status);
+            return next;
+          }),
+        );
+      }
+      if (isReportFinished(status)) sessionStorage.removeItem(PENDING_REPORT_GUID);
+    },
+    [reportRequests, setReportRequests],
+  );
 
   useEffect(() => {
-    if (currentRequestGuid) setStartReportGuidsListener(true);
-  }, [currentRequestGuid]);
+    if (restoredPendingReport.current) return;
+    restoredPendingReport.current = true;
+
+    const pendingGuid = sessionStorage.getItem(PENDING_REPORT_GUID);
+    if (!pendingGuid) return;
+
+    dispatch(setCurrentRequestGuid(pendingGuid));
+  }, [dispatch]);
 
   useEffect(() => {
-    if (!startReportGuidsListener) return;
     const listener = (data: ReportsReadyNotificatorResponse) => {
       const list = data.response.AsyncProcessList || [];
       setReadyReportGuids((oldList) => {
         const newGuids = list.filter((guid) => !oldList.includes(guid));
         return [...oldList, ...newGuids];
       });
+      list.forEach((guid) => {
+        getReportStatus(guid)
+          .unwrap()
+          .then((status) => {
+            if (status) patchReportFromStatus(guid, status);
+          })
+          .catch(() => {
+            return;
+          });
+      });
     };
     const unsubscribe = Notifications.subscribe('ReportReady', listener);
     return () => {
       unsubscribe();
     };
-  }, [startReportGuidsListener]);
+  }, [getReportStatus, patchReportFromStatus]);
 
   const handleResetAllFilters = useCallback(() => {
     setSelectPeriod(defaultFilterPeriod);
@@ -208424,6 +208666,12 @@ const ReportsHistory = () => {
 
   const handleResetPeriodFilter = useCallback(() => {
     setSelectPeriod(defaultFilterPeriod);
+    setFilters((oldFilters) => ({
+      ...oldFilters,
+      fromDate: undefined,
+      toDate: undefined,
+      offset: undefined,
+    }));
     setPeriodBottomSheet(false);
   }, []);
 
@@ -208433,6 +208681,7 @@ const ReportsHistory = () => {
       ...oldFilters,
       fromDate: startDate,
       toDate: endDate,
+      offset: undefined,
     }));
     setPeriodBottomSheet(false);
   }, []);
@@ -208443,6 +208692,7 @@ const ReportsHistory = () => {
       ...oldFilters,
       reportTypeId: item.reportTypeId,
       reportTypeCode: item.code,
+      offset: undefined,
     }));
     setTypeBottomSheet(false);
   };
@@ -208461,19 +208711,34 @@ const ReportsHistory = () => {
     />
   ));
 
+  const hasPeriodFilter = Boolean(filters.fromDate && filters.toDate);
+
   const datePickerFormat = useMemo(
-    () => getDatePickerFormat(filters.fromDate, filters.toDate),
+    () =>
+      filters.fromDate && filters.toDate
+        ? getDatePickerFormat(filters.fromDate, filters.toDate)
+        : undefined,
     [filters.fromDate, filters.toDate],
   );
 
-  const yearFromJSDate = useMemo(() => getYearFromJSDate(filters.toDate), [filters.toDate]);
+  const yearFromJSDate = useMemo(
+    () => (filters.toDate ? getYearFromJSDate(filters.toDate) : undefined),
+    [filters.toDate],
+  );
 
-  const isActivePeriodReset = defaultFilterPeriod !== selectPeriod;
+  useEffect(() => {
+    if (!hasLoaded || !isListEnd || !hasMore || isFetching) return;
+    if (!reportRequests || reportRequests.length < (filters.offset ?? 0) + REPORTS_PAGE_SIZE) {
+      return;
+    }
+    setFilters((oldFilters) => ({
+      ...oldFilters,
+      offset: (oldFilters.offset ?? 0) + REPORTS_PAGE_SIZE,
+    }));
+  }, [filters.offset, hasLoaded, hasMore, isFetching, isListEnd, reportRequests]);
 
   const showResetFilters =
-    defaultFilters.fromDate !== filters.fromDate ||
-    defaultFilters.toDate !== filters.toDate ||
-    defaultFilters.reportTypeCode !== filters.reportTypeCode;
+    hasPeriodFilter || defaultFilters.reportTypeCode !== filters.reportTypeCode;
 
   if (isErrorReportParameters) {
     return (
@@ -208503,12 +208768,12 @@ const ReportsHistory = () => {
           {showResetFilters && <Filter shape={'reset'} onClick={handleResetAllFilters} />}
           <Filter
             shape={'select'}
-            active={isActivePeriodReset}
-            text={getNTPDateName(
-              filters.fromDate || defaultFilters.fromDate,
-              filters.toDate || defaultFilters.toDate,
-              selectPeriod,
-            )}
+            active={hasPeriodFilter}
+            text={
+              filters.fromDate && filters.toDate
+                ? getNTPDateName(filters.fromDate, filters.toDate, selectPeriod)
+                : 'Все'
+            }
             onClick={() => setPeriodBottomSheet(!periodBottomSheet)}
             onClose={handleResetPeriodFilter}
           />
@@ -208519,7 +208784,7 @@ const ReportsHistory = () => {
           />
         </FilterBar>
         <div className={styles.content} onTouchMove={(e) => e.stopPropagation()}>
-          {isLoading ? (
+          {!hasLoaded && !filters.offset ? (
             <OrderSkeleton count={4} />
           ) : (
             <div>
@@ -208532,7 +208797,6 @@ const ReportsHistory = () => {
                       isReady={readyReportGuids.includes(item.requestGuid)}
                       onParametersError={() => setIsErrorReportParameters(true)}
                       onParametersErrorClear={() => setIsErrorReportParameters(false)}
-                      isMobile={isMobile}
                     />
                   ))}
                 </>
@@ -208546,6 +208810,7 @@ const ReportsHistory = () => {
               )}
             </div>
           )}
+          {hasLoaded && <div ref={sentinelRef} />}
         </div>
       </div>
 
@@ -208575,18 +208840,20 @@ const ReportsHistory = () => {
           <CommonHeadSheet
             name="Период"
             handleSubmit={handleResetPeriodFilter}
-            activeBtn={selectPeriod !== defaultFilterPeriod}
+            activeBtn={hasPeriodFilter || selectPeriod !== defaultFilterPeriod}
           />
         </div>
-        <DatePicker
-          onSubmit={handleSubmitFilterDates}
-          periodPreset
-          dates={datePickerFormat}
-          currentYear={yearFromJSDate}
-          customOptionsPeriodPreset={['month', 'quarter', 'year']}
-          onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
-          defaultOptionPeriodPreset={selectPeriod}
-        />
+        {periodBottomSheet && (
+          <DatePicker
+            onSubmit={handleSubmitFilterDates}
+            periodPreset
+            dates={datePickerFormat}
+            currentYear={yearFromJSDate}
+            customOptionsPeriodPreset={['month', 'quarter', 'year']}
+            onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
+            defaultOptionPeriodPreset={hasPeriodFilter ? selectPeriod : 'year'}
+          />
+        )}
       </BottomSheetComponent>
     </>
   );
@@ -209060,6 +209327,10 @@ export const visualIsoDateFormatter = (date: string) => {
   return dt.toFormat(DEFAULT_DATE_VIEW_FORMAT);
 };
 
+export const isDepoStatementDateReport = (parameters: { parameter: string }[] = []) =>
+  parameters.some((item) => item.parameter === 'Date') &&
+  parameters.some((item) => item.parameter === 'DepoAccount');
+
 export const validateReportForm = (
   parameters: ReportParameter[],
   data: CreateReportRequest | null,
@@ -209146,6 +209417,7 @@ export { default } from './ReportsOrder';
 
 .bsWrapFixed {
   position: fixed;
+  pointer-events: none;
 }
 
 .selectList {
@@ -209195,26 +209467,20 @@ export { default } from './ReportsOrder';
 
 --- FILE: src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx ---
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import {
-  BannerWarningLine,
   BottomSheet,
   Button,
   DatePicker,
   Headline,
   Input,
+  Month,
   Placeholder,
-  Switch,
   Text,
 } from '@aurora/components';
 import cx from 'classnames';
 import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
-import { ROUTE_PROFILE } from 'const/routes';
 import { DateTime } from 'luxon';
-import sanitizeHtml from 'sanitize-html';
-
-import { useGetHintsQuery } from 'core/api/hints';
 
 import { visualDateFormatter } from 'modules/PersonalInformation/components/Passport/helper';
 import { useReportOrder } from 'modules/ReportsPage/hooks/useReportOrder';
@@ -209222,7 +209488,6 @@ import { useReportOrder } from 'modules/ReportsPage/hooks/useReportOrder';
 import { ReactComponent as SomethingWrongSvg } from 'images/birds/birds-broken-pen.svg';
 import { ReactComponent as NotConnectedSvg } from 'images/birds/birds-no-connect.svg';
 import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
-import { ReactComponent as InfoBadgeIcon } from 'images/raw-icons/bannerWarningBadge.svg';
 
 import { DepoInstrumentItem, ReportDepoAccountParameter, ReportType } from 'types/reports';
 
@@ -209240,7 +209505,6 @@ const ReportsOrder = () => {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [bottomSheetDateOpen, setBottomSheetDateOpen] = useState(false);
   const [bottomSheetPeriodOpen, setBottomSheetPeriodOpen] = useState(false);
-  const [bottomSheetEmailConfirm, setBottomSheetEmailConfirm] = useState(false);
   const [currentInput, setCurrentInput] = useState<ReportInputNames>('reportType');
   const [dateError, setDateError] = useState<boolean>(false);
   const [periodError, setPeriodError] = useState<boolean>(false);
@@ -209248,13 +209512,6 @@ const ReportsOrder = () => {
   const [selectPeriod, setSelectPeriod] = useState<ReportsPeriodTypes>(defaultOrderPeriod);
   const [openSearchInstrument, setOpenSearchInstrument] = useState<boolean>(false);
   const [searchInstrumentText, setSearchInstrumentText] = useState<string>('');
-
-  const { data: hintsResult } = useGetHintsQuery();
-  const reportToEmailText = hintsResult?.hints.find(
-    (item) => item.slug === 'REPORT_TO_EMAIL',
-  )?.text;
-
-  const navigate = useNavigate();
 
   const {
     handleFormSubmit,
@@ -209269,12 +209526,13 @@ const ReportsOrder = () => {
     selectedInstrument,
     selectedDepoAccount,
     parameters,
+    isDepoDateReport,
     isLoading,
     isErrorParameters,
-    email,
-    isStatusLoading,
-    isStatusError,
+    isCreateLoading,
     isCreateReportError,
+    periodErrorText,
+    clearPeriodError,
   } = useReportOrder();
 
   const handleInputClick = useCallback((name: ReportInputNames) => {
@@ -209282,22 +209540,21 @@ const ReportsOrder = () => {
     setCurrentInput(name);
   }, []);
 
-  const handleChangeEmail = useCallback(() => {
-    navigate(ROUTE_PROFILE);
-  }, [navigate]);
-
-  const handleSubmit = () => {
-    setBottomSheetEmailConfirm(false);
-    handleFormSubmit();
-  };
-
   const onReportTypeSelect = useCallback(
     (item: ReportType) => {
       setReportTypeSelected(item);
-      setFormData((oldData) => ({ ...oldData, reportTypeId: item.reportTypeId }));
+      const clearDepoDate = isDepoDateReport(item.code);
+      if (clearDepoDate) setSelectedDepoAccount(null);
+      setFormData((oldData) => ({
+        ...oldData,
+        reportTypeId: item.reportTypeId,
+        ...(clearDepoDate
+          ? { fromDate: undefined, toDate: undefined, depoAccountId: undefined }
+          : {}),
+      }));
       setBottomSheetOpen(false);
     },
-    [setFormData, setReportTypeSelected],
+    [isDepoDateReport, setFormData, setReportTypeSelected, setSelectedDepoAccount],
   );
 
   const onProductSelect = useCallback(
@@ -209319,10 +209576,16 @@ const ReportsOrder = () => {
   const onDepoAccountSelect = useCallback(
     (item: ReportDepoAccountParameter) => {
       setSelectedDepoAccount(item);
-      setFormData((oldData) => ({ ...oldData, depoAccountId: item.depoAccountId }));
+      setFormData((oldData) => ({
+        ...oldData,
+        depoAccountId: item.depoAccountId,
+        ...(isDepoDateReport(reportTypeSelected?.code)
+          ? { fromDate: undefined, toDate: undefined }
+          : {}),
+      }));
       setBottomSheetOpen(false);
     },
-    [setFormData, setSelectedDepoAccount],
+    [isDepoDateReport, reportTypeSelected?.code, setFormData, setSelectedDepoAccount],
   );
 
   const onAgreementSelect = useCallback(
@@ -209373,6 +209636,7 @@ const ReportsOrder = () => {
       const fromDate = DateTime.fromFormat(e[0].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
       const toDate = DateTime.fromFormat(e[1].toLocaleDateString(), DEFAULT_DATE_VIEW_FORMAT);
 
+      clearPeriodError();
       setFormData((oldData) => ({
         ...oldData,
         fromDate:
@@ -209386,14 +209650,7 @@ const ReportsOrder = () => {
       }));
       setBottomSheetPeriodOpen(false);
     },
-    [paramsData.dates, setFormData],
-  );
-
-  const onSendEmailChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((oldData) => ({ ...oldData, sendViaEmail: e.target.checked }));
-    },
-    [setFormData],
+    [clearPeriodError, paramsData.dates, setFormData],
   );
 
   const dateController = useCallback(
@@ -209456,6 +209713,21 @@ const ReportsOrder = () => {
     [formData, parameters],
   );
 
+  const periodDates = useMemo(() => {
+    const from = formData?.fromDate
+      ? DateTime.fromFormat(formData.fromDate, DEFAULT_DATE_VIEW_FORMAT)
+      : undefined;
+    const to = formData?.toDate
+      ? DateTime.fromFormat(formData.toDate, DEFAULT_DATE_VIEW_FORMAT)
+      : undefined;
+    if (!from?.isValid || !to?.isValid) return;
+    return {
+      dates: [from.toJSDate(), to.toJSDate()],
+      year: from.year,
+      month: (from.month - 1) as Month,
+    };
+  }, [formData?.fromDate, formData?.toDate]);
+
   if (isErrorParameters) {
     return (
       <Placeholder
@@ -209468,7 +209740,7 @@ const ReportsOrder = () => {
     );
   }
 
-  if (isCreateReportError || isStatusError) {
+  if (isCreateReportError && !periodErrorText) {
     return (
       <Placeholder
         title={'Что-то пошло не так'}
@@ -209481,6 +209753,34 @@ const ReportsOrder = () => {
       />
     );
   }
+
+  const dateSelectable =
+    !isDepoDateReport(reportTypeSelected?.code) || Boolean(formData?.depoAccountId);
+  const selectedReportDate = paramsData.dates?.[0];
+  const reportMinDate = selectedReportDate?.minFromDate
+    ? DateTime.fromISO(selectedReportDate.minFromDate)
+    : undefined;
+  const reportMaxDate = selectedReportDate?.maxToDate
+    ? DateTime.fromISO(selectedReportDate.maxToDate)
+    : undefined;
+
+  const dateField = (
+    <div onClick={() => dateSelectable && setBottomSheetDateOpen(true)}>
+      <Input
+        disabled={!dateSelectable}
+        onChange={(e) => null}
+        placeholder=""
+        label="Дата"
+        value={formData?.fromDate ? visualDateFormatter(formData.fromDate) : ''}
+        className={styles.input}
+        status={dateError ? 'error' : undefined}
+        description={dateError && 'Введите корректную дату'}
+        onBlur={dateController}
+        onFocus={dateController}
+        addonAfter={<Calendar />}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -209495,23 +209795,12 @@ const ReportsOrder = () => {
 
       <div className={styles.formWrapper}>
         {parameters.map((param) => {
+          if (reportTypeSelected?.code === 'DepoSecurityPos' && param.parameter === 'Date') {
+            return null;
+          }
+
           return {
-            Date: (
-              <div onClick={() => setBottomSheetDateOpen(true)}>
-                <Input
-                  onChange={(e) => null}
-                  placeholder=""
-                  label="Дата"
-                  value={visualDateFormatter(formData?.fromDate || '')}
-                  className={styles.input}
-                  status={dateError ? 'error' : undefined}
-                  description={dateError && 'Введите корректную дату'}
-                  onBlur={dateController}
-                  onFocus={dateController}
-                  addonAfter={<Calendar />}
-                />
-              </div>
-            ),
+            Date: dateField,
             Period: (
               <div onClick={() => reportPeriodEnable && setBottomSheetPeriodOpen(true)}>
                 <Input
@@ -209525,8 +209814,8 @@ const ReportsOrder = () => {
                       : ''
                   }
                   className={styles.input}
-                  status={periodError ? 'error' : undefined}
-                  description={periodError && 'Введите корректый период'}
+                  status={periodError || periodErrorText ? 'error' : undefined}
+                  description={periodErrorText || (periodError && 'Введите корректый период')}
                   onBlur={periodController}
                   onFocus={periodController}
                   addonAfter={<Calendar />}
@@ -209613,36 +209902,18 @@ const ReportsOrder = () => {
               className={styles.input}
               variant={undefined}
             />
+            {parameters.some((param) => param.parameter === 'Date') && dateField}
           </>
         )}
       </div>
 
       <div className={styles.buttonWrapper}>
-        {email && (
-          <Switch
-            onChange={onSendEmailChange}
-            checked={formData?.sendViaEmail}
-            label="Отправить документ с электронной подписью на почту"
-          />
-        )}
-
-        {reportToEmailText && (
-          <BannerWarningLine
-            variant="attention"
-            addonLeft={<InfoBadgeIcon />}
-            title={<span dangerouslySetInnerHTML={{ __html: sanitizeHtml(reportToEmailText) }} />}
-            className={styles.banner}
-          />
-        )}
-
         <Button
-          loading={isStatusLoading}
-          disabled={!isFormValid || isStatusLoading}
-          onClick={
-            formData?.sendViaEmail ? () => setBottomSheetEmailConfirm(true) : handleFormSubmit
-          }
+          loading={isCreateLoading}
+          disabled={!isFormValid || isCreateLoading}
+          onClick={handleFormSubmit}
         >
-          {isStatusLoading ? 'Отправка...' : 'Заказать отчёт'}
+          {isCreateLoading ? 'Отправка...' : 'Заказать отчёт'}
         </Button>
       </div>
 
@@ -209694,7 +209965,19 @@ const ReportsOrder = () => {
           <Text type={'bodySemiBold'}>Выберите дату</Text>
         </div>
 
-        <DatePicker withPeriod={false} withOptions={false} onSubmit={onDateSubmit} />
+        {bottomSheetDateOpen && (
+          <DatePicker
+            periodPreset
+            defaultOptionPeriodPreset="day"
+            withOptions={false}
+            withPeriod={false}
+            onSubmit={onDateSubmit}
+            minDate={reportMinDate?.toJSDate()}
+            maxDate={reportMaxDate?.toJSDate()}
+            currentYear={reportMaxDate?.year}
+            currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+          />
+        )}
       </BottomSheet>
 
       <BottomSheet
@@ -209708,11 +209991,15 @@ const ReportsOrder = () => {
         </div>
 
         <DatePicker
+          key={periodDates ? `${formData?.fromDate}-${formData?.toDate}` : 'empty-period'}
           periodPreset
           customOptionsPeriodPreset={['day', 'month', 'year']}
           onSetOptionPeriodPreset={(p) => setSelectPeriod(p)}
           defaultOptionPeriodPreset={selectPeriod}
           onSubmit={onPeriodSubmit}
+          dates={periodDates?.dates}
+          currentYear={periodDates?.year}
+          currentMonth={periodDates?.month}
           minDate={
             paramsData.dates?.[0]?.minFromDate
               ? DateTime.fromISO(paramsData.dates[0].minFromDate).toJSDate()
@@ -209724,31 +210011,6 @@ const ReportsOrder = () => {
               : undefined
           }
         />
-      </BottomSheet>
-
-      <BottomSheet
-        open={bottomSheetEmailConfirm}
-        onDismiss={() => setBottomSheetEmailConfirm(false)}
-        onTouchMove={(e) => e.stopPropagation()}
-        className={cx(styles.wrap, { [styles.bsWrapFixed]: !bottomSheetEmailConfirm })}
-      >
-        <div className={styles.BHtitle}>
-          <Text type={'bodySemiBold'}>Подтверждение отправки</Text>
-        </div>
-
-        <div className={styles.selectList}>
-          <Text type="bodyRegular">
-            {`${reportTypeSelected?.name} будет отправлен на почту `}
-            <Text inline type="bodySemiBold">
-              {email}
-            </Text>
-          </Text>
-
-          <Button onClick={handleSubmit}>Отправить</Button>
-          <Button variant="secondary" onClick={handleChangeEmail}>
-            Изменить почту
-          </Button>
-        </div>
       </BottomSheet>
     </>
   );
@@ -209808,6 +210070,8 @@ export default Skeleton;
 --- FILE: src/modules/ReportsPage/constants.ts ---
 import { ROUTE_REPORTS, ROUTE_REPORTS_HISTORY } from 'const/routes';
 
+import { Permissions } from 'core/permissions';
+
 export const DEFAULT_QUERY_ERROR_MESSAGE =
   'При запросе произошла ошибка. Повторите попытку позднее.';
 export const DEFAULT_MUTATION_ERROR_MESSAGE = 'Что-то пошло не так';
@@ -209819,23 +210083,51 @@ export const pageTabs = [
 
 export const PERMISSION_PERSON_REPORTING = 'PERSON_REPORTING';
 
+export const isReportsMenuEnabled = () => {
+  const isTestMode = !process.env.TIER || process.env.TIER === 'tt';
+  return isTestMode && !Permissions.denied(PERMISSION_PERSON_REPORTING);
+};
+
 
 --- FILE: src/modules/ReportsPage/hooks/useReportHistory.ts ---
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useLazyGetReportsHistoryQuery } from 'core/api/reports';
+import { REPORTS_PAGE_SIZE, useLazyGetReportsHistoryQuery } from 'core/api/reports';
 
 import { createAlertNotification } from 'components';
 
-import { ReportHistoryFilters } from 'types/reports';
+import { ReportHistoryFilters, ReportItem } from 'types/reports';
 
 import { DEFAULT_QUERY_ERROR_MESSAGE } from '../constants';
 
 export const useReportHistory = (filters: ReportHistoryFilters) => {
-  const [getReportsHistory, { data, isLoading, isError }] = useLazyGetReportsHistoryQuery();
+  const [getReportsHistory, { isLoading, isFetching, isError }] = useLazyGetReportsHistoryQuery();
+  const [items, setItems] = useState<ReportItem[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    getReportsHistory(filters);
+    let active = true;
+    if (!filters.offset) {
+      setItems([]);
+      setHasLoaded(false);
+    }
+    const request = getReportsHistory(filters);
+    request
+      .unwrap()
+      .then((page) => {
+        if (!active) return;
+        setHasLoaded(true);
+        setHasMore(page.length === REPORTS_PAGE_SIZE);
+        setItems((prev) => (filters.offset ? [...prev, ...page] : page));
+      })
+      .catch(() => {
+        return;
+      });
+    return () => {
+      active = false;
+      request.abort();
+    };
   }, [filters, getReportsHistory]);
 
   useEffect(() => {
@@ -209847,8 +210139,13 @@ export const useReportHistory = (filters: ReportHistoryFilters) => {
   }, [isError]);
 
   return {
-    data,
+    data: items,
+    setItems,
     isLoading,
+    isFetching,
+    hasLoaded,
+    hasMore,
+    getReportsHistory,
   };
 };
 
@@ -209861,16 +210158,17 @@ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
 import { ROUTE_REPORTS_HISTORY } from 'const/routes';
 import { DateTime } from 'luxon';
 
-import {
-  useCreateReportMutation,
-  useGetReportsParametersQuery,
-  useLazyGetReportStatusQuery,
-} from 'core/api/reports';
+import { useLazyGetDepoInstrumentsQuery } from 'core/api/instrumentDepo';
+import { useCreateReportMutation, useGetReportsParametersQuery } from 'core/api/reports';
+import { isError } from 'core/helpers/isError';
 import { getReportsParametersWithData } from 'core/reports/helpers';
 import { reportsSelector } from 'core/reports/reportsSelector';
 import { setCurrentRequestGuid, setReorderData } from 'core/reports/reportsSlice';
 
 import { useAppDispatch, useAppSelector } from 'hooks';
+
+import { PENDING_REPORT_GUID } from 'modules/ReportsPage/components/ReportsHistory/constants';
+import { isDepoStatementDateReport } from 'modules/ReportsPage/components/ReportsOrder/helper';
 
 import {
   CreateReportRequest,
@@ -209878,6 +210176,39 @@ import {
   ReportDepoAccountParameter,
   ReportType,
 } from 'types/reports';
+
+const buildReorderInstrument = (
+  instrumentId: number,
+  name?: string,
+  isin?: string | null,
+  issuerName?: string | null,
+): DepoInstrumentItem => ({
+  guid: '',
+  instrumentId,
+  depoInstrumentId: 0,
+  name: name || '',
+  fullName: null,
+  issuerName: issuerName ?? null,
+  instrumentType: null,
+  instrumentShortType: null,
+  regNum: null,
+  isin: isin ?? null,
+  gosReg: null,
+  nominal: null,
+  nominalCurrency: null,
+  issueMode: null,
+  registrationType: null,
+  instrumentImageName: null,
+  instrumentImageTime: null,
+  allowed: true,
+});
+
+const getPeriodTooLongMessage = (error: unknown): string => {
+  if (!isError(error)) return '';
+  const item = error.data.error[0];
+  if (String(item?.error ?? '') !== '701' && item?.errorCode !== 'Report.PeriodTooLong') return '';
+  return item.errorMessageText || '';
+};
 
 export const useReportOrder = () => {
   const dispatch = useAppDispatch();
@@ -209890,9 +210221,11 @@ export const useReportOrder = () => {
   );
   const [formData, setFormData] = useState<CreateReportRequest | null>(null);
   const { data, isLoading, isError } = useGetReportsParametersQuery();
-  const [getReportStatus, { isLoading: isStatusLoading, isError: isStatusError }] =
-    useLazyGetReportStatusQuery();
-  const [createReport, { isError: isCreateReportError }] = useCreateReportMutation();
+  const [getDepoInstruments] = useLazyGetDepoInstrumentsQuery();
+  const [
+    createReport,
+    { isLoading: isCreateLoading, isError: isCreateReportError, error: createReportError, reset },
+  ] = useCreateReportMutation();
 
   const reportTypes = useMemo(() => data?.reportTypes || [], [data?.reportTypes]);
 
@@ -209921,18 +210254,22 @@ export const useReportOrder = () => {
     [formData, data],
   );
 
-  const reportDateList = useMemo(
-    () =>
-      data?.reportDates?.filter(
-        (item) =>
-          item.reportTypeId === formData?.reportTypeId &&
-          ((item.reportTypeId === 1 &&
-            item.productId === formData?.productId &&
-            item.portfolioId === formData?.portfolioId) ||
-            ([3, 5].includes(item.reportTypeId) && item.depoAccountId === formData?.depoAccountId)),
-      ) || [],
-    [formData, data],
-  );
+  const reportDateList = useMemo(() => {
+    const sameId = (left?: number | string, right?: number | string) =>
+      left != null && right != null && String(left) === String(right);
+    const depoId = formData?.depoAccountId ?? selectedDepoAccount?.depoAccountId;
+
+    return (
+      data?.reportDates?.filter((item) => {
+        if (!sameId(item.reportTypeId, formData?.reportTypeId)) return false;
+        if (item.depoAccountId != null) return sameId(item.depoAccountId, depoId);
+        return (
+          sameId(item.productId, formData?.productId) &&
+          sameId(item.portfolioId, formData?.portfolioId)
+        );
+      }) || []
+    );
+  }, [formData, data, selectedDepoAccount?.depoAccountId]);
 
   const reportPeriodEnable = useMemo(
     () =>
@@ -209942,6 +210279,8 @@ export const useReportOrder = () => {
         formData?.depoAccountId),
     [formData],
   );
+
+  const maxToDate = reportDateList[0]?.maxToDate;
 
   const reportAgreementList = useMemo(
     () =>
@@ -209956,6 +210295,24 @@ export const useReportOrder = () => {
     () => (reportTypeSelected ? reportTypesObject[reportTypeSelected?.code] || [] : []),
     [reportTypeSelected, reportTypesObject],
   );
+  const isDepoDateReport = useCallback(
+    (code?: string) => isDepoStatementDateReport(code ? reportTypesObject[code] : parameters),
+    [parameters, reportTypesObject],
+  );
+
+  useEffect(() => {
+    if (reOrderData?.reportTypeId || isDepoDateReport(reportTypeSelected?.code)) return;
+
+    const formatted = maxToDate
+      ? DateTime.fromISO(maxToDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
+      : undefined;
+
+    setFormData((old) => {
+      if (!old) return old;
+      if (old.fromDate === formatted && old.toDate === formatted) return old;
+      return { ...old, fromDate: formatted, toDate: formatted };
+    });
+  }, [isDepoDateReport, maxToDate, reOrderData?.reportTypeId, reportTypeSelected?.code]);
 
   useEffect(() => {
     const repTypesData = data?.reportTypes || [];
@@ -209971,12 +210328,32 @@ export const useReportOrder = () => {
           const toDate = reOrderData.toDate
             ? DateTime.fromISO(reOrderData.toDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
             : undefined;
+          const depoAccount =
+            data?.reportDepoAccountParameters?.find(
+              (item) =>
+                item.reportTypeId === reOrderData.reportTypeId &&
+                item.depoAccountId === reOrderData.depoAccountId,
+            ) || null;
+          setSelectedDepoAccount(depoAccount);
+          if (reOrderData.instrumentId) {
+            setSelectedInstrument(
+              buildReorderInstrument(
+                reOrderData.instrumentId,
+                reOrderData.instrumentName,
+                reOrderData.isin,
+                reOrderData.issuerName,
+              ),
+            );
+          } else {
+            setSelectedInstrument(null);
+          }
           setFormData({
             reportTypeId: reOrderData.reportTypeId,
             productId: reOrderData.productId,
             portfolioId: reOrderData.portfolioId,
             depoAccountId: reOrderData.depoAccountId,
             agreementId: reOrderData.agreementId,
+            instrumentId: reOrderData.instrumentId,
             fromDate: fromDate,
             toDate: toDate,
           });
@@ -209998,20 +210375,43 @@ export const useReportOrder = () => {
               )?.portfolioId
             : undefined;
 
-          const today = DateTime.now().toFormat('dd.MM.yyyy');
-          const yesterday = DateTime.now().minus({ days: 1 }).toFormat('dd.MM.yyyy');
-
           setFormData({
             reportTypeId: reportType.reportTypeId,
             productId: firstProductId,
             portfolioId: firstPortfolioId,
-            fromDate: yesterday,
-            toDate: today,
           });
         }
       }
     }
   }, [reOrderData, data]);
+
+  useEffect(() => {
+    const instrumentId = reOrderData?.instrumentId;
+    const searchText = reOrderData?.instrumentName?.trim();
+    if (!searchText || searchText.length < 3) return;
+    if (instrumentId && reOrderData.isin && reOrderData.issuerName) return;
+
+    let cancelled = false;
+    getDepoInstruments({ searchText, maxCount: 16 })
+      .unwrap()
+      .then((instruments) => {
+        if (cancelled) return;
+        const found =
+          (instrumentId && instruments.find((item) => item.instrumentId === instrumentId)) ||
+          undefined ||
+          instruments.find((item) => item.name === searchText);
+        if (!found) return;
+        setSelectedInstrument(found);
+        setFormData((old) => (old ? { ...old, instrumentId: found.instrumentId } : old));
+      })
+      .catch(() => {
+        return;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getDepoInstruments, reOrderData]);
 
   const handleFormSubmit = useCallback(async () => {
     if (formData) {
@@ -210021,17 +210421,19 @@ export const useReportOrder = () => {
         const createResult = await createReport(formData).unwrap();
         const guid = createResult?.reportRequest?.[0]?.requestGuid;
         if (guid) {
+          sessionStorage.setItem(PENDING_REPORT_GUID, guid);
           dispatch(setCurrentRequestGuid(guid));
-          const statusResult = await getReportStatus(guid).unwrap();
-          if (statusResult) {
-            navigate(ROUTE_REPORTS_HISTORY);
-          }
+          navigate(ROUTE_REPORTS_HISTORY);
         }
       } catch (err) {
-        console.error(err);
+        if (!getPeriodTooLongMessage(err)) {
+          console.error(err);
+        }
       }
     }
-  }, [createReport, dispatch, formData, getReportStatus, navigate]);
+  }, [createReport, dispatch, formData, navigate]);
+
+  const periodErrorText = isCreateReportError ? getPeriodTooLongMessage(createReportError) : '';
 
   return {
     formData,
@@ -210043,6 +210445,7 @@ export const useReportOrder = () => {
     selectedDepoAccount,
     setSelectedDepoAccount,
     parameters,
+    isDepoDateReport,
     isLoading,
     isErrorParameters: isError,
     paramsData: {
@@ -210056,9 +210459,10 @@ export const useReportOrder = () => {
     reportPeriodEnable,
     email: data?.eMail?.[0]?.eMail,
     handleFormSubmit,
-    isStatusLoading,
-    isStatusError,
+    isCreateLoading,
     isCreateReportError,
+    periodErrorText,
+    clearPeriodError: reset,
   };
 };
 
@@ -210110,7 +210514,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Headline, Placeholder } from '@aurora/components';
 import cx from 'classnames';
-import { ROUTE_MY_INFORMATION } from 'const/routes';
+import { ROUTE_360 } from 'const/routes';
 
 import { isMobileDevice } from 'core/DeviceDetector';
 import { Permissions } from 'core/permissions';
@@ -210129,20 +210533,16 @@ const ReportsPage: FC = ({ children }) => {
   const isMobile = isMobileDevice();
   const navigate = useNavigate();
 
-  const goBackToProfile = () => {
-    navigate(ROUTE_MY_INFORMATION);
+  const goBack = () => {
+    navigate(ROUTE_360);
   };
 
   return (
     <>
       {isMobile ? (
-        <HeaderPage
-          title="Отчёты и справки"
-          leftIconVariant="back"
-          onLeftIconClick={goBackToProfile}
-        />
+        <HeaderPage title="Отчёты" leftIconVariant="back" onLeftIconClick={goBack} />
       ) : (
-        <Headline className={styles.headlineDesktop} title="Отчёты и справки" />
+        <Headline className={styles.headlineDesktop} title="Отчёты" />
       )}
 
       {isPermissionGranted ? (
@@ -224426,6 +224826,15 @@ export { default } from './TradeOrderConfirmation';
   padding: 0 $spacing6;
 }
 
+.nkd-banner {
+  background-color: #f2f1ff !important;
+  color: #6673e9 !important;
+}
+
+.nkd-banner * {
+  color: #6673e9 !important;
+}
+
 .logo {
   margin: $spacing5 auto;
   width: 80px;
@@ -224677,7 +225086,12 @@ const TradeOrderConfirmation: FC<Props> = ({
                 hints={data.hints}
                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
                 text={acceptBannerSlug.text}
-                className={styles.banner}
+                className={
+                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
+                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
+                    ? `${styles.banner} ${styles.nkdBanner}`
+                    : styles.banner
+                }
                 variant="accent"
               />
             )}
@@ -225142,7 +225556,12 @@ const TradeOrderForm: FC<Props> = ({
                 hints={data.hints}
                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
                 text={acceptBannerSlug.text}
-                className={styles.banner}
+                className={
+                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
+                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
+                    ? `${styles.banner} ${styles.nkdBanner}`
+                    : styles.banner
+                }
                 variant="accent"
               />
             </div>
@@ -225255,6 +225674,15 @@ export default memo(TradeOrderForm);
 
 .banner-wrapper {
   padding: 0 $spacing6;
+}
+
+.nkd-banner {
+  background-color: #f2f1ff !important;
+  color: #6673e9 !important;
+}
+
+.nkd-banner * {
+  color: #6673e9 !important;
 }
 
 .input {
@@ -230193,12 +230621,20 @@ export { default } from './OrderDetails';
 
 --- FILE: src/modules/TradeOrderHistory/components/OrderDetails/OrderDetails.tsx ---
 import { FC } from 'react';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import { Accordion, BottomSheet, Text } from '@aurora/components';
+import { ROUTE_TRADE_ORDER } from 'const/routes';
 
 import { useGetHintsQuery } from 'core/api/hints';
 import { useGetOrderTradesQuery } from 'core/api/orderTrades';
 import { updateLimitOrdersStatus } from 'core/limitOrdersStatus/limitOrdersStatusSlice';
+import {
+  setPrice,
+  setProductId,
+  setQuantity,
+  setSubAccountId,
+} from 'core/tradeOrder/tradeOrderSlice';
 
 import { getNoun } from 'utils/string';
 import { currencySign, sumFormatter } from 'utils/sumFormatter';
@@ -230207,13 +230643,16 @@ import { useAppDispatch, useAppSelector } from 'hooks';
 
 import Header from 'modules/Checks/components/Header/Header';
 import { formattedDateTime, getInstrumentIconIndicator } from 'modules/Checks/helpers';
-import { getFaceValueUnit, getStatusText } from 'modules/TradeOrder/helpers';
+import { LIMIT_ORDER_DENIED_REASON_HINTS_MAP } from 'modules/TradeOrder/components/consts';
+import { getFaceValueUnit, getHint, getStatusText } from 'modules/TradeOrder/helpers';
 import {
   formatOrderProductPortfolio,
   getIsLimitOrderBtnActive,
   getIsNewLimitOrder,
   getOrderCardVariant,
 } from 'modules/TradeOrderHistory/helpers/formatting';
+
+import { createAlertNotification } from 'components/Alert/createAlertNotification';
 
 import { OrderHistoryItem } from 'types/orders';
 
@@ -230231,6 +230670,7 @@ type Props = {
 
 const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const {
     instrumentImageName,
@@ -230261,6 +230701,8 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
     instrumentId,
     faceValue,
     secCode,
+    productId,
+    subAccountId,
   } = data;
 
   const { data: orderTrades } = useGetOrderTradesQuery({ orderNum, tradePlaceId });
@@ -230281,6 +230723,37 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
     isNewOrder ? cancelPermissionState : permissionState,
     tradePlaceId,
   );
+
+  const handleRepeatOrder = () => {
+    if (!isActive) {
+      const slugData = LIMIT_ORDER_DENIED_REASON_HINTS_MAP[deniedReason];
+      createAlertNotification({ text: getHint(hints?.hints, slugData) });
+      return;
+    }
+
+    orderType !== 'M' && dispatch(setPrice(price));
+    dispatch(setQuantity(quantity));
+    dispatch(setProductId(productId));
+    dispatch(setSubAccountId(subAccountId));
+
+    navigate(
+      generatePath(ROUTE_TRADE_ORDER, {
+        instrument: `${instrumentId}_${tradePlaceId}`,
+        direction: buySell === 'B' ? 'buy' : 'sell',
+      }),
+    );
+  };
+
+  const handleOrderCardBtnClick = () => {
+    if (onOrderButtonClick) {
+      onOrderButtonClick(data);
+      return;
+    }
+
+    if (!isNewOrder) {
+      handleRepeatOrder();
+    }
+  };
 
   if (type === 'performed' || type === 'error') {
     if (!(tradeSessionStatus === 'ACTIVE' && permissionState === 'GRANTED')) {
@@ -230323,7 +230796,7 @@ const OrderDetails: FC<Props> = ({ isOpen, data, onDismiss, onOrderButtonClick }
       footer={
         <Footer
           type={type}
-          onOrderCardBtnClick={() => onOrderButtonClick && onOrderButtonClick(data)}
+          onOrderCardBtnClick={handleOrderCardBtnClick}
           onReadyButtonClick={onDismiss}
           isBtnDisabled={!isActive}
           deniedReason={status}
@@ -231564,28 +232037,42 @@ type Props = {
 const NoStopOrders: FC<Props> = ({ title, instrumentId, tradePlaceId }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { data: instrumentInfo } = useGetInstrumentInfoQuery({
-    instrumentId,
-    tradePlaceId,
-    subscribe: false,
-    source: useInstrumentInfoQuerySourceParam(),
-  });
-  const { data: accounts } = useGetAccountsQuery({
-    instrumentId,
-    tradePlaceId,
-  });
-
-  const { data: instrumentInfoFlags, isSuccess: isInstrumentInfoFlagsSuccees } =
-    useGetInstrumentInfoFlagsQuery({
+  const source = useInstrumentInfoQuerySourceParam();
+  const skip = !Number.isFinite(Number(instrumentId)) || !Number.isFinite(Number(tradePlaceId));
+  const { data: instrumentInfo } = useGetInstrumentInfoQuery(
+    {
       instrumentId,
       tradePlaceId,
-    });
+      subscribe: false,
+      source,
+    },
+    { skip },
+  );
+  const { data: accounts } = useGetAccountsQuery(
+    {
+      instrumentId,
+      tradePlaceId,
+    },
+    { skip },
+  );
 
-  const { data: positionsByProduct } = useGetPositionsQuery({
-    datasets: 'PositionValuationByProduct',
-    instrumentId,
-    tradePlaceId,
-  });
+  const { data: instrumentInfoFlags, isSuccess: isInstrumentInfoFlagsSuccees } =
+    useGetInstrumentInfoFlagsQuery(
+      {
+        instrumentId,
+        tradePlaceId,
+      },
+      { skip },
+    );
+
+  const { data: positionsByProduct } = useGetPositionsQuery(
+    {
+      datasets: 'PositionValuationByProduct',
+      instrumentId,
+      tradePlaceId,
+    },
+    { skip },
+  );
 
   const positions =
     isInstrumentInfoFlagsSuccees && instrumentInfoFlags.instrumentInfoFlag[0].positions;
@@ -232250,7 +232737,7 @@ export const STOP_ORDER_DENIED_REASON_HINTS_MAP: HintsMapType = {
   StopOrderNotAvailable: {
     slug: 'STOP_ORDER_NOT_AVAILABLE',
     default:
-      'Торговая сессия уже завершена. Повторите попытку в будние дни с учётом времени работы площадки',
+      'Работа с условными заявками доступна только в терминале ИТС QUIK, либо через трейдера тел. 8 800 775-1945, доб. 3',
   },
   MT5TerminalConnected: {
     slug: 'ORDER_LIST_MT_FIVE_TERMINAL_CONNECTED',
@@ -244733,7 +245220,7 @@ export const MOCK_SECURITIES: MockSecurityOption[] = [
 /* колонка лейбла = ширина «Инструмент», чтобы левый край всех инпутов совпадал */
 .sideField.sideField {
   display: grid;
-  grid-template-columns: 100px 1fr;
+  grid-template-columns: 125px 1fr;
   column-gap: 28px;
   row-gap: 4px;
   align-items: center;
@@ -244905,7 +245392,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { NumberFormatValues } from 'react-number-format';
 import { useNavigate } from 'react-router-dom';
 
-import { BottomSheet, Button, Checkbox, CircleLoader, DatePicker, Input, SearchSelect, Text } from '@aurora/components';
+import {
+  BottomSheet,
+  Button,
+  Checkbox,
+  CircleLoader,
+  DatePicker,
+  Input,
+  SearchSelect,
+  Text,
+} from '@aurora/components';
 import { APP_TITLE, CDN_BASE_URL } from 'const/app';
 import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
 import { ROUTE_SECURITIES_WRITEOFF_ORDER, ROUTE_TRANSFERS } from 'const/routes';
@@ -244939,8 +245435,8 @@ import {
 import { HeaderPage } from 'components';
 import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
 
-import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
 import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
 
 import BlockedContent from '../../components/BlockedContent';
 import WriteOffFailed from '../SecuritiesWriteOffOrder/WriteOffFailed';
@@ -244964,7 +245460,7 @@ import {
 } from './writeOffStatus';
 
 const ACCOUNT_HINT = 'Счёт депо (депозитарий, номер договора)';
-const LATIN_DIGIT_RE = /[^A-Za-z0-9]/g;
+const LATIN_DIGIT_RE = /[^\dA-Za-z]/g;
 const EMPTY_NON_SBP: SecuritiesWriteOffNonSbpDetails = {
   contractorID: '',
   depoNumber: '',
@@ -244983,11 +245479,6 @@ const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
   { id: 'WITH_RIGHTS', value: 'С переходом прав' },
   { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
 ];
-const DATE_FIELD_TITLES: Record<'dealDate' | 'settlementDate' | 'contractDate', string> = {
-  dealDate: 'Выберите дату сделки',
-  settlementDate: 'Выберите дату расчётов',
-  contractDate: 'Выберите дату договора',
-};
 
 const sanitizeLatin = (value: string, max: number) =>
   value.replace(LATIN_DIGIT_RE, '').slice(0, max);
@@ -245000,6 +245491,8 @@ const parseFormDate = (value: string) => {
   const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
   return parsed.isValid ? parsed : null;
 };
+
+const toIsoDate = (value: string) => parseFormDate(value)?.toISODate() ?? null;
 
 const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
   contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
@@ -245632,7 +246125,7 @@ const SecuritiesWriteOff = () => {
     const quantity = toQuantityNumber(formPayload.quantity);
     const contractorId = Number(formPayload.contractor?.id);
     const sbp = formPayload.mode == null ? null : formPayload.mode.code === 'SBP';
-    const dealAmount = toQuantityNumber(nonSbp.dealAmount);
+    const volume = toQuantityNumber(nonSbp.dealAmount);
 
     return {
       depoInstrument_Id: formPayload.instrument?.depoInstrumentId ?? null,
@@ -245641,21 +246134,19 @@ const SecuritiesWriteOff = () => {
       contractor_Id: Number.isFinite(contractorId) ? contractorId : null,
       sbp,
       sendCosts: formPayload.transferExpensesInfo,
-      personalDataAgreement: true,
-      // ponytail: extra POST keys from the mockup; rename if backend contract differs
       ...(sbp === false
         ? {
+            contractorDepoAccount: nonSbp.depoNumber || null,
+            contractorDepoSection: nonSbp.depoDivision || null,
             contractorID: nonSbp.contractorID || null,
-            depoNumber: nonSbp.depoNumber || null,
-            depoDivision: nonSbp.depoDivision || null,
-            withRightsTransfer: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
-            supplierName: isWithRights ? nonSbp.supplierName || null : null,
-            dealAmount: isWithRights && dealAmount != null ? dealAmount : null,
-            dealDate: nonSbp.dealDate || null,
-            settlementDate: nonSbp.settlementDate || null,
+            contractorAgreementNum: nonSbp.contractNumber || null,
+            contractorAgreementDate: toIsoDate(nonSbp.contractDate),
+            changeOwnership: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
+            recipient: isWithRights ? nonSbp.supplierName || null : null,
+            dealDate: toIsoDate(nonSbp.dealDate),
+            settleDate: toIsoDate(nonSbp.settlementDate),
             reference: nonSbp.reference || null,
-            contractNumber: nonSbp.contractNumber || null,
-            contractDate: nonSbp.contractDate || null,
+            volume: isWithRights && volume != null ? volume : null,
             comment: nonSbp.comment || null,
           }
         : {}),
@@ -246037,8 +246528,7 @@ const SecuritiesWriteOff = () => {
             separatorActionCells={false}
             status={fieldErrors.contractor ? 'error' : null}
             description={
-              fieldErrors.contractor ??
-              (isNonSbpMode ? 'Наименование контрагента' : undefined)
+              fieldErrors.contractor ?? (isNonSbpMode ? 'Наименование контрагента' : undefined)
             }
             onChange={(event) => {
               clearFieldError('contractor');
@@ -246113,13 +246603,14 @@ const SecuritiesWriteOff = () => {
                 scale="small"
                 clearable
                 list={CREDIT_TYPE_OPTIONS}
-                value={CREDIT_TYPE_OPTIONS.find((item) => item.id === nonSbp.creditType)?.value ?? ''}
+                value={
+                  CREDIT_TYPE_OPTIONS.find((item) => item.id === nonSbp.creditType)?.value ?? ''
+                }
                 minChar={0}
                 emptyMessage="Ничего не найдено"
                 separatorActionCells={false}
                 status={fieldErrors.creditType ? 'error' : null}
                 description={fieldErrors.creditType}
-                onChange={() => undefined}
                 onClear={clearSearchSelect(() => {
                   clearFieldError('creditType');
                   patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
@@ -246133,46 +246624,49 @@ const SecuritiesWriteOff = () => {
                   });
                 }}
               />
-              <Input
-                label="Поставщик:"
-                className={`${styles.sideField} ${styles.fieldMax400}`}
-                classNameLabel={styles.sideFieldLabel}
-                classNameDescription={styles.fieldHint}
-                placeholder="ФИО поставщика ценных бумаг"
-                scale="small"
-                value={nonSbp.supplierName}
-                disabled={!isWithRights}
-                status={fieldErrors.supplierName ? 'error' : null}
-                description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
-                onChange={(event) => {
-                  clearFieldError('supplierName');
-                  patchNonSbp({ supplierName: event.target.value });
-                }}
-              />
+              {isWithRights && (
+                <Input
+                  label="Поставщик:"
+                  className={styles.sideField}
+                  classNameLabel={styles.sideFieldLabel}
+                  classNameDescription={styles.fieldHint}
+                  placeholder="ФИО поставщика ценных бумаг"
+                  scale="small"
+                  value={nonSbp.supplierName}
+                  status={fieldErrors.supplierName ? 'error' : null}
+                  description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
+                  onChange={(event) => {
+                    clearFieldError('supplierName');
+                    patchNonSbp({ supplierName: event.target.value });
+                  }}
+                />
+              )}
               <Text className={styles.sectionTitle}>Данные для зачисления</Text>
-              <Input
-                label="Сумма сделки:"
-                className={styles.sideField}
-                classNameLabel={styles.sideFieldLabel}
-                classNameDescription={styles.fieldHint}
-                placeholder="0"
-                scale="small"
-                variant="number"
-                precision={2}
-                decimalSeparator="."
-                allowedDecimalSeparators={['.', ',']}
-                thousandSeparator=""
-                disabled={!isWithRights}
-                status={fieldErrors.dealAmount ? 'error' : null}
-                description={
-                  fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
-                }
-                value={nonSbp.dealAmount}
-                onValueChange={(values) => {
-                  clearFieldError('dealAmount');
-                  patchNonSbp({ dealAmount: values.value ?? '' });
-                }}
-              />
+              {isWithRights && (
+                <Input
+                  label="Сумма сделки:"
+                  className={styles.sideField}
+                  classNameLabel={styles.sideFieldLabel}
+                  classNameDescription={styles.fieldHint}
+                  placeholder="0"
+                  scale="small"
+                  variant="number"
+                  precision={2}
+                  decimalSeparator="."
+                  allowedDecimalSeparators={['.', ',']}
+                  thousandSeparator=""
+                  status={fieldErrors.dealAmount ? 'error' : null}
+                  description={
+                    fieldErrors.dealAmount ??
+                    'Если зачисление производится на основании купли-продажи'
+                  }
+                  value={nonSbp.dealAmount}
+                  onValueChange={(values) => {
+                    clearFieldError('dealAmount');
+                    patchNonSbp({ dealAmount: values.value ?? '' });
+                  }}
+                />
+              )}
               <div onClick={() => setOpenDateField('dealDate')}>
                 <Input
                   label="Дата сделки:"
@@ -246183,11 +246677,11 @@ const SecuritiesWriteOff = () => {
                   scale="small"
                   value={nonSbp.dealDate}
                   addonAfter={<Calendar />}
+                  readOnly
                   status={fieldErrors.dealDate ? 'error' : null}
                   description={
                     fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
                   }
-                  onChange={() => undefined}
                 />
               </div>
               <div onClick={() => setOpenDateField('settlementDate')}>
@@ -246200,9 +246694,9 @@ const SecuritiesWriteOff = () => {
                   scale="small"
                   value={nonSbp.settlementDate}
                   addonAfter={<Calendar />}
+                  readOnly
                   status={fieldErrors.settlementDate ? 'error' : null}
                   description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
-                  onChange={() => undefined}
                 />
               </div>
               <Input
@@ -246245,11 +246739,11 @@ const SecuritiesWriteOff = () => {
                   scale="small"
                   value={nonSbp.contractDate}
                   addonAfter={<Calendar />}
+                  readOnly
                   status={fieldErrors.contractDate ? 'error' : null}
                   description={
                     fieldErrors.contractDate ?? 'Дата депозитарного договора с контрагентом'
                   }
-                  onChange={() => undefined}
                 />
               </div>
               <Text className={styles.sectionTitle}>Прочее</Text>
@@ -246312,7 +246806,6 @@ const SecuritiesWriteOff = () => {
         onDismiss={() => setOpenDateField(null)}
         onTouchMove={(event) => event.stopPropagation()}
       >
-        <Text type="subtitleBold">{openDateField ? DATE_FIELD_TITLES[openDateField] : ''}</Text>
         <DatePicker
           withPeriod={false}
           withOptions={false}
@@ -246482,17 +246975,25 @@ const FIELD_NAME_MAP: Record<string, WriteOffFormField> = {
   mode: 'mode',
   personaldataagreement: 'personalDataAgreement',
   contractorid: 'contractorID',
+  contractordepoaccount: 'depoNumber',
   deponumber: 'depoNumber',
+  contractordeposection: 'depoDivision',
   depodivision: 'depoDivision',
+  contractoragreementnum: 'contractNumber',
+  contractnumber: 'contractNumber',
+  contractoragreementdate: 'contractDate',
+  contractdate: 'contractDate',
+  changeownership: 'creditType',
   withrightstransfer: 'creditType',
   credittype: 'creditType',
+  recipient: 'supplierName',
   suppliername: 'supplierName',
+  volume: 'dealAmount',
   dealamount: 'dealAmount',
   dealdate: 'dealDate',
+  settledate: 'settlementDate',
   settlementdate: 'settlementDate',
   reference: 'reference',
-  contractnumber: 'contractNumber',
-  contractdate: 'contractDate',
   comment: 'comment',
 };
 
@@ -248775,7 +249276,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { NumberFormatValues } from 'react-number-format';
 import { useNavigate } from 'react-router-dom';
 
-import { AmountInput, BottomSheet, Button, Text } from '@aurora/components';
+import { AmountInput, Button, Text } from '@aurora/components';
 import { skipToken } from '@reduxjs/toolkit/dist/query';
 import { ROUTE_NEW_REQUISITE, ROUTE_TRANSFERS } from 'const/routes';
 import debounce from 'lodash/debounce';
@@ -248801,7 +249302,7 @@ import SelectProductsAndPortfolios from 'modules/Transfers/components/SelectProd
 import { MONEY_WITHDRAWAL_PAGE_TITLE } from 'modules/Transfers/constants';
 import ArrowNextIcon from 'modules/Transfers/pages/Refill/icons/ArrowNextIcon';
 
-import { DynamicText, HeaderPage, Option } from 'components';
+import { HeaderPage, Option } from 'components';
 import AddonBottom from 'components/AddonBottom';
 import ArrowUpIcon from 'components/icons/ArrowUpIcon';
 
@@ -248846,7 +249347,6 @@ const WithdrawalForm = () => {
   const [amountValue, setAmountValue] = useState<number | null>(null);
   const [amountInputFocused, setAmountInputFocused] = useState(false);
   const [bankSelectOpen, setSelectBankOpen] = useState(false);
-  const [amountInputHintOpen, setAmountInputHintOpen] = useState(false);
   //const [leverageModalOpened, setLeverageModalOpened] = useState(false);
   //const [firstLeverage, setFirstLeverage] = useState(false);
 
@@ -249121,10 +249621,6 @@ const WithdrawalForm = () => {
         }}
       >
         {sumFormatter(max)} {currencyCode ? currencySign(currencyCode) : ''}
-      </span>{' '}
-      •{' '}
-      <span className={styles.amountHintTooltip} onClick={() => setAmountInputHintOpen(true)}>
-        Почему меньше?
       </span>
     </div>
   ) : (
@@ -249133,7 +249629,7 @@ const WithdrawalForm = () => {
 
   const commissionTextComponent = commission ? (
     <div className={styles.commission}>
-      Комиссия{' '}
+      Из суммы вывода будет удержана комиссия{' '}
       <span className={styles.amountHintValue}>
         {sumFormatter(commission)} {currencyCode ? currencySign(currencyCode) : ''}
       </span>
@@ -249249,16 +249745,6 @@ const WithdrawalForm = () => {
                   <>
                     {amountTextComponent}
                     {commissionTextComponent}
-                    <BottomSheet
-                      open={amountInputHintOpen}
-                      onDismiss={() => setAmountInputHintOpen(false)}
-                    >
-                      <DynamicText
-                        className={styles.inputHintBottomSheet}
-                        type="bodyRegular"
-                        slug="TRANSFER_OUTPUT_BANK_ACCOUNT_AMOUNT"
-                      />
-                    </BottomSheet>
                   </>
                 )}
               </Text>
@@ -251544,18 +252030,17 @@ export type SecuritiesWriteOffRequestParams = {
   contractor_Id: number | null;
   sbp: boolean | null;
   sendCosts: boolean;
-  personalDataAgreement: boolean;
+  contractorDepoAccount?: string | null;
+  contractorDepoSection?: string | null;
   contractorID?: string | null;
-  depoNumber?: string | null;
-  depoDivision?: string | null;
-  withRightsTransfer?: boolean | null;
-  supplierName?: string | null;
-  dealAmount?: number | null;
+  contractorAgreementNum?: string | null;
+  contractorAgreementDate?: string | null;
+  changeOwnership?: boolean | null;
+  recipient?: string | null;
   dealDate?: string | null;
-  settlementDate?: string | null;
+  settleDate?: string | null;
   reference?: string | null;
-  contractNumber?: string | null;
-  contractDate?: string | null;
+  volume?: number | null;
   comment?: string | null;
 };
 
@@ -287602,9 +288087,10 @@ export interface EMailReport {
 export type ReportTypesWithParams = { [K in ReportTypeCode]: ReportParameter[] };
 
 export interface ReportHistoryFilters {
-  fromDate: string;
-  toDate: string;
+  fromDate?: string;
+  toDate?: string;
   reportTypeCode?: string;
+  offset?: number;
 }
 
 export interface ReportParameterData {
@@ -287615,6 +288101,10 @@ export interface ReportParameterData {
   subAccountId?: number;
   depoAccountId?: number;
   agreementId?: number;
+  instrumentId?: number;
+  instrumentName?: string;
+  isin?: string;
+  issuerName?: string;
   fromDate?: string;
   toDate?: string;
 }
@@ -287660,7 +288150,7 @@ export interface ReportsParametersResponse {
   reportProductParameters: ReportProductParameter[];
   reportDates: ReportDate[];
   reportDepoAccountParameters: ReportDepoAccountParameter[];
-  reportAvailableYears: any;
+  reportAvailableYears: unknown;
   reportAgreementParameters: ReportAgreementParameter[];
   eMail: EMailReport[];
 }
@@ -287679,17 +288169,34 @@ export interface CreateReportResponse {
 
 export type ReportStatus = 'new' | 'processing' | 'completed' | 'error';
 
-export interface ReportStatusResponse {
-  reportRequestStatus: {
-    status: ReportStatus;
-    statusName: string;
-  }[];
+export interface ReportFile {
+  fileId: number;
+  fileType?: string;
+  fileName: string;
+  downloadOnly?: boolean;
+  createTime: string;
 }
 
-export interface ReportFile {
-  createTime: string;
-  fileName: string;
-  fileId: number;
+export interface ReportStatusPayload {
+  requestGuid?: string;
+  status?: ReportStatus;
+  statusName?: string;
+  requestStatusCode?: ReportStatus;
+  requestStatusName?: string;
+  hasSign?: boolean;
+  multifile?: boolean;
+  fileList?: ReportFile[];
+  errorText?: string;
+  productName?: string;
+  portfolioName?: string;
+  agreementName?: string;
+  depoAccountName?: string;
+  instrumentName?: string;
+  year?: number;
+}
+
+export interface ReportStatusResponse {
+  reportRequestStatus: ReportStatusPayload[];
 }
 
 export interface ReportItem {
@@ -287699,17 +288206,21 @@ export interface ReportItem {
   reportTypeName: string;
   productName?: string;
   portfolioName?: string;
+  agreementName?: string;
+  depoAccountName?: string;
+  instrumentName?: string;
   fromDate?: string;
   toDate?: string;
+  date?: string;
   year?: number;
   requestStatusCode: ReportStatus;
   requestStatusName: string;
   requestStatusTime: string;
   hasResponse?: boolean;
-  downloadable?: boolean;
+  hasSign?: boolean;
+  multifile?: boolean;
+  errorText?: string;
   fileList?: ReportFile[];
-  depoAccountName?: string;
-  agreementName?: string;
 }
 
 export interface ReportHistoryResponse {
