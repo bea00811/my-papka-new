@@ -1,0 +1,19 @@
+diff --git a/src/hooks/useSequentialFileUpload.ts b/src/hooks/useSequentialFileUpload.ts
+--- a/src/hooks/useSequentialFileUpload.ts
++++ b/src/hooks/useSequentialFileUpload.ts
+@@ -152,6 +152,7 @@
+         setFileStatuses([...nextStatuses]);
+         notifyUploadError(error);
+         setIsUploading(false);
++        setIsLocked(false);
+         return;
+       }
+ 
+@@ -166,6 +167,7 @@
+     } catch (error) {
+       setHasCompleteError(true);
+       notifyUploadError(error);
++      setIsLocked(false);
+     }
+   }, [fileStatuses, files, isUploading, onComplete, uploadFile]);
+ 
