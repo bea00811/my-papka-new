@@ -109,71 +109,6 @@ diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Tra
  export type SecuritiesWriteOffResponse = {
    checkResult?: Array<{
      field?: string;
-diff --git a/src/const/files.ts b/src/const/files.ts
---- a/src/const/files.ts
-+++ b/src/const/files.ts
-@@ -1,7 +1,19 @@
- export const FILE_EXT_ACCEPT = '.jpg, .jpeg, .png, .pdf';
- export const FILE_EXT_ACCEPT_ARRAY = ['.pdf', '.jpg', '.jpeg', '.png'];
-+export const WRITEOFF_FILE_EXT_ACCEPT = '.jpg, .jpeg, .png, .pdf, .doc, .docx, .xls, .xlsx';
-+export const WRITEOFF_FILE_EXT_ACCEPT_ARRAY = [
-+  '.jpg',
-+  '.jpeg',
-+  '.png',
-+  '.pdf',
-+  '.doc',
-+  '.docx',
-+  '.xls',
-+  '.xlsx',
-+];
- export const MAX_FILE_UPLOAD_SIZE_BYTES = 8_000_000;
- export const MAX_UPLOAD_FILES_COUNT = 3;
-+export const WRITEOFF_MAX_UPLOAD_FILES_COUNT = 3;
- export const FILE_SIZE_ERROR_MSG = 'Максимальный размер одного файла — 8 Мб';
- export const FILE_COUNT_ERROR_MSG = 'Можно загрузить не более 3 файлов';
- export const FILE_UPLOAD_INFO_TEXT =
-@@ -15,12 +27,20 @@
- export const filterValidUploadFiles = (
-   files: File[],
-   existingFiles: File[] = [],
-+  options?: {
-+    acceptExtensions?: string[];
-+    maxFilesCount?: number;
-+    maxFileSizeBytes?: number;
-+  },
- ): {
-   validFiles: File[];
-   hasSizeError: boolean;
-   hasFormatError: boolean;
-   hasCountError: boolean;
- } => {
-+  const acceptExtensions = options?.acceptExtensions ?? FILE_EXT_ACCEPT_ARRAY;
-+  const maxFilesCount = options?.maxFilesCount ?? MAX_UPLOAD_FILES_COUNT;
-+  const maxFileSizeBytes = options?.maxFileSizeBytes ?? MAX_FILE_UPLOAD_SIZE_BYTES;
-   let filesCount = existingFiles.length;
-   let hasSizeError = false;
-   let hasFormatError = false;
-@@ -30,17 +50,17 @@
-   files.forEach((file) => {
-     const fileExtension = getFileExtension(file.name);
- 
--    if (!FILE_EXT_ACCEPT_ARRAY.includes(fileExtension)) {
-+    if (!acceptExtensions.includes(fileExtension)) {
-       hasFormatError = true;
-       return;
-     }
- 
--    if (file.size > MAX_FILE_UPLOAD_SIZE_BYTES) {
-+    if (file.size > maxFileSizeBytes) {
-       hasSizeError = true;
-       return;
-     }
- 
--    if (filesCount >= MAX_UPLOAD_FILES_COUNT) {
-+    if (filesCount >= maxFilesCount) {
-       hasCountError = true;
-       return;
-     }
 diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 --- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
 +++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
@@ -562,23 +497,86 @@ diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.t
            <Checkbox
              className={styles.expensesCheckbox}
              classNameLabel={styles.expensesCheckboxLabel}
+diff --git a/src/const/writeoffFiles.ts b/src/const/writeoffFiles.ts
+new file mode 100644
+--- /dev/null
++++ b/src/const/writeoffFiles.ts
+@@ -0,0 +1,59 @@
++export const WRITEOFF_FILE_EXT_ACCEPT = '.jpg, .jpeg, .png, .pdf, .doc, .docx, .xls, .xlsx';
++export const WRITEOFF_FILE_EXT_ACCEPT_ARRAY = [
++  '.jpg',
++  '.jpeg',
++  '.png',
++  '.pdf',
++  '.doc',
++  '.docx',
++  '.xls',
++  '.xlsx',
++];
++export const WRITEOFF_MAX_UPLOAD_FILES_COUNT = 3;
++export const WRITEOFF_MAX_FILE_UPLOAD_SIZE_BYTES = 8_000_000;
++export const WRITEOFF_FILE_SIZE_ERROR_MSG = 'Максимальный размер одного файла — 8 Мб';
++export const WRITEOFF_FILE_COUNT_ERROR_MSG = 'Можно загрузить не более 3 файлов';
++export const WRITEOFF_FILE_FORMAT_ERROR_MSG = 'Неверный формат файла';
++
++export const getWriteOffFileExtension = (fileName: string) =>
++  `.${fileName.split('.').pop()?.toLowerCase() ?? ''}`;
++
++export const filterValidWriteOffUploadFiles = (
++  files: File[],
++  existingFiles: File[] = [],
++): {
++  validFiles: File[];
++  hasSizeError: boolean;
++  hasFormatError: boolean;
++  hasCountError: boolean;
++} => {
++  let filesCount = existingFiles.length;
++  let hasSizeError = false;
++  let hasFormatError = false;
++  let hasCountError = false;
++  const validFiles: File[] = [];
++
++  files.forEach((file) => {
++    const fileExtension = getWriteOffFileExtension(file.name);
++
++    if (!WRITEOFF_FILE_EXT_ACCEPT_ARRAY.includes(fileExtension)) {
++      hasFormatError = true;
++      return;
++    }
++
++    if (file.size > WRITEOFF_MAX_FILE_UPLOAD_SIZE_BYTES) {
++      hasSizeError = true;
++      return;
++    }
++
++    if (filesCount >= WRITEOFF_MAX_UPLOAD_FILES_COUNT) {
++      hasCountError = true;
++      return;
++    }
++
++    filesCount += 1;
++    validFiles.push(file);
++  });
++
++  return { validFiles, hasSizeError, hasFormatError, hasCountError };
++};
 diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
 new file mode 100644
 --- /dev/null
 +++ b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,127 @@
 +import React, { useCallback, useRef, useState } from 'react';
 +
 +import { BottomSheet, Button, FileUploader, Text } from '@aurora/components';
 +import {
-+  FILE_COUNT_ERROR_MSG,
-+  FILE_FORMAT_ERROR_MSG,
-+  FILE_SIZE_ERROR_MSG,
++  WRITEOFF_FILE_COUNT_ERROR_MSG,
 +  WRITEOFF_FILE_EXT_ACCEPT,
-+  WRITEOFF_FILE_EXT_ACCEPT_ARRAY,
++  WRITEOFF_FILE_FORMAT_ERROR_MSG,
++  WRITEOFF_FILE_SIZE_ERROR_MSG,
 +  WRITEOFF_MAX_UPLOAD_FILES_COUNT,
-+  filterValidUploadFiles,
-+} from 'const/files';
++  filterValidWriteOffUploadFiles,
++} from 'const/writeoffFiles';
 +
 +import { createAlertNotification } from 'components';
 +
@@ -613,27 +611,25 @@ new file mode 100644
 +
 +  const onValidateFiles = useCallback(
 +    async (incomingFiles: File[]) => {
-+      const { validFiles, hasSizeError, hasFormatError, hasCountError } = filterValidUploadFiles(
-+        incomingFiles,
-+        files,
-+        {
-+          acceptExtensions: WRITEOFF_FILE_EXT_ACCEPT_ARRAY,
-+          maxFilesCount: WRITEOFF_MAX_UPLOAD_FILES_COUNT,
-+        },
-+      );
++      const { validFiles, hasSizeError, hasFormatError, hasCountError } =
++        filterValidWriteOffUploadFiles(incomingFiles, files);
 +
 +      if (incomingFiles.length > 0 && validFiles.length === 0) {
 +        validationRejectedRef.current = true;
 +      }
 +
 +      if (hasSizeError) {
-+        createAlertNotification({ text: FILE_SIZE_ERROR_MSG, ms: 3000, status: 'error' });
++        createAlertNotification({ text: WRITEOFF_FILE_SIZE_ERROR_MSG, ms: 3000, status: 'error' });
 +      }
 +      if (hasCountError) {
-+        createAlertNotification({ text: FILE_COUNT_ERROR_MSG, ms: 3000, status: 'error' });
++        createAlertNotification({ text: WRITEOFF_FILE_COUNT_ERROR_MSG, ms: 3000, status: 'error' });
 +      }
 +      if (hasFormatError) {
-+        createAlertNotification({ text: FILE_FORMAT_ERROR_MSG, ms: 3000, status: 'error' });
++        createAlertNotification({
++          text: WRITEOFF_FILE_FORMAT_ERROR_MSG,
++          ms: 3000,
++          status: 'error',
++        });
 +      }
 +
 +      return validFiles;
