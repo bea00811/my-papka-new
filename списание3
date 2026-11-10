@@ -1,0 +1,34 @@
+GET /v1/nontrade/securities/writeoff/file
+Параметры запроса
+*	JSESSIONID	Header/Cookie	TOKEN	Идентификатор сессии.
+*	requestGuid	Query	GUID	
+GUID заявки
+
+*	fileType	Query	String	
+Тип документа
+
+
+download	Query	Boolean	Скачать/просмотреть файл (по умолчанию просмотреть)
+Ответ
+Файл
+
+Право для проверки
+нет
+
+Возможные коды ошибок
+SessionTokenNotSpecified	Не указан токен сессии
+SessionClosed	Сессия была закрыта
+NoSession	Отсутствует сессия
+RequestNotFound	Не найден запрос
+RequestGuidNotSpecified	Не указан GUID запроса
+Пример запроса
+Запрос
+GET /v1/nontrade/securities/writeoff/file?requestGuid=BB50614A-929D-427A-9BCD-3186CF56BC93&fileType=assignment
+DataApi
+05. Списание ЦБ. Получение файла. DataAPI
+
+
+НравитсяСтаньте первыми кому понравится это
+Нет метокРедактировать метки
+Иконка пользователя: Добавить свою фотографию
+Написать комментарий...
