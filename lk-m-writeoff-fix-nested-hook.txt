@@ -1,0 +1,113 @@
+$ErrorActionPreference = "Stop"
+Write-Host "SCRIPT VERSION: fix-hooks-v1"
+$path = "src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx"
+$c = [IO.File]::ReadAllText($path)
+$nl = if ($c.Contains("`r`n")) { "`r`n" } else { "`n" }
+
+# Detect broken pattern: useEffect started for contractor check, then another useEffect spliced in
+if ($c -notmatch "(?s)if \(!selectedContractor \|\| contractors\.length === 0\) \{\s*return;\s*\}\s*useEffect\(") {
+  if ($c -match "(?s)if \(!selectedContractor \|\| contractors\.length === 0\) \{\s*return;\s*\}\s*const isSelectedContractorAvailable") {
+    Write-Host "OK already: contractor useEffect is intact"
+  } else {
+    throw "Unexpected SecuritiesWriteOff.tsx structure around contractor useEffect"
+  }
+} else {
+  $broken = @'
+  useEffect(() => {
+    if (!selectedContractor || contractors.length === 0) {
+      return;
+    }
+useEffect(() => {
+  if (isNonSbpMode) {
+return;
+  }
+  if (attachmentFiles.length === 0 && draftRequestGuid == null) {
+return;
+  }
+  setAttachmentFiles([]);
+  setAttachmentStatuses([]);
+  setDraftRequestGuid(null);
+}, [attachmentFiles.length, draftRequestGuid, isNonSbpMode]);
+
+
+    const isSelectedContractorAvailable = contractors.some(
+      (contractor) =>
+        (selectedContractor.id != null && contractor.id === selectedContractor.id) ||
+        contractor.name === selectedContractor.name,
+    );
+
+
+    if (!isSelectedContractorAvailable) {
+      selectContractor(null);
+    }
+  }, [contractors, selectedContractor]);
+'@
+
+  $fixed = @'
+  useEffect(() => {
+    if (!selectedContractor || contractors.length === 0) {
+      return;
+    }
+
+    const isSelectedContractorAvailable = contractors.some(
+      (contractor) =>
+        (selectedContractor.id != null && contractor.id === selectedContractor.id) ||
+        contractor.name === selectedContractor.name,
+    );
+
+    if (!isSelectedContractorAvailable) {
+      selectContractor(null);
+    }
+  }, [contractors, selectedContractor]);
+
+  useEffect(() => {
+    if (isNonSbpMode) {
+      return;
+    }
+
+    if (attachmentFiles.length === 0 && draftRequestGuid == null) {
+      return;
+    }
+
+    setAttachmentFiles([]);
+    setAttachmentStatuses([]);
+    setDraftRequestGuid(null);
+  }, [attachmentFiles.length, draftRequestGuid, isNonSbpMode]);
+'@
+
+  # Normalize to file newlines
+  $brokenN = ($broken -replace "`r`n", "`n") -replace "`n", $nl
+  $fixedN = ($fixed -replace "`r`n", "`n") -replace "`n", $nl
+
+  # Also try with the exact weird indentation from the uploaded file (double blank lines etc)
+  # Use regex replace for robustness
+  $pattern = '(?s)  useEffect\(\(\) => \{\s*if \(!selectedContractor \|\| contractors\.length === 0\) \{\s*return;\s*\}\s*useEffect\(\(\) => \{\s*if \(isNonSbpMode\) \{\s*return;\s*\}\s*if \(attachmentFiles\.length === 0 && draftRequestGuid == null\) \{\s*return;\s*\}\s*setAttachmentFiles\(\[\]\);\s*setAttachmentStatuses\(\[\]\);\s*setDraftRequestGuid\(null\);\s*\}, \[attachmentFiles\.length, draftRequestGuid, isNonSbpMode\]\);\s*const isSelectedContractorAvailable = contractors\.some\(\s*\(contractor\) =>\s*\(selectedContractor\.id != null && contractor\.id === selectedContractor\.id\) \|\|\s*contractor\.name === selectedContractor\.name,\s*\);\s*if \(!isSelectedContractorAvailable\) \{\s*selectContractor\(null\);\s*\}\s*\}, \[contractors, selectedContractor\]\);'
+
+  if ($c -match $pattern) {
+    $c = [regex]::Replace($c, $pattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $fixedN.TrimEnd() }, 1)
+    Write-Host "OK fixed via regex: nested useEffect unwrapped"
+  } elseif ($c.Contains($brokenN)) {
+    $c = $c.Replace($brokenN, $fixedN)
+    Write-Host "OK fixed via exact replace"
+  } else {
+    # dump nearby for debug
+    $idx = $c.IndexOf("if (!selectedContractor || contractors.length === 0)")
+    if ($idx -ge 0) {
+      Write-Host "DEBUG snippet:"
+      Write-Host $c.Substring([Math]::Max(0,$idx-40), [Math]::Min(500, $c.Length - [Math]::Max(0,$idx-40)))
+    }
+    throw "Broken nested useEffect pattern not matched exactly"
+  }
+
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  [IO.File]::WriteAllText((Resolve-Path $path), $c, $utf8)
+}
+
+# Verify no nested useEffect after contractor guard
+if ($c -match "(?s)if \(!selectedContractor \|\| contractors\.length === 0\) \{\s*return;\s*\}\s*useEffect\(") {
+  throw "VERIFY FAIL: nested useEffect still present"
+}
+if ($c -notmatch "(?s)if \(!selectedContractor \|\| contractors\.length === 0\) \{\s*return;\s*\}\s*const isSelectedContractorAvailable") {
+  throw "VERIFY FAIL: contractor availability block missing"
+}
+Write-Host "ALL OK: contractor hook fixed"
