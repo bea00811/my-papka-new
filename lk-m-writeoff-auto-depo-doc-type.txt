@@ -1,0 +1,47 @@
+$ErrorActionPreference = "Stop"
+Write-Host "SCRIPT VERSION: auto-depo-doc-v1"
+$path = "src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx"
+$c = [IO.File]::ReadAllText($path)
+$nl = if ($c.Contains("`r`n")) { "`r`n" } else { "`n" }
+
+if ($c -match "Депозитарный договор" -and $c -match "WITHOUT_RIGHTS' \|\| nonSbp\.docTypeId") {
+  Write-Host "SKIP already: auto-select Депозитарный договор"
+} else {
+  $anchor = "  }, [needDocTypeOther, nonSbp.docTypeOther]);"
+  if (-not $c.Contains($anchor)) { throw "FAIL: needDocTypeOther effect anchor not found" }
+
+  $effect = @"
+  }, [needDocTypeOther, nonSbp.docTypeOther]);
+
+  useEffect(() => {
+    if (nonSbp.creditType !== 'WITHOUT_RIGHTS' || nonSbp.docTypeId || docTypes.length === 0) {
+      return;
+    }
+
+    const preferred =
+      docTypes.find((item) => item.name === 'Депозитарный договор') ??
+      (docTypes.length === 1 ? docTypes[0] : null);
+
+    if (!preferred) {
+      return;
+    }
+
+    clearFieldError('docTypeId');
+    patchNonSbp({
+      docTypeId: preferred.id,
+      docTypeOther: preferred.needComment ? nonSbp.docTypeOther : '',
+    });
+  }, [docTypes, nonSbp.creditType, nonSbp.docTypeId, nonSbp.docTypeOther]);
+"@
+  $effectN = ($effect -replace "`n", $nl)
+  # Replace only first occurrence of anchor with anchor+effect (effect already starts with anchor)
+  $idx = $c.IndexOf($anchor)
+  if ($idx -lt 0) { throw "FAIL: anchor index" }
+  $c = $c.Substring(0, $idx) + $effectN + $c.Substring($idx + $anchor.Length)
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  [IO.File]::WriteAllText((Resolve-Path $path), $c, $utf8)
+  Write-Host "OK: auto-select Депозитарный договор on WITHOUT_RIGHTS"
+}
+
+if ($c -notmatch "Депозитарный договор") { throw "VERIFY FAIL" }
+Write-Host "ALL OK"
