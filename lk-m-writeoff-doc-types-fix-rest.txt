@@ -1,0 +1,389 @@
+$ErrorActionPreference = "Stop"
+function Get-NL([string]$c) { if ($c.Contains("`r`n")) { "`r`n" } else { "`n" } }
+function Ensure-Replace([string]$c, [string]$oldCRLF, [string]$newCRLF, [string]$label) {
+  if ($c.Contains($newCRLF.Replace("`r`n","`n")) -or $c.Contains($newCRLF)) {
+    Write-Host "SKIP already: $label"
+    return $c
+  }
+  $nl = Get-NL $c
+  $old = $oldCRLF -replace "`r`n", $nl
+  $new = $newCRLF -replace "`r`n", $nl
+  if (-not $c.Contains($old)) {
+    throw "FAIL marker not found: $label"
+  }
+  Write-Host "OK replace: $label"
+  return $c.Replace($old, $new)
+}
+function Write-FileUtf8([string]$path, [string]$c) {
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  [IO.File]::WriteAllText((Resolve-Path $path), $c, $utf8)
+}
+
+Write-Host "=== apiConstants.ts ==="
+$p = "src/core/api/apiConstants.ts"
+$c = [IO.File]::ReadAllText($p)
+if ($c -match "API_REQUEST_SECURITIES_DOC_TYPES") {
+  Write-Host "SKIP already: apiConstants DOC_TYPES"
+} else {
+  $c = Ensure-Replace $c `
+    "export const API_REQUEST_SECURITIES_CONTRACTORS =" `
+    ("export const API_REQUEST_SECURITIES_DOC_TYPES =" + (Get-NL $c) + "  API_REQUEST_URL + '/nontrade/securities/doc_types';" + (Get-NL $c) + "export const API_REQUEST_SECURITIES_CONTRACTORS =") `
+    "apiConstants DOC_TYPES"
+  Write-FileUtf8 $p $c
+}
+
+Write-Host "=== securitiesWriteOff.ts ==="
+$p = "src/modules/Transfers/types/securitiesWriteOff.ts"
+$c = [IO.File]::ReadAllText($p)
+$nl = Get-NL $c
+if ($c -notmatch "docTypeId") {
+  $c = Ensure-Replace $c `
+    ("  reference: string;" + $nl + "  contractNumber: string;") `
+    ("  reference: string;" + $nl + "  docTypeId: number | null;" + $nl + "  docTypeOther: string;" + $nl + "  contractNumber: string;") `
+    "types docType fields"
+}
+if ($c -notmatch "SecuritiesDepoDocType") {
+  $block = @"
+export type SecuritiesDepoDocType = {
+  id: number;
+  name: string;
+  changeOwnership?: boolean | null;
+  needComment: boolean;
+};
+
+export type SecuritiesDocTypesRequestParams = {
+  changeOwnership?: boolean;
+};
+
+export type SecuritiesDocTypesResponse = {
+  depoDocTypes?: SecuritiesDepoDocType[];
+};
+
+"@
+  $block = $block -replace "`n", $nl
+  $marker = "export type SecuritiesContractorsRequestParams"
+  if ($c -notmatch [regex]::Escape($marker)) { throw "FAIL: SecuritiesContractorsRequestParams not found" }
+  $c = $c.Replace($marker, $block + $marker)
+  Write-Host "OK insert: SecuritiesDepoDocType block"
+}
+if ($c -notmatch "depoDocType_Id") {
+  if ($c -match ("noCommit\?: boolean;" + [regex]::Escape($nl))) {
+    $c = Ensure-Replace $c `
+      ("  noCommit?: boolean;" + $nl + "  contractorDepoAccount") `
+      ("  noCommit?: boolean;" + $nl + "  depoDocType_Id?: number | null;" + $nl + "  depoDocTypeOther?: string | null;" + $nl + "  contractorDepoAccount") `
+      "types depoDocType request fields"
+  } else {
+    $c = Ensure-Replace $c `
+      ("  sendCosts: boolean;" + $nl + "  contractorDepoAccount") `
+      ("  sendCosts: boolean;" + $nl + "  depoDocType_Id?: number | null;" + $nl + "  depoDocTypeOther?: string | null;" + $nl + "  contractorDepoAccount") `
+      "types depoDocType request fields (no noCommit)"
+  }
+}
+Write-FileUtf8 $p $c
+
+Write-Host "=== writeOffCheckResult.ts ==="
+$p = "src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts"
+$c = [IO.File]::ReadAllText($p)
+$nl = Get-NL $c
+if ($c -notmatch "'docTypeId'") {
+  $c = Ensure-Replace $c `
+    ("  | 'reference'" + $nl + "  | 'contractNumber'") `
+    ("  | 'reference'" + $nl + "  | 'docTypeId'" + $nl + "  | 'docTypeOther'" + $nl + "  | 'contractNumber'") `
+    "checkResult field union"
+}
+if ($c -notmatch "depodoctype_id") {
+  $c = Ensure-Replace $c `
+    ("  reference: 'reference'," + $nl + "  comment: 'comment',") `
+    ("  reference: 'reference'," + $nl + "  depodoctype_id: 'docTypeId'," + $nl + "  depodoctype: 'docTypeId'," + $nl + "  doctypeid: 'docTypeId'," + $nl + "  depodoctypeother: 'docTypeOther'," + $nl + "  doctypeother: 'docTypeOther'," + $nl + "  comment: 'comment',") `
+    "checkResult field map"
+}
+Write-FileUtf8 $p $c
+
+Write-Host "=== SecuritiesWriteOff.tsx ==="
+$p = "src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx"
+$c = [IO.File]::ReadAllText($p)
+$nl = Get-NL $c
+
+if ($c -notmatch "useGetSecuritiesDocTypesQuery") {
+  $c = Ensure-Replace $c `
+    ("  useGetSecuritiesContractorsQuery," + $nl + "  useGetSecuritiesWriteOffParamsQuery,") `
+    ("  useGetSecuritiesContractorsQuery," + $nl + "  useGetSecuritiesDocTypesQuery," + $nl + "  useGetSecuritiesWriteOffParamsQuery,") `
+    "SW import doc types query"
+}
+
+if ($c -notmatch "docTypeId: null") {
+  $c = Ensure-Replace $c `
+    ("  reference: ''," + $nl + "  contractNumber: '',") `
+    ("  reference: ''," + $nl + "  docTypeId: null," + $nl + "  docTypeOther: ''," + $nl + "  contractNumber: '',") `
+    "SW empty nonSbp docType fields"
+}
+
+if ($c -notmatch "docTypesChangeOwnership") {
+  $old = "  const isWithRights = nonSbp.creditType === 'WITH_RIGHTS';" + $nl + "  const {" + $nl + "    data: contractorsData,"
+  $new = @"
+  const isWithRights = nonSbp.creditType === 'WITH_RIGHTS';
+  const docTypesChangeOwnership =
+    nonSbp.creditType === 'WITH_RIGHTS'
+      ? true
+      : nonSbp.creditType === 'WITHOUT_RIGHTS'
+        ? false
+        : undefined;
+  const {
+    data: docTypesData,
+    isLoading: isDocTypesLoading,
+    isFetching: isDocTypesFetching,
+  } = useGetSecuritiesDocTypesQuery(
+    docTypesChangeOwnership === undefined
+      ? undefined
+      : { changeOwnership: docTypesChangeOwnership },
+    {
+      skip: !isNonSbpMode,
+      refetchOnMountOrArgChange: true,
+    },
+  );
+  const docTypes = docTypesData ?? [];
+  const {
+    data: contractorsData,
+"@
+  $c = Ensure-Replace $c $old ($new -replace "`n", $nl) "SW docTypes query"
+}
+
+if ($c -notmatch "needDocTypeOther") {
+  $old = "  const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {" + $nl + "    setNonSbp((prev) => ({ ...prev, ...patch }));" + $nl + "  };" + $nl + $nl + "  const selectInstrument"
+  # try with single newline too
+  $new = @"
+  const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {
+    setNonSbp((prev) => ({ ...prev, ...patch }));
+  };
+
+  const docTypeOptions = useMemo(
+    () =>
+      docTypes.map((item) => ({
+        id: item.id,
+        value: item.name,
+      })),
+    [docTypes],
+  );
+  const selectedDocType = useMemo(
+    () => docTypes.find((item) => item.id === nonSbp.docTypeId) ?? null,
+    [docTypes, nonSbp.docTypeId],
+  );
+  const needDocTypeOther = Boolean(selectedDocType?.needComment);
+
+  useEffect(() => {
+    if (!nonSbp.docTypeId) {
+      return;
+    }
+
+    if (docTypes.some((item) => item.id === nonSbp.docTypeId)) {
+      return;
+    }
+
+    patchNonSbp({ docTypeId: null, docTypeOther: '' });
+  }, [docTypes, nonSbp.docTypeId]);
+
+  useEffect(() => {
+    if (needDocTypeOther || !nonSbp.docTypeOther) {
+      return;
+    }
+
+    patchNonSbp({ docTypeOther: '' });
+  }, [needDocTypeOther, nonSbp.docTypeOther]);
+
+  const selectInstrument
+"@
+  $old2 = "  const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {" + $nl + "    setNonSbp((prev) => ({ ...prev, ...patch }));" + $nl + "  };" + $nl + $nl + $nl + "  const selectInstrument"
+  $newN = $new -replace "`n", $nl
+  if ($c.Contains($old)) {
+    $c = $c.Replace($old, $newN)
+    Write-Host "OK replace: SW docType options/effects"
+  } elseif ($c.Contains($old2)) {
+    $c = $c.Replace($old2, $newN)
+    Write-Host "OK replace: SW docType options/effects (dbl blank)"
+  } else {
+    # looser: just after patchNonSbp closing
+    $marker = "  const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {"
+    if ($c -notmatch [regex]::Escape($marker)) { throw "FAIL marker not found: SW docType options/effects" }
+    $insert = @"
+  const docTypeOptions = useMemo(
+    () =>
+      docTypes.map((item) => ({
+        id: item.id,
+        value: item.name,
+      })),
+    [docTypes],
+  );
+  const selectedDocType = useMemo(
+    () => docTypes.find((item) => item.id === nonSbp.docTypeId) ?? null,
+    [docTypes, nonSbp.docTypeId],
+  );
+  const needDocTypeOther = Boolean(selectedDocType?.needComment);
+
+  useEffect(() => {
+    if (!nonSbp.docTypeId) {
+      return;
+    }
+
+    if (docTypes.some((item) => item.id === nonSbp.docTypeId)) {
+      return;
+    }
+
+    patchNonSbp({ docTypeId: null, docTypeOther: '' });
+  }, [docTypes, nonSbp.docTypeId]);
+
+  useEffect(() => {
+    if (needDocTypeOther || !nonSbp.docTypeOther) {
+      return;
+    }
+
+    patchNonSbp({ docTypeOther: '' });
+  }, [needDocTypeOther, nonSbp.docTypeOther]);
+
+"@
+    $c = $c.Replace($marker, ($insert -replace "`n", $nl) + $marker)
+    Write-Host "OK insert before selectInstrument: SW docType options/effects"
+  }
+}
+
+if ($c -notmatch "Выберите тип документа") {
+  $old = "    const errors: WriteOffFieldErrors = {};" + $nl + "    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {"
+  $new = @"
+    const errors: WriteOffFieldErrors = {};
+    if (!nonSbp.docTypeId) {
+      errors.docTypeId = 'Выберите тип документа';
+    }
+    if (
+      docTypes.find((item) => item.id === nonSbp.docTypeId)?.needComment &&
+      !nonSbp.docTypeOther.trim()
+    ) {
+      errors.docTypeOther = 'Укажите иной тип документа';
+    }
+    if (nonSbp.docTypeOther.length > 50) {
+      errors.docTypeOther = 'Не более 50 символов';
+    }
+    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {
+"@
+  $c = Ensure-Replace $c $old ($new -replace "`n", $nl) "SW validation docType"
+}
+
+if ($c -notmatch "depoDocType_Id") {
+  $old = "            reference: nonSbp.reference || null," + $nl + "            volume:"
+  $new = "            reference: nonSbp.reference || null," + $nl + "            depoDocType_Id: nonSbp.docTypeId," + $nl + "            depoDocTypeOther: needDocTypeOther ? nonSbp.docTypeOther || null : null," + $nl + "            volume:"
+  $c = Ensure-Replace $c $old $new "SW request depoDocType fields"
+}
+
+# creditType clear/select resets
+if ($c -match "patchNonSbp\(\{ creditType: '', supplierName: '', dealAmount: '' \}\)" -and $c -notmatch "dealAmount: '', docTypeId: null") {
+  $c = $c.Replace(
+    "patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' })",
+    "patchNonSbp({ creditType: '', supplierName: '', dealAmount: '', docTypeId: null, docTypeOther: '' })")
+  Write-Host "OK replace: SW creditType clear resets docType"
+}
+if ($c -notmatch "clearFieldError\('docTypeId'\)") {
+  $old = "                  const creditType = item.id as WriteOffCreditType;" + $nl + "                  clearFieldError('creditType');" + $nl + "                  patchNonSbp({" + $nl + "                    creditType," + $nl + "                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' })," + $nl + "                  });"
+  $new = @"
+                  const creditType = item.id as WriteOffCreditType;
+                  clearFieldError('creditType');
+                  clearFieldError('docTypeId');
+                  clearFieldError('docTypeOther');
+                  patchNonSbp({
+                    creditType,
+                    docTypeId: null,
+                    docTypeOther: '',
+                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
+                  });
+"@
+  $c = Ensure-Replace $c $old ($new.TrimEnd() -replace "`n", $nl) "SW creditType select resets docType"
+}
+
+if ($c -notmatch "Тип документа:") {
+  $old = "              <Text className={styles.sectionTitle}>Основание для зачисления</Text>" + $nl + "              <Input" + $nl + "                label=`"Номер договора:`""
+  $ui = @"
+              <Text className={styles.sectionTitle}>Основание для зачисления</Text>
+              <SearchSelect
+                label="Тип документа:"
+                className={styles.sideField}
+                classNameLabel={styles.sideFieldLabel}
+                classNamePopover={styles.searchSelectPopover}
+                classNameContent={styles.searchSelectDropdown}
+                classNameDescription={styles.fieldHint}
+                placeholder="Тип документа"
+                scale="small"
+                clearable
+                list={docTypeOptions}
+                value={selectedDocType?.name ?? ''}
+                emptyMessage={
+                  isDocTypesLoading || isDocTypesFetching ? 'Загрузка...' : 'Ничего не найдено'
+                }
+                separatorActionCells={false}
+                status={fieldErrors.docTypeId ? 'error' : null}
+                description={fieldErrors.docTypeId}
+                onClear={clearSearchSelect(() => {
+                  clearFieldError('docTypeId');
+                  clearFieldError('docTypeOther');
+                  patchNonSbp({ docTypeId: null, docTypeOther: '' });
+                })}
+                onSelect={(item) => {
+                  clearFieldError('docTypeId');
+                  clearFieldError('docTypeOther');
+                  const selected =
+                    docTypes.find((docType) => docType.id === item.id || docType.name === item.value) ??
+                    null;
+                  patchNonSbp({
+                    docTypeId: selected?.id ?? null,
+                    docTypeOther: selected?.needComment ? nonSbp.docTypeOther : '',
+                  });
+                }}
+              />
+              {needDocTypeOther && (
+                <Input
+                  label="Иной тип:"
+                  className={styles.sideField}
+                  classNameLabel={styles.sideFieldLabel}
+                  classNameDescription={styles.fieldHint}
+                  placeholder="Иной тип документа"
+                  scale="small"
+                  value={nonSbp.docTypeOther}
+                  maxLength={50}
+                  status={fieldErrors.docTypeOther ? 'error' : null}
+                  description={
+                    fieldErrors.docTypeOther ??
+                    'Тип подтверждающего документа. Не более 50 символов'
+                  }
+                  onChange={(event) => {
+                    clearFieldError('docTypeOther');
+                    patchNonSbp({ docTypeOther: event.target.value.slice(0, 50) });
+                  }}
+                />
+              )}
+              <Input
+                label="Номер договора:"
+"@
+  $c = Ensure-Replace $c $old ($ui -replace "`n", $nl) "SW UI Тип документа / Иной тип"
+}
+
+Write-FileUtf8 $p $c
+
+Write-Host ""
+Write-Host "=== VERIFY ==="
+$checks = @(
+  @("src/core/api/apiConstants.ts", "API_REQUEST_SECURITIES_DOC_TYPES"),
+  @("src/modules/Transfers/types/securitiesWriteOff.ts", "SecuritiesDepoDocType"),
+  @("src/modules/Transfers/types/securitiesWriteOff.ts", "depoDocType_Id"),
+  @("src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts", "docTypeId"),
+  @("src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx", "useGetSecuritiesDocTypesQuery"),
+  @("src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx", "Тип документа"),
+  @("src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx", "depoDocType_Id")
+)
+$failed = $false
+foreach ($item in $checks) {
+  $text = [IO.File]::ReadAllText($item[0])
+  if ($text -match [regex]::Escape($item[1])) {
+    Write-Host "OK $($item[0]) :: $($item[1])"
+  } else {
+    Write-Host "MISSING $($item[0]) :: $($item[1])"
+    $failed = $true
+  }
+}
+if ($failed) { throw "Some markers missing" }
+Write-Host "ALL OK: remaining doc-types files updated"
