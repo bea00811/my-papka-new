@@ -15,19 +15,7 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +  API_REQUEST_SECURITIES_DOC_TYPES,
    API_REQUEST_SECURITIES_WRITEOFF,
    API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
-@@ -186,10 +190,38 @@
-       keepUnusedDataFor: 0,
-       query: () => ({
--        url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
--      }),
--    }),
--
--
--    getSecuritiesContractors: builder.query<
-+        url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
-+      }),
-+    }),
-+
+@@ -193,3 +197,32 @@
 +    getSecuritiesDocTypes: builder.query<
 +      SecuritiesDepoDocType[],
 +      SecuritiesDocTypesRequestParams | void
@@ -57,10 +45,10 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +      },
 +    }),
 +
-+    getSecuritiesContractors: builder.query<
+     getSecuritiesContractors: builder.query<
        SecuritiesContractor[],
        SecuritiesContractorsRequestParams | void
-@@ -512,4 +544,5 @@
+@@ -512,4 +545,5 @@
    useGetMoneyOperationParamsQuery,
    useGetSecuritiesWriteOffParamsQuery,
 +  useGetSecuritiesDocTypesQuery,
