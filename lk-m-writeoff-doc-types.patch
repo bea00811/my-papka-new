@@ -13,28 +13,31 @@ diff --git a/src/core/api/apiConstants.ts b/src/core/api/apiConstants.ts
 diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 --- a/src/core/api/transfers.ts
 +++ b/src/core/api/transfers.ts
-@@ -43,6 +43,9 @@
-   SecuritiesContractor,
-   SecuritiesContractorsRequestParams,
-   SecuritiesContractorsResponse,
+@@ -45,2 +45,5 @@
+-  SecuritiesContractorsResponse,
+-  SecuritiesWriteOffCommitParams,
++  SecuritiesContractorsResponse,
 +  SecuritiesDepoDocType,
 +  SecuritiesDocTypesRequestParams,
 +  SecuritiesDocTypesResponse,
-   SecuritiesWriteOffCommitParams,
-   SecuritiesWriteOffDetailsParams,
-   SecuritiesWriteOffDetailsResponse,
-@@ -78,6 +81,7 @@
-   API_REQUEST_MONEY_TRANSFERS_WITHDRAWAL_REQUEST,
-   API_REQUEST_PERSON_BANK_DETAILS,
-   API_REQUEST_SECURITIES_CONTRACTORS,
++  SecuritiesWriteOffCommitParams,
+@@ -80,2 +83,3 @@
+-  API_REQUEST_SECURITIES_CONTRACTORS,
+-  API_REQUEST_SECURITIES_WRITEOFF,
++  API_REQUEST_SECURITIES_CONTRACTORS,
 +  API_REQUEST_SECURITIES_DOC_TYPES,
-   API_REQUEST_SECURITIES_WRITEOFF,
-   API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
-   API_REQUEST_SECURITIES_WRITEOFF_FILES,
-@@ -189,7 +193,35 @@
-       }),
-     }),
- 
++  API_REQUEST_SECURITIES_WRITEOFF,
+@@ -188,6 +192,34 @@
+-        url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
+-      }),
+-    }),
+-
+-
+-    getSecuritiesContractors: builder.query<
++        url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
++      }),
++    }),
++
 +    getSecuritiesDocTypes: builder.query<
 +      SecuritiesDepoDocType[],
 +      SecuritiesDocTypesRequestParams | void
@@ -59,22 +62,18 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +          (record.depoDocTypes as SecuritiesDepoDocType[] | undefined) ??
 +          (record.depoDocType as SecuritiesDepoDocType[] | undefined) ??
 +          (record.docTypes as SecuritiesDepoDocType[] | undefined);
- 
++
 +        return Array.isArray(list) ? list : [];
 +      },
 +    }),
 +
-     getSecuritiesContractors: builder.query<
-       SecuritiesContractor[],
-       SecuritiesContractorsRequestParams | void
-@@ -511,6 +543,7 @@
-   useMoneyRefillDetailMutation,
-   useGetMoneyOperationParamsQuery,
-   useGetSecuritiesWriteOffParamsQuery,
++    getSecuritiesContractors: builder.query<
+@@ -513,2 +545,3 @@
+-  useGetSecuritiesWriteOffParamsQuery,
+-  useGetSecuritiesContractorsQuery,
++  useGetSecuritiesWriteOffParamsQuery,
 +  useGetSecuritiesDocTypesQuery,
-   useGetSecuritiesContractorsQuery,
-   useSecuritiesWriteOffMutation,
-   useLazyGetSecuritiesWriteOffQuery,
++  useGetSecuritiesContractorsQuery,
 diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
 --- a/src/modules/Transfers/types/securitiesWriteOff.ts
 +++ b/src/modules/Transfers/types/securitiesWriteOff.ts
