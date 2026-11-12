@@ -1,0 +1,26 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.module.pcss b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.module.pcss
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.module.pcss
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.module.pcss
+@@ -27,6 +27,22 @@
+ .uploader {
+   padding: 0;
+   width: 100%;
++
++  /* Корзина удаления: светло-сиреневый фон + сиреневая иконка (как у file-type icon) */
++  :global(svg[class*='action-icon']) {
++    color: #6470dc;
++    background-color: #f0ecfc;
++    border-radius: 8px;
++    box-sizing: border-box;
++    padding: 6px;
++    width: 32px !important;
++    height: 32px !important;
++  }
++
++  :global(svg[class*='action-icon']:hover) {
++    color: #5460d0;
++    background-color: #e8e4fa;
++  }
+ }
+ 
+ .uploaderLocked {
