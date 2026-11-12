@@ -13,17 +13,17 @@ diff --git a/src/core/api/apiConstants.ts b/src/core/api/apiConstants.ts
 diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 --- a/src/core/api/transfers.ts
 +++ b/src/core/api/transfers.ts
-@@ -42,6 +42,9 @@
+@@ -43,6 +43,9 @@
    SecuritiesContractor,
    SecuritiesContractorsRequestParams,
    SecuritiesContractorsResponse,
 +  SecuritiesDepoDocType,
 +  SecuritiesDocTypesRequestParams,
 +  SecuritiesDocTypesResponse,
+   SecuritiesWriteOffCommitParams,
    SecuritiesWriteOffDetailsParams,
    SecuritiesWriteOffDetailsResponse,
-   SecuritiesWriteOffFilesParams,
-@@ -76,6 +79,7 @@
+@@ -78,6 +81,7 @@
    API_REQUEST_MONEY_TRANSFERS_WITHDRAWAL_REQUEST,
    API_REQUEST_PERSON_BANK_DETAILS,
    API_REQUEST_SECURITIES_CONTRACTORS,
@@ -31,13 +31,10 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
    API_REQUEST_SECURITIES_WRITEOFF,
    API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
    API_REQUEST_SECURITIES_WRITEOFF_FILES,
-@@ -176,7 +180,36 @@
-       keepUnusedDataFor: 0,
-       query: () => ({
-         url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
-+      }),
-+    }),
-+
+@@ -189,7 +193,35 @@
+       }),
+     }),
+ 
 +    getSecuritiesDocTypes: builder.query<
 +      SecuritiesDepoDocType[],
 +      SecuritiesDocTypesRequestParams | void
@@ -49,7 +46,7 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +          params?.changeOwnership === undefined
 +            ? undefined
 +            : { changeOwnership: params.changeOwnership },
-       }),
++      }),
 +      transformResponse: (
 +        data: SecuritiesDocTypesResponse | SecuritiesDepoDocType[] | Record<string, unknown>,
 +      ) => {
@@ -62,20 +59,22 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +          (record.depoDocTypes as SecuritiesDepoDocType[] | undefined) ??
 +          (record.depoDocType as SecuritiesDepoDocType[] | undefined) ??
 +          (record.docTypes as SecuritiesDepoDocType[] | undefined);
-+
+ 
 +        return Array.isArray(list) ? list : [];
 +      },
-     }),
- 
++    }),
++
      getSecuritiesContractors: builder.query<
-@@ -475,6 +508,7 @@
+       SecuritiesContractor[],
+       SecuritiesContractorsRequestParams | void
+@@ -511,6 +543,7 @@
+   useMoneyRefillDetailMutation,
    useGetMoneyOperationParamsQuery,
    useGetSecuritiesWriteOffParamsQuery,
-   useGetSecuritiesContractorsQuery,
 +  useGetSecuritiesDocTypesQuery,
+   useGetSecuritiesContractorsQuery,
    useSecuritiesWriteOffMutation,
    useLazyGetSecuritiesWriteOffQuery,
-   useLazyGetSecuritiesWriteOffFilesQuery,
 diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
 --- a/src/modules/Transfers/types/securitiesWriteOff.ts
 +++ b/src/modules/Transfers/types/securitiesWriteOff.ts
