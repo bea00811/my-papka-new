@@ -1,21 +1,23 @@
 diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 --- a/src/core/api/transfers.ts
 +++ b/src/core/api/transfers.ts
-@@ -45,2 +45,5 @@
--  SecuritiesContractorsResponse,
--  SecuritiesWriteOffCommitParams,
-+  SecuritiesContractorsResponse,
+@@ -44,4 +44,7 @@
+   SecuritiesContractorsRequestParams,
+   SecuritiesContractorsResponse,
 +  SecuritiesDepoDocType,
 +  SecuritiesDocTypesRequestParams,
 +  SecuritiesDocTypesResponse,
-+  SecuritiesWriteOffCommitParams,
-@@ -80,2 +83,3 @@
--  API_REQUEST_SECURITIES_CONTRACTORS,
--  API_REQUEST_SECURITIES_WRITEOFF,
-+  API_REQUEST_SECURITIES_CONTRACTORS,
+   SecuritiesWriteOffCommitParams,
+   SecuritiesWriteOffDetailsParams,
+@@ -79,4 +82,5 @@
+   API_REQUEST_PERSON_BANK_DETAILS,
+   API_REQUEST_SECURITIES_CONTRACTORS,
 +  API_REQUEST_SECURITIES_DOC_TYPES,
-+  API_REQUEST_SECURITIES_WRITEOFF,
-@@ -188,6 +192,34 @@
+   API_REQUEST_SECURITIES_WRITEOFF,
+   API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
+@@ -186,10 +190,38 @@
+       keepUnusedDataFor: 0,
+       query: () => ({
 -        url: API_REQUEST_SECURITIES_WRITEOFF_PARAMS,
 -      }),
 -    }),
@@ -56,9 +58,11 @@ diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
 +    }),
 +
 +    getSecuritiesContractors: builder.query<
-@@ -513,2 +545,3 @@
--  useGetSecuritiesWriteOffParamsQuery,
--  useGetSecuritiesContractorsQuery,
-+  useGetSecuritiesWriteOffParamsQuery,
+       SecuritiesContractor[],
+       SecuritiesContractorsRequestParams | void
+@@ -512,4 +544,5 @@
+   useGetMoneyOperationParamsQuery,
+   useGetSecuritiesWriteOffParamsQuery,
 +  useGetSecuritiesDocTypesQuery,
-+  useGetSecuritiesContractorsQuery,
+   useGetSecuritiesContractorsQuery,
+   useSecuritiesWriteOffMutation,
