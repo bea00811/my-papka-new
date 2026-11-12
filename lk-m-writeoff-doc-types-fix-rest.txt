@@ -246,8 +246,9 @@ if ($c -notmatch "needDocTypeOther") {
 }
 
 if ($c -notmatch "Выберите тип документа") {
-  $old = "    const errors: WriteOffFieldErrors = {};" + $nl + "    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {"
-  $new = @"
+  $marker = "    const errors: WriteOffFieldErrors = {};"
+  if (-not $c.Contains($marker)) { throw "FAIL marker not found: SW validation docType (errors block)" }
+  $insert = @"
     const errors: WriteOffFieldErrors = {};
     if (!nonSbp.docTypeId) {
       errors.docTypeId = 'Выберите тип документа';
@@ -261,15 +262,24 @@ if ($c -notmatch "Выберите тип документа") {
     if (nonSbp.docTypeOther.length > 50) {
       errors.docTypeOther = 'Не более 50 символов';
     }
-    if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {
 "@
-  $c = Ensure-Replace $c $old ($new -replace "`n", $nl) "SW validation docType"
+  $c = $c.Replace($marker, ($insert -replace "`n", $nl))
+  Write-Host "OK insert: SW validation docType"
 }
 
 if ($c -notmatch "depoDocType_Id") {
-  $old = "            reference: nonSbp.reference || null," + $nl + "            volume:"
-  $new = "            reference: nonSbp.reference || null," + $nl + "            depoDocType_Id: nonSbp.docTypeId," + $nl + "            depoDocTypeOther: needDocTypeOther ? nonSbp.docTypeOther || null : null," + $nl + "            volume:"
-  $c = Ensure-Replace $c $old $new "SW request depoDocType fields"
+  $old1 = "            reference: nonSbp.reference || null,"
+  $old2 = "            reference: nonSbp.reference,"
+  $add = $nl + "            depoDocType_Id: nonSbp.docTypeId," + $nl + "            depoDocTypeOther: needDocTypeOther ? nonSbp.docTypeOther || null : null,"
+  if ($c.Contains($old1)) {
+    $c = $c.Replace($old1, $old1 + $add)
+    Write-Host "OK insert: SW request depoDocType fields"
+  } elseif ($c.Contains($old2)) {
+    $c = $c.Replace($old2, $old2 + $add)
+    Write-Host "OK insert: SW request depoDocType fields (no || null)"
+  } else {
+    throw "FAIL marker not found: SW request depoDocType fields"
+  }
 }
 
 # creditType clear/select resets
@@ -280,24 +290,22 @@ if ($c -match "patchNonSbp\(\{ creditType: '', supplierName: '', dealAmount: '' 
   Write-Host "OK replace: SW creditType clear resets docType"
 }
 if ($c -notmatch "clearFieldError\('docTypeId'\)") {
-  $old = "                  const creditType = item.id as WriteOffCreditType;" + $nl + "                  clearFieldError('creditType');" + $nl + "                  patchNonSbp({" + $nl + "                    creditType," + $nl + "                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' })," + $nl + "                  });"
-  $new = @"
-                  const creditType = item.id as WriteOffCreditType;
-                  clearFieldError('creditType');
-                  clearFieldError('docTypeId');
-                  clearFieldError('docTypeOther');
-                  patchNonSbp({
-                    creditType,
-                    docTypeId: null,
-                    docTypeOther: '',
-                    ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
-                  });
-"@
-  $c = Ensure-Replace $c $old ($new.TrimEnd() -replace "`n", $nl) "SW creditType select resets docType"
+  $oldA = "                  clearFieldError('creditType');" + $nl + "                  patchNonSbp({" + $nl + "                    creditType,"
+  $newA = "                  clearFieldError('creditType');" + $nl + "                  clearFieldError('docTypeId');" + $nl + "                  clearFieldError('docTypeOther');" + $nl + "                  patchNonSbp({" + $nl + "                    creditType," + $nl + "                    docTypeId: null," + $nl + "                    docTypeOther: '',"
+  if ($c.Contains($oldA) -and $c -notmatch "docTypeId: null,\s*$([regex]::Escape($nl))\s*docTypeOther: '',") {
+    # avoid double-adding if creditType already has docType in patchNonSbp from clear handler only
+  }
+  if ($c.Contains($oldA)) {
+    $c = $c.Replace($oldA, $newA)
+    Write-Host "OK replace: SW creditType select resets docType"
+  } else {
+    Write-Host "WARN skip: SW creditType select resets docType (manual check later)"
+  }
 }
 
 if ($c -notmatch "Тип документа:") {
-  $old = "              <Text className={styles.sectionTitle}>Основание для зачисления</Text>" + $nl + "              <Input" + $nl + "                label=`"Номер договора:`""
+  $marker = "              <Text className={styles.sectionTitle}>Основание для зачисления</Text>"
+  if (-not $c.Contains($marker)) { throw "FAIL marker not found: SW UI section title" }
   $ui = @"
               <Text className={styles.sectionTitle}>Основание для зачисления</Text>
               <SearchSelect
@@ -356,10 +364,9 @@ if ($c -notmatch "Тип документа:") {
                   }}
                 />
               )}
-              <Input
-                label="Номер договора:"
 "@
-  $c = Ensure-Replace $c $old ($ui -replace "`n", $nl) "SW UI Тип документа / Иной тип"
+  $c = $c.Replace($marker, ($ui -replace "`n", $nl))
+  Write-Host "OK insert: SW UI Тип документа / Иной тип"
 }
 
 Write-FileUtf8 $p $c
