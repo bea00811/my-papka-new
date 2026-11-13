@@ -1,0 +1,66 @@
+diff --git a/src/modules/Transfers/pages/Withdrawal/components/WithdrawalForm/WithdrawalForm.tsx b/src/modules/Transfers/pages/Withdrawal/components/WithdrawalForm/WithdrawalForm.tsx
+--- a/src/modules/Transfers/pages/Withdrawal/components/WithdrawalForm/WithdrawalForm.tsx
++++ b/src/modules/Transfers/pages/Withdrawal/components/WithdrawalForm/WithdrawalForm.tsx
+@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
+ import { NumberFormatValues } from 'react-number-format';
+ import { useNavigate } from 'react-router-dom';
+ 
+-import { AmountInput, BottomSheet, Button, Text } from '@aurora/components';
++import { AmountInput, Button, Text } from '@aurora/components';
+ import { skipToken } from '@reduxjs/toolkit/dist/query';
+ import { ROUTE_NEW_REQUISITE, ROUTE_TRANSFERS } from 'const/routes';
+ import debounce from 'lodash/debounce';
+@@ -28,7 +28,7 @@ import SelectProductsAndPortfolios from 'modules/Transfers/components/SelectProd
+ import { MONEY_WITHDRAWAL_PAGE_TITLE } from 'modules/Transfers/constants';
+ import ArrowNextIcon from 'modules/Transfers/pages/Refill/icons/ArrowNextIcon';
+ 
+-import { DynamicText, HeaderPage, Option } from 'components';
++import { HeaderPage, Option } from 'components';
+ import AddonBottom from 'components/AddonBottom';
+ import ArrowUpIcon from 'components/icons/ArrowUpIcon';
+ 
+@@ -73,7 +73,6 @@ const WithdrawalForm = () => {
+   const [amountValue, setAmountValue] = useState<number | null>(null);
+   const [amountInputFocused, setAmountInputFocused] = useState(false);
+   const [bankSelectOpen, setSelectBankOpen] = useState(false);
+-  const [amountInputHintOpen, setAmountInputHintOpen] = useState(false);
+   //const [leverageModalOpened, setLeverageModalOpened] = useState(false);
+   //const [firstLeverage, setFirstLeverage] = useState(false);
+ 
+@@ -348,10 +347,6 @@ const WithdrawalForm = () => {
+         }}
+       >
+         {sumFormatter(max)} {currencyCode ? currencySign(currencyCode) : ''}
+-      </span>{' '}
+-      •{' '}
+-      <span className={styles.amountHintTooltip} onClick={() => setAmountInputHintOpen(true)}>
+-        Почему меньше?
+       </span>
+     </div>
+   ) : (
+@@ -360,7 +355,7 @@ const WithdrawalForm = () => {
+ 
+   const commissionTextComponent = commission ? (
+     <div className={styles.commission}>
+-      Комиссия{' '}
++      Из суммы вывода будет удержана комиссия{' '}
+       <span className={styles.amountHintValue}>
+         {sumFormatter(commission)} {currencyCode ? currencySign(currencyCode) : ''}
+       </span>
+@@ -476,16 +471,6 @@ const WithdrawalForm = () => {
+                   <>
+                     {amountTextComponent}
+                     {commissionTextComponent}
+-                    <BottomSheet
+-                      open={amountInputHintOpen}
+-                      onDismiss={() => setAmountInputHintOpen(false)}
+-                    >
+-                      <DynamicText
+-                        className={styles.inputHintBottomSheet}
+-                        type="bodyRegular"
+-                        slug="TRANSFER_OUTPUT_BANK_ACCOUNT_AMOUNT"
+-                      />
+-                    </BottomSheet>
+                   </>
+                 )}
+               </Text>

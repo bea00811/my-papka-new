@@ -1,0 +1,234 @@
+https://newlk-tt.investpalata.ru/rs/v2/reports?fromDate=2025-10-14&toDate=2026-10-14
+
+
+{
+    "ReportRequests": [
+        {
+            "Request_Id": 705,
+            "Request_Guid": "00078984-1807-4673-9e1a-77ef53c85682",
+            "RequestTime": "2026-10-14T10:26:41.47+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2026-09-22T00:00:00+03:00",
+            "ToDate": "2026-09-22T00:00:00+03:00",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:28:22.423+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 704,
+            "Request_Guid": "37fb481a-14ec-492d-96cf-3cd97d47062f",
+            "RequestTime": "2026-10-14T10:24:15.067+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2026-09-22T00:00:00+03:00",
+            "ToDate": "2026-09-22T00:00:00+03:00",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:26:20.673+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 703,
+            "Request_Guid": "e03044e0-ab0e-44f4-9cf9-8a24093c6076",
+            "RequestTime": "2026-10-14T10:21:06.193+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2026-09-22T00:00:00+03:00",
+            "ToDate": "2026-09-22T00:00:00+03:00",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:23:23.077+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 702,
+            "Request_Guid": "d0977782-f21f-46fe-aa83-7273cc619456",
+            "RequestTime": "2026-10-14T10:20:25.873+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2025-01-01T00:00:00+03:00",
+            "ToDate": "2025-12-31T00:00:00+03:00",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:22:33.93+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 701,
+            "Request_Guid": "2b387557-e2c7-4728-a959-01fa44804c24",
+            "RequestTime": "2026-10-14T10:03:58.413+03:00",
+            "ReportTypeName": "Выписка о состоянии счёта депо",
+            "ReportRequestType_Id": 2,
+            "Date": "2024-04-24T00:00:00+03:00",
+            "DepoAccountName": "K417525380000 (Владелец торговый НКЦ)",
+            "RequestStatusCode": "completed",
+            "RequestStatusName": "Готово",
+            "RequestStatusTime": "2026-10-14T10:08:46.24+03:00",
+            "HasSign": true,
+            "Multifile": false,
+            "FileList": [
+                {
+                    "File_Id": 429,
+                    "FileType": "PDF",
+                    "FileName": "Выписка_по_счету_депо_752538_20261014100702239",
+                    "DownloadOnly": false,
+                    "CreateTime": "2026-10-14T10:08:46.233"
+                },
+                {
+                    "File_Id": 429,
+                    "FileType": "SIG",
+                    "FileName": "Выписка_по_счету_депо_752538_20261014100702239",
+                    "DownloadOnly": true,
+                    "CreateTime": "2026-10-14T10:08:46.233"
+                }
+            ]
+        },
+        {
+            "Request_Id": 700,
+            "Request_Guid": "2d0668d8-48a9-4e64-b128-391998971a8d",
+            "RequestTime": "2026-10-14T10:01:18.297+03:00",
+            "ReportTypeName": "Копия уведомления о заключении договоров",
+            "ReportRequestType_Id": 6,
+            "AgreementName": "818137-ДФ",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:01:24.817+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 699,
+            "Request_Guid": "e63c304f-481b-4c0d-8788-935c3548a956",
+            "RequestTime": "2026-10-14T10:00:57.943+03:00",
+            "ReportTypeName": "Копия уведомления о заключении договоров",
+            "ReportRequestType_Id": 6,
+            "AgreementName": "752538-ДФ",
+            "RequestStatusCode": "error",
+            "RequestStatusName": "Ошибка",
+            "RequestStatusTime": "2026-10-14T10:01:24.813+03:00",
+            "HasSign": false,
+            "Multifile": false,
+            "FileList": []
+        },
+        {
+            "Request_Id": 689,
+            "Request_Guid": "5513e14e-5c19-4a0d-adc3-b020715955f7",
+            "RequestTime": "2026-10-12T17:19:55.6+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2026-09-22T00:00:00+03:00",
+            "ToDate": "2026-09-22T00:00:00+03:00",
+            "RequestStatusCode": "completed",
+            "RequestStatusName": "Готово",
+            "RequestStatusTime": "2026-10-12T17:22:33.433+03:00",
+            "HasSign": true,
+            "Multifile": false,
+            "FileList": [
+                {
+                    "File_Id": 419,
+                    "FileType": "PDF",
+                    "FileName": "RPT752538_20260922_20260922",
+                    "DownloadOnly": false,
+                    "CreateTime": "2026-10-12T17:22:33.433"
+                },
+                {
+                    "File_Id": 419,
+                    "FileType": "SIG",
+                    "FileName": "RPT752538_20260922_20260922",
+                    "DownloadOnly": true,
+                    "CreateTime": "2026-10-12T17:22:33.433"
+                }
+            ]
+        },
+        {
+            "Request_Id": 688,
+            "Request_Guid": "576059cb-fccf-419d-b42b-e99e662708e5",
+            "RequestTime": "2026-10-12T16:48:03.43+03:00",
+            "ReportTypeName": "Выписка о ЦБ определенного эмитента",
+            "ReportRequestType_Id": 4,
+            "Date": "2025-02-01T00:00:00+03:00",
+            "DepoAccountName": "K407525380000 (Владелец основной)",
+            "InstrumentName": "Сбербанк ИОС_PRT_GAZP-3Y-001Р-531R",
+            "RequestStatusCode": "completed",
+            "RequestStatusName": "Готово",
+            "RequestStatusTime": "2026-10-12T16:53:46.903+03:00",
+            "HasSign": true,
+            "Multifile": false,
+            "FileList": [
+                {
+                    "File_Id": 418,
+                    "FileType": "PDF",
+                    "FileName": "Отчёт_об_остатках_ЦБ_эмитента_по_заданной_ЦБ_752538_20261012165202056",
+                    "DownloadOnly": false,
+                    "CreateTime": "2026-10-12T16:53:46.890"
+                },
+                {
+                    "File_Id": 418,
+                    "FileType": "SIG",
+                    "FileName": "Отчёт_об_остатках_ЦБ_эмитента_по_заданной_ЦБ_752538_20261012165202056",
+                    "DownloadOnly": true,
+                    "CreateTime": "2026-10-12T16:53:46.890"
+                }
+            ]
+        },
+        {
+            "Request_Id": 687,
+            "Request_Guid": "e10fbb55-afe2-4589-a7a5-532efb0ff0e2",
+            "RequestTime": "2026-10-12T16:09:28.127+03:00",
+            "ReportTypeName": "Брокерский отчет",
+            "ReportRequestType_Id": 1,
+            "Product_Id": 29850,
+            "ProductName": "752538",
+            "PortfolioName": "Фондовый рынок Московской биржи",
+            "FromDate": "2026-09-22T00:00:00+03:00",
+            "ToDate": "2026-09-22T00:00:00+03:00",
+            "RequestStatusCode": "completed",
+            "RequestStatusName": "Готово",
+            "RequestStatusTime": "2026-10-12T16:12:35.983+03:00",
+            "HasSign": true,
+            "Multifile": false,
+            "FileList": [
+                {
+                    "File_Id": 417,
+                    "FileType": "PDF",
+                    "FileName": "RPT752538_20260922_20260922",
+                    "DownloadOnly": false,
+                    "CreateTime": "2026-10-12T16:12:35.970"
+                },
+                {
+                    "File_Id": 417,
+                    "FileType": "SIG",
+                    "FileName": "RPT752538_20260922_20260922",
+                    "DownloadOnly": true,
+                    "CreateTime": "2026-10-12T16:12:35.970"
+                }
+            ]
+        }
+    ]
+}

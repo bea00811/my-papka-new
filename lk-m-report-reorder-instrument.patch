@@ -1,0 +1,153 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -91,9 +91,15 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+   }, [dispatch, setOpenDetails, onParametersErrorClear]);
+ 
+   const handleReOrder = useCallback(() => {
+-    dispatch(setReorderData(reportParameters));
++    if (!reportParameters) return;
++    dispatch(
++      setReorderData({
++        ...reportParameters,
++        instrumentName: reportParameters.instrumentName || report.instrumentName,
++      }),
++    );
+     navigate(ROUTE_REPORTS);
+-  }, [dispatch, navigate, reportParameters]);
++  }, [dispatch, navigate, report.instrumentName, reportParameters]);
+ 
+   const statusColorName = textStatusColors[report.requestStatusCode];
+   const isCompleted = report.requestStatusCode === 'completed';
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -5,6 +5,7 @@ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+ import { ROUTE_REPORTS_HISTORY } from 'const/routes';
+ import { DateTime } from 'luxon';
+ 
++import { useLazyGetDepoInstrumentsQuery } from 'core/api/instrumentDepo';
+ import { useCreateReportMutation, useGetReportsParametersQuery } from 'core/api/reports';
+ import { isError } from 'core/helpers/isError';
+ import { getReportsParametersWithData } from 'core/reports/helpers';
+@@ -23,6 +24,32 @@ import {
+   ReportType,
+ } from 'types/reports';
+ 
++const buildReorderInstrument = (
++  instrumentId: number,
++  name?: string,
++  isin?: string | null,
++  issuerName?: string | null,
++): DepoInstrumentItem => ({
++  guid: '',
++  instrumentId,
++  depoInstrumentId: 0,
++  name: name || '',
++  fullName: null,
++  issuerName: issuerName ?? null,
++  instrumentType: null,
++  instrumentShortType: null,
++  regNum: null,
++  isin: isin ?? null,
++  gosReg: null,
++  nominal: null,
++  nominalCurrency: null,
++  issueMode: null,
++  registrationType: null,
++  instrumentImageName: null,
++  instrumentImageTime: null,
++  allowed: true,
++});
++
+ const getPeriodTooLongMessage = (error: unknown): string => {
+   if (!isError(error)) return '';
+   const item = error.data.error[0];
+@@ -41,6 +68,7 @@ export const useReportOrder = () => {
+   );
+   const [formData, setFormData] = useState<CreateReportRequest | null>(null);
+   const { data, isLoading, isError } = useGetReportsParametersQuery();
++  const [getDepoInstruments] = useLazyGetDepoInstrumentsQuery();
+   const [
+     createReport,
+     { isLoading: isCreateLoading, isError: isCreateReportError, error: createReportError, reset },
+@@ -157,12 +185,32 @@ export const useReportOrder = () => {
+           const toDate = reOrderData.toDate
+             ? DateTime.fromISO(reOrderData.toDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
+             : undefined;
++          const depoAccount =
++            data?.reportDepoAccountParameters?.find(
++              (item) =>
++                item.reportTypeId === reOrderData.reportTypeId &&
++                item.depoAccountId === reOrderData.depoAccountId,
++            ) || null;
++          setSelectedDepoAccount(depoAccount);
++          if (reOrderData.instrumentId) {
++            setSelectedInstrument(
++              buildReorderInstrument(
++                reOrderData.instrumentId,
++                reOrderData.instrumentName,
++                reOrderData.isin,
++                reOrderData.issuerName,
++              ),
++            );
++          } else {
++            setSelectedInstrument(null);
++          }
+           setFormData({
+             reportTypeId: reOrderData.reportTypeId,
+             productId: reOrderData.productId,
+             portfolioId: reOrderData.portfolioId,
+             depoAccountId: reOrderData.depoAccountId,
+             agreementId: reOrderData.agreementId,
++            instrumentId: reOrderData.instrumentId,
+             fromDate: fromDate,
+             toDate: toDate,
+           });
+@@ -194,6 +242,32 @@ export const useReportOrder = () => {
+     }
+   }, [reOrderData, data]);
+ 
++  useEffect(() => {
++    const instrumentId = reOrderData?.instrumentId;
++    const searchText = reOrderData?.instrumentName?.trim();
++    if (!searchText || searchText.length < 3) return;
++    if (instrumentId && reOrderData.isin && reOrderData.issuerName) return;
++
++    let cancelled = false;
++    getDepoInstruments({ searchText, maxCount: 16 })
++      .unwrap()
++      .then((instruments) => {
++        if (cancelled) return;
++        const found =
++          (instrumentId
++            ? instruments.find((item) => item.instrumentId === instrumentId)
++            : undefined) || instruments.find((item) => item.name === searchText);
++        if (!found) return;
++        setSelectedInstrument(found);
++        setFormData((old) => (old ? { ...old, instrumentId: found.instrumentId } : old));
++      })
++      .catch(() => undefined);
++
++    return () => {
++      cancelled = true;
++    };
++  }, [getDepoInstruments, reOrderData]);
++
+   const handleFormSubmit = useCallback(async () => {
+     if (formData) {
+       dispatch(setReorderData(null));
+diff --git a/src/types/reports/models.ts b/src/types/reports/models.ts
+--- a/src/types/reports/models.ts
++++ b/src/types/reports/models.ts
+@@ -83,6 +83,10 @@ export interface ReportParameterData {
+   subAccountId?: number;
+   depoAccountId?: number;
+   agreementId?: number;
++  instrumentId?: number;
++  instrumentName?: string;
++  isin?: string;
++  issuerName?: string;
+   fromDate?: string;
+   toDate?: string;
+ }

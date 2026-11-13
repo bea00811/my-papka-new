@@ -1,0 +1,29 @@
+  useEffect(() => {
+    if (!selectedContractor || contractors.length === 0) {
+      return;
+    }
+
+    const isSelectedContractorAvailable = contractors.some(
+      (contractor) =>
+        (selectedContractor.id != null && contractor.id === selectedContractor.id) ||
+        contractor.name === selectedContractor.name,
+    );
+
+    if (!isSelectedContractorAvailable) {
+      selectContractor(null);
+    }
+  }, [contractors, selectedContractor]);
+
+  useEffect(() => {
+    if (isNonSbpMode) {
+      return;
+    }
+
+    if (attachmentFiles.length === 0 && draftRequestGuid == null) {
+      return;
+    }
+
+    setAttachmentFiles([]);
+    setAttachmentStatuses([]);
+    setDraftRequestGuid(null);
+  }, [attachmentFiles.length, draftRequestGuid, isNonSbpMode]);

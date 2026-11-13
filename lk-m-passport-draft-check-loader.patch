@@ -1,0 +1,21 @@
+diff --git a/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts b/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
+--- a/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
++++ b/src/modules/PersonalInformation/components/Passport/hooks/useFormSave.ts
+@@ -38,7 +38,7 @@
+   const [savePassport, { isError: savePassportError, isLoading: isSavePassportLoading }] =
+     useSaveFormPassportMutation();
+   const [saveFormDraft, { isLoading: isSaveFormDraftLoading }] = useSaveFormDraftMutation();
+-  const [checkForm, { isLoading: isCheckFormLoading }] = useLazyCheckFormQuery();
++  const [checkForm, { isFetching: isCheckFormFetching }] = useLazyCheckFormQuery();
+   const { isFioChanged, isPassportDataChanged } = useIsPassportDataChanged(state);
+   const saveError = saveFioError || savePassportError;
+ 
+@@ -126,7 +126,7 @@
+   return {
+     saveData,
+     isSaving:
+-      isCheckFormLoading || isSaveFioLoading || isSavePassportLoading || isSaveFormDraftLoading,
++      isCheckFormFetching || isSaveFioLoading || isSavePassportLoading || isSaveFormDraftLoading,
+   };
+ };
+ 

@@ -1,0 +1,335 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -5,7 +5,7 @@
+ import cx from 'classnames';
+ 
+ import {
+-  reportsApi,
++  REPORTS_PAGE_SIZE,
+   useGetReportsParametersQuery,
+   useLazyGetReportStatusQuery,
+ } from 'core/api/reports';
+@@ -13,6 +13,7 @@
+ import { setCurrentRequestGuid } from 'core/reports/reportsSlice';
+ 
+ import { useAppDispatch } from 'hooks';
++import useViewOnScreen from 'hooks/useViewOnScreen';
+ 
+ import CommonHeadSheet from 'modules/OrderHistory/components/CommonHeadSheet';
+ import OrderSkeleton from 'modules/OrderHistory/components/OrderSkeleton';
+@@ -60,7 +61,17 @@
+   const [readyReportGuids, setReadyReportGuids] = useState<string[]>([]);
+   const [isErrorReportParameters, setIsErrorReportParameters] = useState(false);
+ 
+-  const { data: reportRequests, isLoading, getReportsHistory } = useReportHistory(filters);
++  const {
++    data: reportRequests,
++    setItems: setReportRequests,
++    isLoading,
++    isFetching,
++    hasLoaded,
++    hasMore,
++  } = useReportHistory(filters);
++  const sentinelRef = useRef<HTMLDivElement>(null);
++  const listEndOptions = useMemo(() => ({ threshold: 0 }), [hasLoaded]);
++  const isListEnd = useViewOnScreen(sentinelRef, listEndOptions);
+   const { data: reportParams } = useGetReportsParametersQuery();
+   const [getReportStatus] = useLazyGetReportStatusQuery();
+ 
+@@ -74,19 +85,22 @@
+ 
+   const patchReportFromStatus = useCallback(
+     (guid: string, status: ReportStatusPayload) => {
+-      let found = false;
+-      dispatch(
+-        reportsApi.util.updateQueryData('getReportsHistory', filters, (draft) => {
+-          const item = draft.find((report) => report.requestGuid === guid);
+-          if (!item) return;
+-          found = true;
+-          applyReportStatus(item, status);
+-        }),
+-      );
+-      if (!found) getReportsHistory(filters);
++      const current = reportRequests?.find((report) => report.requestGuid === guid);
++      if (!current) {
++        setFilters((oldFilters) => ({ ...oldFilters, offset: undefined }));
++      } else {
++        setReportRequests((prev) =>
++          prev.map((item) => {
++            if (item.requestGuid !== guid) return item;
++            const next = { ...item };
++            applyReportStatus(next, status);
++            return next;
++          }),
++        );
++      }
+       if (isReportFinished(status)) sessionStorage.removeItem(PENDING_REPORT_GUID);
+     },
+-    [dispatch, filters, getReportsHistory],
++    [reportRequests, setReportRequests],
+   );
+ 
+   useEffect(() => {
+@@ -131,6 +145,12 @@
+ 
+   const handleResetPeriodFilter = useCallback(() => {
+     setSelectPeriod(defaultFilterPeriod);
++    setFilters((oldFilters) => ({
++      ...oldFilters,
++      fromDate: undefined,
++      toDate: undefined,
++      offset: undefined,
++    }));
+     setPeriodBottomSheet(false);
+   }, []);
+ 
+@@ -140,6 +160,7 @@
+       ...oldFilters,
+       fromDate: startDate,
+       toDate: endDate,
++      offset: undefined,
+     }));
+     setPeriodBottomSheet(false);
+   }, []);
+@@ -150,6 +171,7 @@
+       ...oldFilters,
+       reportTypeId: item.reportTypeId,
+       reportTypeCode: item.code,
++      offset: undefined,
+     }));
+     setTypeBottomSheet(false);
+   };
+@@ -168,19 +190,34 @@
+     />
+   ));
+ 
++  const hasPeriodFilter = Boolean(filters.fromDate && filters.toDate);
++
+   const datePickerFormat = useMemo(
+-    () => getDatePickerFormat(filters.fromDate, filters.toDate),
++    () =>
++      filters.fromDate && filters.toDate
++        ? getDatePickerFormat(filters.fromDate, filters.toDate)
++        : undefined,
+     [filters.fromDate, filters.toDate],
+   );
+ 
+-  const yearFromJSDate = useMemo(() => getYearFromJSDate(filters.toDate), [filters.toDate]);
++  const yearFromJSDate = useMemo(
++    () => (filters.toDate ? getYearFromJSDate(filters.toDate) : undefined),
++    [filters.toDate],
++  );
+ 
+-  const isActivePeriodReset = defaultFilterPeriod !== selectPeriod;
++  useEffect(() => {
++    if (!hasLoaded || !isListEnd || !hasMore || isFetching) return;
++    if (!reportRequests || reportRequests.length < (filters.offset ?? 0) + REPORTS_PAGE_SIZE) {
++      return;
++    }
++    setFilters((oldFilters) => ({
++      ...oldFilters,
++      offset: (oldFilters.offset ?? 0) + REPORTS_PAGE_SIZE,
++    }));
++  }, [filters.offset, hasLoaded, hasMore, isFetching, isListEnd, reportRequests]);
+ 
+   const showResetFilters =
+-    defaultFilters.fromDate !== filters.fromDate ||
+-    defaultFilters.toDate !== filters.toDate ||
+-    defaultFilters.reportTypeCode !== filters.reportTypeCode;
++    hasPeriodFilter || defaultFilters.reportTypeCode !== filters.reportTypeCode;
+ 
+   if (isErrorReportParameters) {
+     return (
+@@ -210,12 +247,12 @@
+           {showResetFilters && <Filter shape={'reset'} onClick={handleResetAllFilters} />}
+           <Filter
+             shape={'select'}
+-            active={isActivePeriodReset}
+-            text={getNTPDateName(
+-              filters.fromDate || defaultFilters.fromDate,
+-              filters.toDate || defaultFilters.toDate,
+-              selectPeriod,
+-            )}
++            active={hasPeriodFilter}
++            text={
++              filters.fromDate && filters.toDate
++                ? getNTPDateName(filters.fromDate, filters.toDate, selectPeriod)
++                : 'Все'
++            }
+             onClick={() => setPeriodBottomSheet(!periodBottomSheet)}
+             onClose={handleResetPeriodFilter}
+           />
+@@ -226,7 +263,7 @@
+           />
+         </FilterBar>
+         <div className={styles.content} onTouchMove={(e) => e.stopPropagation()}>
+-          {isLoading ? (
++          {!hasLoaded && !filters.offset ? (
+             <OrderSkeleton count={4} />
+           ) : (
+             <div>
+@@ -252,6 +289,7 @@
+               )}
+             </div>
+           )}
++          {hasLoaded && <div ref={sentinelRef} />}
+         </div>
+       </div>
+ 
+@@ -281,18 +319,20 @@
+           <CommonHeadSheet
+             name="Период"
+             handleSubmit={handleResetPeriodFilter}
+-            activeBtn={selectPeriod !== defaultFilterPeriod}
++            activeBtn={hasPeriodFilter || selectPeriod !== defaultFilterPeriod}
+           />
+         </div>
+-        <DatePicker
+-          onSubmit={handleSubmitFilterDates}
+-          periodPreset
+-          dates={datePickerFormat}
+-          currentYear={yearFromJSDate}
+-          customOptionsPeriodPreset={['month', 'quarter', 'year']}
+-          onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
+-          defaultOptionPeriodPreset={selectPeriod}
+-        />
++        {periodBottomSheet && (
++          <DatePicker
++            onSubmit={handleSubmitFilterDates}
++            periodPreset
++            dates={datePickerFormat}
++            currentYear={yearFromJSDate}
++            customOptionsPeriodPreset={['month', 'quarter', 'year']}
++            onSetOptionPeriodPreset={(p) => p !== 'day' && setSelectPeriod(p)}
++            defaultOptionPeriodPreset={hasPeriodFilter ? selectPeriod : 'year'}
++          />
++        )}
+       </BottomSheetComponent>
+     </>
+   );
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/constants.ts b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+--- a/src/modules/ReportsPage/components/ReportsHistory/constants.ts
++++ b/src/modules/ReportsPage/components/ReportsHistory/constants.ts
+@@ -1,5 +1,3 @@
+-import { getFilterDateFormat } from 'modules/OrderHistory/helpers';
+-
+ import { ReportType } from 'types/reports';
+ 
+ export const REPORT_HISTORY_FILTER_TYPE_KEY = 'ReportHistoryTypeFilter';
+@@ -16,14 +14,7 @@
+   reportTypeId: 0,
+ };
+ 
+-const defaultFilterDates = getFilterDateFormat([
+-  new Date(new Date().getFullYear() - 1, new Date().getMonth(), new Date().getDate()),
+-  new Date(),
+-]);
+-
+ export const defaultFilters = {
+-  fromDate: defaultFilterDates.startDate,
+-  toDate: defaultFilterDates.endDate,
+   reportTypeCode: 'all',
+ };
+ 
+diff --git a/src/modules/ReportsPage/hooks/useReportHistory.ts b/src/modules/ReportsPage/hooks/useReportHistory.ts
+--- a/src/modules/ReportsPage/hooks/useReportHistory.ts
++++ b/src/modules/ReportsPage/hooks/useReportHistory.ts
+@@ -1,18 +1,41 @@
+-import { useEffect } from 'react';
++import { useEffect, useState } from 'react';
+ 
+-import { useLazyGetReportsHistoryQuery } from 'core/api/reports';
++import { REPORTS_PAGE_SIZE, useLazyGetReportsHistoryQuery } from 'core/api/reports';
+ 
+ import { createAlertNotification } from 'components';
+ 
+-import { ReportHistoryFilters } from 'types/reports';
++import { ReportHistoryFilters, ReportItem } from 'types/reports';
+ 
+ import { DEFAULT_QUERY_ERROR_MESSAGE } from '../constants';
+ 
+ export const useReportHistory = (filters: ReportHistoryFilters) => {
+-  const [getReportsHistory, { data, isLoading, isError }] = useLazyGetReportsHistoryQuery();
++  const [getReportsHistory, { isLoading, isFetching, isError }] = useLazyGetReportsHistoryQuery();
++  const [items, setItems] = useState<ReportItem[]>([]);
++  const [hasMore, setHasMore] = useState(false);
++  const [hasLoaded, setHasLoaded] = useState(false);
+ 
+   useEffect(() => {
+-    getReportsHistory(filters);
++    let active = true;
++    if (!filters.offset) {
++      setItems([]);
++      setHasLoaded(false);
++    }
++    const request = getReportsHistory(filters);
++    request
++      .unwrap()
++      .then((page) => {
++        if (!active) return;
++        setHasLoaded(true);
++        setHasMore(page.length === REPORTS_PAGE_SIZE);
++        setItems((prev) => (filters.offset ? [...prev, ...page] : page));
++      })
++      .catch(() => {
++        return;
++      });
++    return () => {
++      active = false;
++      request.abort();
++    };
+   }, [filters, getReportsHistory]);
+ 
+   useEffect(() => {
+@@ -24,8 +47,12 @@
+   }, [isError]);
+ 
+   return {
+-    data,
++    data: items,
++    setItems,
+     isLoading,
++    isFetching,
++    hasLoaded,
++    hasMore,
+     getReportsHistory,
+   };
+ };
+diff --git a/src/core/api/reports.ts b/src/core/api/reports.ts
+--- a/src/core/api/reports.ts
++++ b/src/core/api/reports.ts
+@@ -18,6 +18,8 @@
+ 
+ import { fetchBaseQueryWithCamelize } from './common';
+ 
++export const REPORTS_PAGE_SIZE = 20;
++
+ export const reportsApi = createApi({
+   reducerPath: 'reportsApi',
+   baseQuery: fetchBaseQueryWithCamelize({ baseUrl: '/rs/v2' }),
+@@ -41,6 +43,8 @@
+           fromDate: filters.fromDate,
+           toDate: filters.toDate,
+           codes: filters.reportTypeCode === 'all' ? undefined : filters.reportTypeCode,
++          count: REPORTS_PAGE_SIZE,
++          offset: filters.offset || undefined,
+         },
+       }),
+       transformResponse: (response: ReportHistoryResponse) => response.reportRequests || [],
+diff --git a/src/types/reports/models.ts b/src/types/reports/models.ts
+--- a/src/types/reports/models.ts
++++ b/src/types/reports/models.ts
+@@ -70,9 +70,10 @@
+ export type ReportTypesWithParams = { [K in ReportTypeCode]: ReportParameter[] };
+ 
+ export interface ReportHistoryFilters {
+-  fromDate: string;
+-  toDate: string;
++  fromDate?: string;
++  toDate?: string;
+   reportTypeCode?: string;
++  offset?: number;
+ }
+ 
+ export interface ReportParameterData {

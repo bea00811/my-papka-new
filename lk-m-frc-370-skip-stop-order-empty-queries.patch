@@ -1,0 +1,64 @@
+diff --git a/src/modules/TradeOrderHistory/components/StopOrders/components/NoStopOrders/NoStopOrders.tsx b/src/modules/TradeOrderHistory/components/StopOrders/components/NoStopOrders/NoStopOrders.tsx
+--- a/src/modules/TradeOrderHistory/components/StopOrders/components/NoStopOrders/NoStopOrders.tsx
++++ b/src/modules/TradeOrderHistory/components/StopOrders/components/NoStopOrders/NoStopOrders.tsx
+@@ -24,28 +24,42 @@ type Props = {
+ const NoStopOrders: FC<Props> = ({ title, instrumentId, tradePlaceId }) => {
+   const navigate = useNavigate();
+   const dispatch = useAppDispatch();
+-  const { data: instrumentInfo } = useGetInstrumentInfoQuery({
+-    instrumentId,
+-    tradePlaceId,
+-    subscribe: false,
+-    source: useInstrumentInfoQuerySourceParam(),
+-  });
+-  const { data: accounts } = useGetAccountsQuery({
+-    instrumentId,
+-    tradePlaceId,
+-  });
++  const source = useInstrumentInfoQuerySourceParam();
++  const skip = !Number.isFinite(Number(instrumentId)) || !Number.isFinite(Number(tradePlaceId));
++  const { data: instrumentInfo } = useGetInstrumentInfoQuery(
++    {
++      instrumentId,
++      tradePlaceId,
++      subscribe: false,
++      source,
++    },
++    { skip },
++  );
++  const { data: accounts } = useGetAccountsQuery(
++    {
++      instrumentId,
++      tradePlaceId,
++    },
++    { skip },
++  );
+ 
+   const { data: instrumentInfoFlags, isSuccess: isInstrumentInfoFlagsSuccees } =
+-    useGetInstrumentInfoFlagsQuery({
++    useGetInstrumentInfoFlagsQuery(
++      {
++        instrumentId,
++        tradePlaceId,
++      },
++      { skip },
++    );
++
++  const { data: positionsByProduct } = useGetPositionsQuery(
++    {
++      datasets: 'PositionValuationByProduct',
+       instrumentId,
+       tradePlaceId,
+-    });
+-
+-  const { data: positionsByProduct } = useGetPositionsQuery({
+-    datasets: 'PositionValuationByProduct',
+-    instrumentId,
+-    tradePlaceId,
+-  });
++    },
++    { skip },
++  );
+ 
+   const positions =
+     isInstrumentInfoFlagsSuccees && instrumentInfoFlags.instrumentInfoFlag[0].positions;

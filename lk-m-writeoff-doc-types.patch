@@ -1,0 +1,333 @@
+diff --git a/src/core/api/apiConstants.ts b/src/core/api/apiConstants.ts
+--- a/src/core/api/apiConstants.ts
++++ b/src/core/api/apiConstants.ts
+@@ -74,6 +74,8 @@
+ // Списание ценных бумаг
+ export const API_REQUEST_SECURITIES_WRITEOFF_PARAMS =
+   API_REQUEST_URL + '/nontrade/securities/writeoff/params';
++export const API_REQUEST_SECURITIES_DOC_TYPES =
++  API_REQUEST_URL + '/nontrade/securities/doc_types';
+ export const API_REQUEST_SECURITIES_CONTRACTORS =
+   API_REQUEST_URL + '/nontrade/securities/contractors';
+ export const API_REQUEST_SECURITIES_WRITEOFF = API_REQUEST_URL + '/nontrade/securities/writeoff';
+diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
+--- a/src/core/api/transfers.ts
++++ b/src/core/api/transfers.ts
+@@ -44,4 +44,7 @@
+   SecuritiesContractorsRequestParams,
+   SecuritiesContractorsResponse,
++  SecuritiesDepoDocType,
++  SecuritiesDocTypesRequestParams,
++  SecuritiesDocTypesResponse,
+   SecuritiesWriteOffCommitParams,
+   SecuritiesWriteOffDetailsParams,
+@@ -79,4 +82,5 @@
+   API_REQUEST_PERSON_BANK_DETAILS,
+   API_REQUEST_SECURITIES_CONTRACTORS,
++  API_REQUEST_SECURITIES_DOC_TYPES,
+   API_REQUEST_SECURITIES_WRITEOFF,
+   API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
+@@ -193,3 +197,32 @@
++    getSecuritiesDocTypes: builder.query<
++      SecuritiesDepoDocType[],
++      SecuritiesDocTypesRequestParams | void
++    >({
++      keepUnusedDataFor: 0,
++      query: (params) => ({
++        url: API_REQUEST_SECURITIES_DOC_TYPES,
++        params:
++          params?.changeOwnership === undefined
++            ? undefined
++            : { changeOwnership: params.changeOwnership },
++      }),
++      transformResponse: (
++        data: SecuritiesDocTypesResponse | SecuritiesDepoDocType[] | Record<string, unknown>,
++      ) => {
++        if (Array.isArray(data)) {
++          return data;
++        }
++
++        const record = data as Record<string, unknown>;
++        const list =
++          (record.depoDocTypes as SecuritiesDepoDocType[] | undefined) ??
++          (record.depoDocType as SecuritiesDepoDocType[] | undefined) ??
++          (record.docTypes as SecuritiesDepoDocType[] | undefined);
++
++        return Array.isArray(list) ? list : [];
++      },
++    }),
++
+     getSecuritiesContractors: builder.query<
+       SecuritiesContractor[],
+       SecuritiesContractorsRequestParams | void
+@@ -512,4 +545,5 @@
+   useGetMoneyOperationParamsQuery,
+   useGetSecuritiesWriteOffParamsQuery,
++  useGetSecuritiesDocTypesQuery,
+   useGetSecuritiesContractorsQuery,
+   useSecuritiesWriteOffMutation,
+diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
+--- a/src/modules/Transfers/types/securitiesWriteOff.ts
++++ b/src/modules/Transfers/types/securitiesWriteOff.ts
+@@ -72,11 +72,28 @@
+   dealDate: string;
+   settlementDate: string;
+   reference: string;
++  docTypeId: number | null;
++  docTypeOther: string;
+   contractNumber: string;
+   contractDate: string;
+   comment: string;
+ };
+ 
++export type SecuritiesDepoDocType = {
++  id: number;
++  name: string;
++  changeOwnership?: boolean | null;
++  needComment: boolean;
++};
++
++export type SecuritiesDocTypesRequestParams = {
++  changeOwnership?: boolean;
++};
++
++export type SecuritiesDocTypesResponse = {
++  depoDocTypes?: SecuritiesDepoDocType[];
++};
++
+ export type SecuritiesContractorsRequestParams = {
+   sbp?: boolean;
+ };
+@@ -127,6 +144,8 @@
+   sbp: boolean | null;
+   sendCosts: boolean;
+   noCommit?: boolean;
++  depoDocType_Id?: number | null;
++  depoDocTypeOther?: string | null;
+   contractorDepoAccount?: string | null;
+   contractorDepoSection?: string | null;
+   contractorID?: string | null;
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+@@ -20,6 +20,8 @@
+   | 'dealDate'
+   | 'settlementDate'
+   | 'reference'
++  | 'docTypeId'
++  | 'docTypeOther'
+   | 'contractNumber'
+   | 'contractDate'
+   | 'comment';
+@@ -65,6 +67,11 @@
+   settledate: 'settlementDate',
+   settlementdate: 'settlementDate',
+   reference: 'reference',
++  depodoctype_id: 'docTypeId',
++  depodoctype: 'docTypeId',
++  doctypeid: 'docTypeId',
++  depodoctypeother: 'docTypeOther',
++  doctypeother: 'docTypeOther',
+   comment: 'comment',
+ };
+ 
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -20,6 +20,7 @@
+ import { isMobileDevice } from 'core/DeviceDetector';
+ import {
+   useGetSecuritiesContractorsQuery,
++  useGetSecuritiesDocTypesQuery,
+   useGetSecuritiesWriteOffParamsQuery,
+   useLazyGetSecuritiesWriteOffFilesQuery,
+   useLazyGetSecuritiesWriteOffQuery,
+@@ -84,6 +85,8 @@
+   dealDate: '',
+   settlementDate: '',
+   reference: '',
++  docTypeId: null,
++  docTypeOther: '',
+   contractNumber: '',
+   contractDate: '',
+   comment: '',
+@@ -334,7 +337,27 @@
+   const isSbpMode = selectedMode?.code === 'SBP';
+   const isNonSbpMode = Boolean(selectedMode) && !isSbpMode;
+   const isWithRights = nonSbp.creditType === 'WITH_RIGHTS';
++  const docTypesChangeOwnership =
++    nonSbp.creditType === 'WITH_RIGHTS'
++      ? true
++      : nonSbp.creditType === 'WITHOUT_RIGHTS'
++        ? false
++        : undefined;
+   const {
++    data: docTypesData,
++    isLoading: isDocTypesLoading,
++    isFetching: isDocTypesFetching,
++  } = useGetSecuritiesDocTypesQuery(
++    docTypesChangeOwnership === undefined
++      ? undefined
++      : { changeOwnership: docTypesChangeOwnership },
++    {
++      skip: !isNonSbpMode,
++      refetchOnMountOrArgChange: true,
++    },
++  );
++  const docTypes = docTypesData ?? [];
++  const {
+     data: contractorsData,
+     isLoading: isContractorsLoading,
+     isFetching: isContractorsFetching,
+@@ -522,7 +545,41 @@
+   const patchNonSbp = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {
+     setNonSbp((prev) => ({ ...prev, ...patch }));
+   };
++
++  const docTypeOptions = useMemo(
++    () =>
++      docTypes.map((item) => ({
++        id: item.id,
++        value: item.name,
++      })),
++    [docTypes],
++  );
++  const selectedDocType = useMemo(
++    () => docTypes.find((item) => item.id === nonSbp.docTypeId) ?? null,
++    [docTypes, nonSbp.docTypeId],
++  );
++  const needDocTypeOther = Boolean(selectedDocType?.needComment);
+ 
++  useEffect(() => {
++    if (!nonSbp.docTypeId) {
++      return;
++    }
++
++    if (docTypes.some((item) => item.id === nonSbp.docTypeId)) {
++      return;
++    }
++
++    patchNonSbp({ docTypeId: null, docTypeOther: '' });
++  }, [docTypes, nonSbp.docTypeId]);
++
++  useEffect(() => {
++    if (needDocTypeOther || !nonSbp.docTypeOther) {
++      return;
++    }
++
++    patchNonSbp({ docTypeOther: '' });
++  }, [needDocTypeOther, nonSbp.docTypeOther]);
++
+   const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {
+     clearFieldError('instrument');
+     setSelectedInstrument(instrument);
+@@ -741,6 +798,18 @@
+     }
+ 
+     const errors: WriteOffFieldErrors = {};
++    if (!nonSbp.docTypeId) {
++      errors.docTypeId = 'Выберите тип документа';
++    }
++    if (
++      docTypes.find((item) => item.id === nonSbp.docTypeId)?.needComment &&
++      !nonSbp.docTypeOther.trim()
++    ) {
++      errors.docTypeOther = 'Укажите иной тип документа';
++    }
++    if (nonSbp.docTypeOther.length > 50) {
++      errors.docTypeOther = 'Не более 50 символов';
++    }
+     if (nonSbp.contractorID && nonSbp.contractorID.length < 3) {
+       errors.contractorID = 'От 3 до 12 знаков, латинские буквы и цифры';
+     }
+@@ -782,6 +851,8 @@
+             dealDate: toIsoDate(nonSbp.dealDate),
+             settleDate: toIsoDate(nonSbp.settlementDate),
+             reference: nonSbp.reference || null,
++            depoDocType_Id: nonSbp.docTypeId,
++            depoDocTypeOther: needDocTypeOther ? nonSbp.docTypeOther || null : null,
+             volume: isWithRights && volume != null ? volume : null,
+             comment: nonSbp.comment || null,
+           }
+@@ -1336,13 +1407,17 @@
+                 description={fieldErrors.creditType}
+                 onClear={clearSearchSelect(() => {
+                   clearFieldError('creditType');
+-                  patchNonSbp({ creditType: '', supplierName: '', dealAmount: '' });
++                  patchNonSbp({ creditType: '', supplierName: '', dealAmount: '', docTypeId: null, docTypeOther: '' });
+                 })}
+                 onSelect={(item) => {
+                   const creditType = item.id as WriteOffCreditType;
+                   clearFieldError('creditType');
++                  clearFieldError('docTypeId');
++                  clearFieldError('docTypeOther');
+                   patchNonSbp({
+                     creditType,
++                    docTypeId: null,
++                    docTypeOther: '',
+                     ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
+                   });
+                 }}
+@@ -1435,6 +1510,62 @@
+                 onChange={handleLatinChange('reference', 16)}
+               />
+               <Text className={styles.sectionTitle}>Основание для зачисления</Text>
++              <SearchSelect
++                label="Тип документа:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNamePopover={styles.searchSelectPopover}
++                classNameContent={styles.searchSelectDropdown}
++                classNameDescription={styles.fieldHint}
++                placeholder="Тип документа"
++                scale="small"
++                clearable
++                list={docTypeOptions}
++                value={selectedDocType?.name ?? ''}
++                emptyMessage={
++                  isDocTypesLoading || isDocTypesFetching ? 'Загрузка...' : 'Ничего не найдено'
++                }
++                separatorActionCells={false}
++                status={fieldErrors.docTypeId ? 'error' : null}
++                description={fieldErrors.docTypeId}
++                onClear={clearSearchSelect(() => {
++                  clearFieldError('docTypeId');
++                  clearFieldError('docTypeOther');
++                  patchNonSbp({ docTypeId: null, docTypeOther: '' });
++                })}
++                onSelect={(item) => {
++                  clearFieldError('docTypeId');
++                  clearFieldError('docTypeOther');
++                  const selected =
++                    docTypes.find((docType) => docType.id === item.id || docType.name === item.value) ??
++                    null;
++                  patchNonSbp({
++                    docTypeId: selected?.id ?? null,
++                    docTypeOther: selected?.needComment ? nonSbp.docTypeOther : '',
++                  });
++                }}
++              />
++              {needDocTypeOther && (
++                <Input
++                  label="Иной тип:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Иной тип документа"
++                  scale="small"
++                  value={nonSbp.docTypeOther}
++                  maxLength={50}
++                  status={fieldErrors.docTypeOther ? 'error' : null}
++                  description={
++                    fieldErrors.docTypeOther ??
++                    'Тип подтверждающего документа. Не более 50 символов'
++                  }
++                  onChange={(event) => {
++                    clearFieldError('docTypeOther');
++                    patchNonSbp({ docTypeOther: event.target.value.slice(0, 50) });
++                  }}
++                />
++              )}
+               <Input
+                 label="Номер договора:"
+                 className={styles.sideField}

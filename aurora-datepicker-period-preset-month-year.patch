@@ -1,0 +1,61 @@
+diff --git a/src/packages/components/src/DatePicker/DatePicker.stories.tsx b/src/packages/components/src/DatePicker/DatePicker.stories.tsx
+--- a/src/packages/components/src/DatePicker/DatePicker.stories.tsx
++++ b/src/packages/components/src/DatePicker/DatePicker.stories.tsx
+@@ -129,6 +129,20 @@ WithMinMaxDate.args = {
+   withOptions: false,
+ };
+ 
++/** lk-m single Date field: open on maxDate month with periodPreset */
++export const SingleDatePeriodPreset = Template.bind({});
++SingleDatePeriodPreset.args = {
++  currentMonth: 1,
++  currentYear: 2025,
++  defaultOptionPeriodPreset: "day",
++  maxDate: new Date("2025-02-07"),
++  minDate: new Date("2022-08-05"),
++  mode: "mobile",
++  periodPreset: true,
++  withOptions: false,
++  withPeriod: false,
++};
++
+ export const ButtonClear = Template.bind({});
+ ButtonClear.args = {
+   customOptionsPeriodPreset: ["month", "quarter", "year", "day"],
+diff --git a/src/packages/components/src/DatePicker/DatePicker.tsx b/src/packages/components/src/DatePicker/DatePicker.tsx
+--- a/src/packages/components/src/DatePicker/DatePicker.tsx
++++ b/src/packages/components/src/DatePicker/DatePicker.tsx
+@@ -262,11 +262,11 @@
+     );
+ 
+     const handleSetMonthCalendar = useCallback(() => {
+-      !periodPreset && setVariantCalendar("month");
++      setVariantCalendar("month");
+     }, []);
+ 
+     const handleSetYearCalendar = useCallback(() => {
+-      !periodPreset && setVariantCalendar("year");
++      setVariantCalendar("year");
+     }, []);
+ 
+     const handleMouseLeaveCalendar = () => {
+diff --git a/src/packages/components/src/DatePicker/components/HeaderPeriod/HeaderPeriod.tsx b/src/packages/components/src/DatePicker/components/HeaderPeriod/HeaderPeriod.tsx
+--- a/src/packages/components/src/DatePicker/components/HeaderPeriod/HeaderPeriod.tsx
++++ b/src/packages/components/src/DatePicker/components/HeaderPeriod/HeaderPeriod.tsx
+@@ -16,7 +16,6 @@ const HeaderPeriod: FC<IHeaderPeriodProps> = ({
+   onNextClick,
+   onPeriodClick,
+   onPrevClick,
+-  periodPreset,
+   theme,
+   title,
+ }) => {
+@@ -45,7 +44,7 @@ const HeaderPeriod: FC<IHeaderPeriodProps> = ({
+         >
+           {title}
+         </Text>
+-        {!periodPreset && <SmallArrowDown />}
++        <SmallArrowDown />
+       </div>
+       {arrowSwitch && (
+         <div className={styles["switch"]}>

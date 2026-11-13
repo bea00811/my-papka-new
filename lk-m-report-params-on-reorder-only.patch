@@ -1,0 +1,70 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -68,7 +68,7 @@
+ }) => {
+   const dispatch = useAppDispatch();
+   const Icon = getReportIcon(report.hasSign, report.multifile);
+-  const [getReportParameters, { data: reportParameters, isError: isParametersError }] =
++  const [getReportParameters, { isError: isParametersError, isFetching: isParametersFetching }] =
+     useLazyGetReportParametersQuery();
+ 
+   const navigate = useNavigate();
+@@ -77,12 +77,6 @@
+     if (isParametersError) onParametersError();
+   }, [isParametersError, onParametersError]);
+ 
+-  useEffect(() => {
+-    if (openDetails && report.requestGuid) {
+-      getReportParameters(report.requestGuid);
+-    }
+-  }, [getReportParameters, openDetails, report.requestGuid, report.requestStatusCode]);
+-
+   const onDismiss = useCallback(() => {
+     dispatch(setReorderData(null));
+     dispatch(setCurrentRequestGuid(null));
+@@ -90,17 +84,25 @@
+     onParametersErrorClear();
+   }, [dispatch, setOpenDetails, onParametersErrorClear]);
+ 
+-  const handleReOrder = useCallback(() => {
+-    if (!reportParameters) return;
+-    dispatch(
+-      setReorderData({
+-        ...reportParameters,
+-        instrumentName: reportParameters.instrumentName || report.instrumentName,
+-      }),
+-    );
+-    navigate(ROUTE_REPORTS);
+-  }, [dispatch, navigate, report.instrumentName, reportParameters]);
++  const handleReOrder = useCallback(async () => {
++    if (!report.requestGuid) return;
+ 
++    try {
++      const reportParameters = await getReportParameters(report.requestGuid).unwrap();
++      if (!reportParameters?.reportTypeId) return;
++
++      dispatch(
++        setReorderData({
++          ...reportParameters,
++          instrumentName: reportParameters.instrumentName || report.instrumentName,
++        }),
++      );
++      navigate(ROUTE_REPORTS);
++    } catch {
++      // ошибка параметров обрабатывается в useEffect выше
++    }
++  }, [dispatch, getReportParameters, navigate, report.instrumentName, report.requestGuid]);
++
+   const statusColorName = textStatusColors[report.requestStatusCode];
+   const isCompleted = report.requestStatusCode === 'completed';
+   const isNew = report.requestStatusCode === 'new';
+@@ -149,7 +151,7 @@
+           <div className={styles.buttons}>
+             {showReorderButton && (
+               <Button
+-                disabled={!reportParameters?.reportTypeId}
++                disabled={isParametersFetching}
+                 variant="secondary"
+                 onClick={handleReOrder}
+               >

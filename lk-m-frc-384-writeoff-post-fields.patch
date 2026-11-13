@@ -1,0 +1,133 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -80,11 +80,6 @@ const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
+   { id: 'WITH_RIGHTS', value: 'С переходом прав' },
+   { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
+ ];
+-const DATE_FIELD_TITLES: Record<'dealDate' | 'settlementDate' | 'contractDate', string> = {
+-  dealDate: 'Выберите дату сделки',
+-  settlementDate: 'Выберите дату расчётов',
+-  contractDate: 'Выберите дату договора',
+-};
+ 
+ const sanitizeLatin = (value: string, max: number) =>
+   value.replace(LATIN_DIGIT_RE, '').slice(0, max);
+@@ -98,6 +93,8 @@ const parseFormDate = (value: string) => {
+   return parsed.isValid ? parsed : null;
+ };
+ 
++const toIsoDate = (value: string) => parseFormDate(value)?.toISODate() ?? null;
++
+ const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
+   contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
+ 
+@@ -729,7 +726,7 @@ const SecuritiesWriteOff = () => {
+     const quantity = toQuantityNumber(formPayload.quantity);
+     const contractorId = Number(formPayload.contractor?.id);
+     const sbp = formPayload.mode == null ? null : formPayload.mode.code === 'SBP';
+-    const dealAmount = toQuantityNumber(nonSbp.dealAmount);
++    const volume = toQuantityNumber(nonSbp.dealAmount);
+ 
+     return {
+       depoInstrument_Id: formPayload.instrument?.depoInstrumentId ?? null,
+@@ -738,21 +735,19 @@ const SecuritiesWriteOff = () => {
+       contractor_Id: Number.isFinite(contractorId) ? contractorId : null,
+       sbp,
+       sendCosts: formPayload.transferExpensesInfo,
+-      personalDataAgreement: true,
+-      // ponytail: extra POST keys from the mockup; rename if backend contract differs
+       ...(sbp === false
+         ? {
++            contractorDepoAccount: nonSbp.depoNumber || null,
++            contractorDepoSection: nonSbp.depoDivision || null,
+             contractorID: nonSbp.contractorID || null,
+-            depoNumber: nonSbp.depoNumber || null,
+-            depoDivision: nonSbp.depoDivision || null,
+-            withRightsTransfer: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
+-            supplierName: isWithRights ? nonSbp.supplierName || null : null,
+-            dealAmount: isWithRights && dealAmount != null ? dealAmount : null,
+-            dealDate: nonSbp.dealDate || null,
+-            settlementDate: nonSbp.settlementDate || null,
++            contractorAgreementNum: nonSbp.contractNumber || null,
++            contractorAgreementDate: toIsoDate(nonSbp.contractDate),
++            changeOwnership: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
++            recipient: isWithRights ? nonSbp.supplierName || null : null,
++            dealDate: toIsoDate(nonSbp.dealDate),
++            settleDate: toIsoDate(nonSbp.settlementDate),
+             reference: nonSbp.reference || null,
+-            contractNumber: nonSbp.contractNumber || null,
+-            contractDate: nonSbp.contractDate || null,
++            volume: isWithRights && volume != null ? volume : null,
+             comment: nonSbp.comment || null,
+           }
+         : {}),
+@@ -1409,7 +1404,6 @@ const SecuritiesWriteOff = () => {
+         onDismiss={() => setOpenDateField(null)}
+         onTouchMove={(event) => event.stopPropagation()}
+       >
+-        <Text type="subtitleBold">{openDateField ? DATE_FIELD_TITLES[openDateField] : ''}</Text>
+         <DatePicker
+           withPeriod={false}
+           withOptions={false}
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+@@ -46,17 +46,25 @@ const FIELD_NAME_MAP: Record<string, WriteOffFormField> = {
+   mode: 'mode',
+   personaldataagreement: 'personalDataAgreement',
+   contractorid: 'contractorID',
++  contractordepoaccount: 'depoNumber',
+   deponumber: 'depoNumber',
++  contractordeposection: 'depoDivision',
+   depodivision: 'depoDivision',
++  contractoragreementnum: 'contractNumber',
++  contractnumber: 'contractNumber',
++  contractoragreementdate: 'contractDate',
++  contractdate: 'contractDate',
++  changeownership: 'creditType',
+   withrightstransfer: 'creditType',
+   credittype: 'creditType',
++  recipient: 'supplierName',
+   suppliername: 'supplierName',
++  volume: 'dealAmount',
+   dealamount: 'dealAmount',
+   dealdate: 'dealDate',
++  settledate: 'settlementDate',
+   settlementdate: 'settlementDate',
+   reference: 'reference',
+-  contractnumber: 'contractNumber',
+-  contractdate: 'contractDate',
+   comment: 'comment',
+ };
+ 
+diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
+--- a/src/modules/Transfers/types/securitiesWriteOff.ts
++++ b/src/modules/Transfers/types/securitiesWriteOff.ts
+@@ -126,18 +126,17 @@ export type SecuritiesWriteOffRequestParams = {
+   contractor_Id: number | null;
+   sbp: boolean | null;
+   sendCosts: boolean;
+-  personalDataAgreement: boolean;
++  contractorDepoAccount?: string | null;
++  contractorDepoSection?: string | null;
+   contractorID?: string | null;
+-  depoNumber?: string | null;
+-  depoDivision?: string | null;
+-  withRightsTransfer?: boolean | null;
+-  supplierName?: string | null;
+-  dealAmount?: number | null;
++  contractorAgreementNum?: string | null;
++  contractorAgreementDate?: string | null;
++  changeOwnership?: boolean | null;
++  recipient?: string | null;
+   dealDate?: string | null;
+-  settlementDate?: string | null;
++  settleDate?: string | null;
+   reference?: string | null;
+-  contractNumber?: string | null;
+-  contractDate?: string | null;
++  volume?: number | null;
+   comment?: string | null;
+ };
+ 

@@ -1,0 +1,64 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -255,6 +255,23 @@ const ReportsOrder = () => {
+     );
+   }
+ 
++  const dateField = (
++    <div onClick={() => setBottomSheetDateOpen(true)}>
++      <Input
++        onChange={(e) => null}
++        placeholder=""
++        label="Дата"
++        value={visualDateFormatter(formData?.fromDate || '')}
++        className={styles.input}
++        status={dateError ? 'error' : undefined}
++        description={dateError && 'Введите корректную дату'}
++        onBlur={dateController}
++        onFocus={dateController}
++        addonAfter={<Calendar />}
++      />
++    </div>
++  );
++
+   return (
+     <>
+       <Headline size="s" title="Заказать онлайн" />
+@@ -268,23 +285,12 @@ const ReportsOrder = () => {
+ 
+       <div className={styles.formWrapper}>
+         {parameters.map((param) => {
++          if (reportTypeSelected?.code === 'DepoSecurityPos' && param.parameter === 'Date') {
++            return null;
++          }
++
+           return {
+-            Date: (
+-              <div onClick={() => setBottomSheetDateOpen(true)}>
+-                <Input
+-                  onChange={(e) => null}
+-                  placeholder=""
+-                  label="Дата"
+-                  value={visualDateFormatter(formData?.fromDate || '')}
+-                  className={styles.input}
+-                  status={dateError ? 'error' : undefined}
+-                  description={dateError && 'Введите корректную дату'}
+-                  onBlur={dateController}
+-                  onFocus={dateController}
+-                  addonAfter={<Calendar />}
+-                />
+-              </div>
+-            ),
++            Date: dateField,
+             Period: (
+               <div onClick={() => reportPeriodEnable && setBottomSheetPeriodOpen(true)}>
+                 <Input
+@@ -386,6 +392,7 @@ const ReportsOrder = () => {
+               className={styles.input}
+               variant={undefined}
+             />
++            {parameters.some((param) => param.parameter === 'Date') && dateField}
+           </>
+         )}
+       </div>

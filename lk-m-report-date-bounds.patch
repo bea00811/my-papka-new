@@ -1,0 +1,184 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -31,7 +31,7 @@ import ReportFormInput from './components/ReportFormInput';
+ import { ReportInputNames, bsTitleByInputName } from './components/ReportFormInput/constants';
+ import ReportSelectItem from './components/ReportSelectItem';
+ import { defaultOrderPeriod } from './constants';
+-import { isDepoStatementDateReport, validateReportForm, visualPeriodFormatter } from './helper';
++import { validateReportForm, visualPeriodFormatter } from './helper';
+ 
+ const ReportsOrder = () => {
+   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+@@ -58,6 +58,7 @@ const ReportsOrder = () => {
+     selectedInstrument,
+     selectedDepoAccount,
+     parameters,
++    isDepoDateReport,
+     isLoading,
+     isErrorParameters,
+     isCreateLoading,
+@@ -74,7 +75,7 @@ const ReportsOrder = () => {
+   const onReportTypeSelect = useCallback(
+     (item: ReportType) => {
+       setReportTypeSelected(item);
+-      const clearDepoDate = isDepoStatementDateReport(item.code);
++      const clearDepoDate = isDepoDateReport(item.code);
+       if (clearDepoDate) setSelectedDepoAccount(null);
+       setFormData((oldData) => ({
+         ...oldData,
+@@ -85,7 +86,7 @@ const ReportsOrder = () => {
+       }));
+       setBottomSheetOpen(false);
+     },
+-    [setFormData, setReportTypeSelected, setSelectedDepoAccount],
++    [isDepoDateReport, setFormData, setReportTypeSelected, setSelectedDepoAccount],
+   );
+ 
+   const onProductSelect = useCallback(
+@@ -110,13 +111,13 @@ const ReportsOrder = () => {
+       setFormData((oldData) => ({
+         ...oldData,
+         depoAccountId: item.depoAccountId,
+-        ...(isDepoStatementDateReport(reportTypeSelected?.code)
++        ...(isDepoDateReport(reportTypeSelected?.code)
+           ? { fromDate: undefined, toDate: undefined }
+           : {}),
+       }));
+       setBottomSheetOpen(false);
+     },
+-    [reportTypeSelected?.code, setFormData, setSelectedDepoAccount],
++    [isDepoDateReport, reportTypeSelected?.code, setFormData, setSelectedDepoAccount],
+   );
+ 
+   const onAgreementSelect = useCallback(
+@@ -286,13 +287,13 @@ const ReportsOrder = () => {
+   }
+ 
+   const dateSelectable =
+-    !isDepoStatementDateReport(reportTypeSelected?.code) || Boolean(formData?.depoAccountId);
++    !isDepoDateReport(reportTypeSelected?.code) || Boolean(formData?.depoAccountId);
+   const selectedReportDate = paramsData.dates?.[0];
+   const reportMinDate = selectedReportDate?.minFromDate
+-    ? DateTime.fromISO(selectedReportDate.minFromDate).toJSDate()
++    ? DateTime.fromISO(selectedReportDate.minFromDate)
+     : undefined;
+   const reportMaxDate = selectedReportDate?.maxToDate
+-    ? DateTime.fromISO(selectedReportDate.maxToDate).toJSDate()
++    ? DateTime.fromISO(selectedReportDate.maxToDate)
+     : undefined;
+ 
+   const dateField = (
+@@ -497,11 +498,14 @@ const ReportsOrder = () => {
+         </div>
+ 
+         <DatePicker
++          key={reportMaxDate ? reportMaxDate.toISODate() : 'report-date'}
+           withPeriod={false}
+           withOptions={false}
+           onSubmit={onDateSubmit}
+-          minDate={reportMinDate}
+-          maxDate={reportMaxDate}
++          minDate={reportMinDate?.toJSDate()}
++          maxDate={reportMaxDate?.toJSDate()}
++          currentYear={reportMaxDate?.year}
++          currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+         />
+       </BottomSheet>
+ 
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/helper.ts b/src/modules/ReportsPage/components/ReportsOrder/helper.ts
+--- a/src/modules/ReportsPage/components/ReportsOrder/helper.ts
++++ b/src/modules/ReportsPage/components/ReportsOrder/helper.ts
+@@ -37,8 +37,9 @@ export const visualIsoDateFormatter = (date: string) => {
+   return dt.toFormat(DEFAULT_DATE_VIEW_FORMAT);
+ };
+ 
+-export const isDepoStatementDateReport = (code?: string) =>
+-  code === 'DepoAccState' || code === 'DepoSecurityPos';
++export const isDepoStatementDateReport = (parameters: { parameter: string }[] = []) =>
++  parameters.some((item) => item.parameter === 'Date') &&
++  parameters.some((item) => item.parameter === 'DepoAccount');
+ 
+ export const validateReportForm = (
+   parameters: ReportParameter[],
+diff --git a/src/modules/ReportsPage/hooks/useReportOrder.ts b/src/modules/ReportsPage/hooks/useReportOrder.ts
+--- a/src/modules/ReportsPage/hooks/useReportOrder.ts
++++ b/src/modules/ReportsPage/hooks/useReportOrder.ts
+@@ -77,20 +77,10 @@ export const useReportOrder = () => {
+     () =>
+       data?.reportDates?.filter((item) => {
+         if (item.reportTypeId !== formData?.reportTypeId) return false;
+-        if (item.reportTypeId === 1) {
+-          return (
+-            item.productId === formData?.productId && item.portfolioId === formData?.portfolioId
+-          );
+-        }
+-        if (
+-          isDepoStatementDateReport(reportTypeSelected?.code) ||
+-          [3, 5].includes(item.reportTypeId)
+-        ) {
+-          return item.depoAccountId === formData?.depoAccountId;
+-        }
+-        return false;
++        if (item.depoAccountId != null) return item.depoAccountId === formData?.depoAccountId;
++        return item.productId === formData?.productId && item.portfolioId === formData?.portfolioId;
+       }) || [],
+-    [formData, data, reportTypeSelected?.code],
++    [formData, data],
+   );
+ 
+   const reportPeriodEnable = useMemo(
+@@ -104,20 +94,6 @@ export const useReportOrder = () => {
+ 
+   const maxToDate = reportDateList[0]?.maxToDate;
+ 
+-  useEffect(() => {
+-    if (reOrderData?.reportTypeId || isDepoStatementDateReport(reportTypeSelected?.code)) return;
+-
+-    const formatted = maxToDate
+-      ? DateTime.fromISO(maxToDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
+-      : undefined;
+-
+-    setFormData((old) => {
+-      if (!old) return old;
+-      if (old.fromDate === formatted && old.toDate === formatted) return old;
+-      return { ...old, fromDate: formatted, toDate: formatted };
+-    });
+-  }, [maxToDate, reOrderData?.reportTypeId, reportTypeSelected?.code]);
+-
+   const reportAgreementList = useMemo(
+     () =>
+       data?.reportAgreementParameters?.filter(
+@@ -131,6 +107,24 @@ export const useReportOrder = () => {
+     () => (reportTypeSelected ? reportTypesObject[reportTypeSelected?.code] || [] : []),
+     [reportTypeSelected, reportTypesObject],
+   );
++  const isDepoDateReport = useCallback(
++    (code?: string) => isDepoStatementDateReport(code ? reportTypesObject[code] : parameters),
++    [parameters, reportTypesObject],
++  );
++
++  useEffect(() => {
++    if (reOrderData?.reportTypeId || isDepoDateReport(reportTypeSelected?.code)) return;
++
++    const formatted = maxToDate
++      ? DateTime.fromISO(maxToDate).toFormat(DEFAULT_DATE_VIEW_FORMAT)
++      : undefined;
++
++    setFormData((old) => {
++      if (!old) return old;
++      if (old.fromDate === formatted && old.toDate === formatted) return old;
++      return { ...old, fromDate: formatted, toDate: formatted };
++    });
++  }, [isDepoDateReport, maxToDate, reOrderData?.reportTypeId, reportTypeSelected?.code]);
+ 
+   useEffect(() => {
+     const repTypesData = data?.reportTypes || [];
+@@ -215,6 +209,7 @@ export const useReportOrder = () => {
+     selectedDepoAccount,
+     setSelectedDepoAccount,
+     parameters,
++    isDepoDateReport,
+     isLoading,
+     isErrorParameters: isError,
+     paramsData: {

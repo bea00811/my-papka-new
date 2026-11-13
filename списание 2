@@ -1,0 +1,159 @@
+POST /v1/nontrade/securities/writeoff
+Параметры запроса
+*	JSESSIONID	Header/Cookie	TOKEN	Идентификатор сессии.
+*	depoInstrument_Id	Body	Integer	
+Идентификатор списываемого инструмента депо
+
+*	depoSubAccount_Id	Body	Integer	
+ID секции счета депо
+
+*	quantity	Body	Decimal	
+Количество инструмента
+
+*	contractor_Id	Body	Integer	
+ID контрагента
+
+
+contractorDepoAccount	Body	String	
+Счет депо контрагента (обязательно для sbp=false)
+
+
+contractorDepoSection	Body	String	
+Раздел счета депо контрагента (обязательно для sbp=false)
+
+
+contractorID	Body	String	
+Идентификатор (код) контрагента (обязательно для sbp=false)
+
+
+depoDocType_Id	Body	Integer	
+ID типа подтверждающего документа (обязательно для sbp=false)
+
+
+depoDocTypeOther	Body	String	
+Тип подтверждающего документа для случая ручного ввода
+
+
+depoDocNum	Body	String	
+Номер подтверждающего документа (обязательно для sbp=false)
+
+
+depoDocDate	Body	Date(ISO)	
+Дата подтверждающего документа (обязательно для sbp=false)
+
+
+changeOwnership	Body	Bool	
+Признак перехода прав собственности (обязательно для sbp=false)
+
+false - без перехода прав
+true - с переходом прав
+
+recipient	Body	String	
+ФИО получателя ценных бумаг
+
+
+dealDate	Body	Date(ISO)	
+Дата сделки (обязательно для sbp=false)
+
+
+settleDate	Body	Date(ISO)	
+Дата расчетов (обязательно для sbp=false)
+
+
+reference	Body	String	
+Референс (обязательно для sbp=false)
+
+
+volume	Body	Decimal	
+Сумма сделки
+
+
+comment	Body	String	
+Примечание
+
+
+sbp
+
+Body	Bool	
+Признак отправки списания через СБП:
+
+false - не отправлять через СБП (по умолчанию)
+true - отправить через СБП
+
+sendCosts
+
+
+
+Body	Bool	
+Отправлять информацию о затратах на приобретение (имеет смысл только для sbp=true)
+
+true - отправлять
+false - не отправлять (по умолчанию)
+
+personalDataAgreement
+
+параметр пока исключен
+
+Body	Bool	
+Признак согласия на передачу персональных данных:
+
+true - согласие
+false - несогласие
+
+noCommit	Body	Bool	
+Оставлять заявку активной для добавления еще инструментов:
+
+false - заявка переходит в состояние ожидания подтверждения (по умолчанию)
+true - заявка остается активной для добавления еще инструментов
+Ответ
+DataSet: CheckResult
+Поле	Тип	Описание
+Field
+
+String
+
+Название поля
+
+Status
+
+Enum
+
+Статус проверки поля:
+
+EMPTY - поле пустое
+INVALID - поле содержит неправильное значение
+DataSet: Request
+Поле	Тип	Описание
+RequestGuid	GUID	Идентификатор созданной заявки (при отсутствии данных в датасете CheckResult)
+Право для проверки
+PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT
+
+Возможные коды ошибок
+SessionTokenNotSpecified	Не указан токен сессии
+SessionClosed	Сессия была закрыта
+NoSession	Отсутствует сессия
+AccessDenied	Недостаточно полномочий
+DepoNotFound
+
+Не найден депозитарий
+DepoNotSpecified	Не указан депозитарий
+DepoSubAccountNotFound	Не найден раздел счета депо
+DepoSubAccountNotSpecified	Не указан раздел счета депо
+DuplicateRequestGUID	Данный запрос уже зарегистрирован в системе
+InstrumentNotFound	Не найден инструмент
+InstrumentNotSpecified	Не указан инструмент
+PersonalDataAgreementNeeded	Требуется согласие на обработку персональных данных
+NoFundsForCommission	Недостаточно денежных средств для списания комиссии
+Пример запроса
+Запрос
+POST /v1/nontrade/securities/writeoff
+...
+depoInstrument_Id=1636&depoSubAccount_Id=832503&quantity=12&contractor_Id=67&contractorDepoAccount=TL1803200144&contractorDepoSection=70DVP000000000000&contractorID=MSA253200000&contractorAgreementNum=000013298&contractorAgreementDate=2018-05-16T00%3a00%3a00.000%2b03%3a00&dealDate=2026-01-14T00%3a00%3a00.000%2b03%3a00&settleDate=2026-01-15T00%3a00%3a00.000%2b03%3a00&changeOwnership=true&reference=TECH1&comment=%d0%9f%d1%80%d0%b8%d0%bc%d0%b5%d1%87%d0%b0%d0%bd%d0%b8%d0%b5&recipient=%d0%9a%d0%b0%d0%ba%d0%be%d0%b9%d1%82%d0%be+%d0%9a%d0%bb%d0%b8%d0%b5%d0%bd%d1%82&volume=12345.89&sbp=false
+DataApi
+02. Списание ЦБ. Старт заявки на списание ЦБ. DataAPI
+
+
+НравитсяСтаньте первыми кому понравится это
+Нет метокРедактировать метки
+Иконка пользователя: Добавить свою фотографию
+Написать комментарий...

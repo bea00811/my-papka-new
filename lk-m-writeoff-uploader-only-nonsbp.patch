@@ -1,0 +1,39 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -360,7 +360,7 @@
+     isWriteOffLoading || isStatusPolling || isUploadingAttachments || isCommitLoading;
+ 
+   useEffect(() => {
+-    if (!isSbpMode) {
++    if (isNonSbpMode) {
+       return;
+     }
+ 
+@@ -371,7 +371,7 @@
+     setAttachmentFiles([]);
+     setAttachmentStatuses([]);
+     setDraftRequestGuid(null);
+-  }, [attachmentFiles.length, draftRequestGuid, isSbpMode]);
++  }, [attachmentFiles.length, draftRequestGuid, isNonSbpMode]);
+ 
+   const clearFieldError = (field: WriteOffFormField) => {
+     setFieldErrors((prev) => {
+@@ -947,7 +947,7 @@
+     }
+ 
+     const requestParams = buildWriteOffRequest();
+-    const hasAttachments = !isSbpMode && attachmentFiles.length > 0;
++    const hasAttachments = isNonSbpMode && attachmentFiles.length > 0;
+ 
+     console.log('[SecuritiesWriteOff] POST /v1/nontrade/securities/writeoff', {
+       ...requestParams,
+@@ -1488,7 +1488,7 @@
+               />
+             </>
+           )}
+-          {!isSbpMode && (
++          {isNonSbpMode && (
+             <WriteOffSupportingDocuments
+               files={attachmentFiles}
+               onFilesChange={handleAttachmentFilesChange}

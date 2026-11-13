@@ -1,0 +1,31 @@
+diff --git a/src/images/icons/reports/ReportMany.svg b/src/images/raw-icons/reports/ReportMany.svg
+similarity index 100%
+rename from src/images/icons/reports/ReportMany.svg
+rename to src/images/raw-icons/reports/ReportMany.svg
+diff --git a/src/images/icons/reports/ReportManySign.svg b/src/images/raw-icons/reports/ReportManySign.svg
+similarity index 100%
+rename from src/images/icons/reports/ReportManySign.svg
+rename to src/images/raw-icons/reports/ReportManySign.svg
+diff --git a/src/images/icons/reports/ReportOne.svg b/src/images/raw-icons/reports/ReportOne.svg
+similarity index 100%
+rename from src/images/icons/reports/ReportOne.svg
+rename to src/images/raw-icons/reports/ReportOne.svg
+diff --git a/src/images/icons/reports/ReportOneSign.svg b/src/images/raw-icons/reports/ReportOneSign.svg
+similarity index 100%
+rename from src/images/icons/reports/ReportOneSign.svg
+rename to src/images/raw-icons/reports/ReportOneSign.svg
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+@@ -1,7 +1,7 @@
+-import { ReactComponent as ReportMany } from 'images/icons/reports/ReportMany.svg';
+-import { ReactComponent as ReportManySign } from 'images/icons/reports/ReportManySign.svg';
+-import { ReactComponent as ReportOne } from 'images/icons/reports/ReportOne.svg';
+-import { ReactComponent as ReportOneSign } from 'images/icons/reports/ReportOneSign.svg';
++import { ReactComponent as ReportMany } from 'images/raw-icons/reports/ReportMany.svg';
++import { ReactComponent as ReportManySign } from 'images/raw-icons/reports/ReportManySign.svg';
++import { ReactComponent as ReportOne } from 'images/raw-icons/reports/ReportOne.svg';
++import { ReactComponent as ReportOneSign } from 'images/raw-icons/reports/ReportOneSign.svg';
+ 
+ import { ReportItem, ReportStatusPayload } from 'types/reports';
+ 

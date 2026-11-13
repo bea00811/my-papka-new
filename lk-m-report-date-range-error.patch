@@ -1,0 +1,30 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -145,13 +145,14 @@
+     (e: Date[]) => {
+       const currentDate = e[0];
+       if (!currentDate) return;
++      clearPeriodError();
+       setFormData((oldData) => ({
+         ...oldData,
+         fromDate: DateTime.fromJSDate(new Date(currentDate)).toFormat(DEFAULT_DATE_VIEW_FORMAT),
+       }));
+       setBottomSheetDateOpen(false);
+     },
+-    [setFormData],
++    [clearPeriodError, setFormData],
+   );
+ 
+   const onPeriodSubmit = useCallback(
+@@ -305,8 +306,8 @@
+         label="Дата"
+         value={formData?.fromDate ? visualDateFormatter(formData.fromDate) : ''}
+         className={styles.input}
+-        status={dateError ? 'error' : undefined}
+-        description={dateError && 'Введите корректную дату'}
++        status={dateError || periodErrorText ? 'error' : undefined}
++        description={periodErrorText || (dateError && 'Введите корректную дату')}
+         onBlur={dateController}
+         onFocus={dateController}
+         addonAfter={<Calendar />}

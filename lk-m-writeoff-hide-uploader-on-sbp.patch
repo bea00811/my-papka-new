@@ -1,0 +1,52 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -358,6 +358,20 @@
+   const [draftRequestGuid, setDraftRequestGuid] = useState<string | null>(null);
+   const isNextBusy =
+     isWriteOffLoading || isStatusPolling || isUploadingAttachments || isCommitLoading;
++
++  useEffect(() => {
++    if (!isSbpMode) {
++      return;
++    }
++
++    if (attachmentFiles.length === 0 && draftRequestGuid == null) {
++      return;
++    }
++
++    setAttachmentFiles([]);
++    setAttachmentStatuses([]);
++    setDraftRequestGuid(null);
++  }, [attachmentFiles.length, draftRequestGuid, isSbpMode]);
+ 
+   const clearFieldError = (field: WriteOffFormField) => {
+     setFieldErrors((prev) => {
+@@ -933,7 +947,7 @@
+     }
+ 
+     const requestParams = buildWriteOffRequest();
+-    const hasAttachments = attachmentFiles.length > 0;
++    const hasAttachments = !isSbpMode && attachmentFiles.length > 0;
+ 
+     console.log('[SecuritiesWriteOff] POST /v1/nontrade/securities/writeoff', {
+       ...requestParams,
+@@ -1474,11 +1488,13 @@
+               />
+             </>
+           )}
+-          <WriteOffSupportingDocuments
+-            files={attachmentFiles}
+-            onFilesChange={handleAttachmentFilesChange}
+-            disabled={isNextBusy}
+-          />
++          {!isSbpMode && (
++            <WriteOffSupportingDocuments
++              files={attachmentFiles}
++              onFilesChange={handleAttachmentFilesChange}
++              disabled={isNextBusy}
++            />
++          )}
+           <Checkbox
+             className={styles.expensesCheckbox}
+             classNameLabel={styles.expensesCheckboxLabel}

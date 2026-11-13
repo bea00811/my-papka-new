@@ -1,0 +1,19 @@
+diff --git a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+--- a/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
++++ b/src/modules/ReportsPage/components/ReportsOrder/ReportsOrder.tsx
+@@ -499,12 +499,13 @@ const ReportsOrder = () => {
+ 
+         {bottomSheetDateOpen && (
+           <DatePicker
+-            withPeriod={false}
++            periodPreset
++            defaultOptionPeriodPreset="day"
+             withOptions={false}
++            withPeriod={false}
+             onSubmit={onDateSubmit}
+             minDate={reportMinDate?.toJSDate()}
+             maxDate={reportMaxDate?.toJSDate()}
+-            dates={reportMaxDate ? [reportMaxDate.toJSDate()] : undefined}
+             currentYear={reportMaxDate?.year}
+             currentMonth={reportMaxDate ? ((reportMaxDate.month - 1) as Month) : undefined}
+           />

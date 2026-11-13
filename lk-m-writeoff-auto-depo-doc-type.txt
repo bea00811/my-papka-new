@@ -1,0 +1,47 @@
+﻿$ErrorActionPreference = "Stop"
+Write-Host "SCRIPT VERSION: auto-depo-doc-v2-ascii"
+$path = "src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx"
+$bytes = [IO.File]::ReadAllBytes((Resolve-Path $path))
+# decode as UTF-8 (with or without BOM)
+if ($bytes.Length -ge 3 -and $bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191) {
+  $c = [Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3)
+} else {
+  $c = [Text.Encoding]::UTF8.GetString($bytes)
+}
+$nl = if ($c.Contains("`r`n")) { "`r`n" } else { "`n" }
+
+$marker = "AUTO_SELECT_DOC_TYPE_WITHOUT_RIGHTS"
+if ($c.Contains($marker)) {
+  Write-Host "SKIP already"
+} else {
+  $anchor = "  }, [needDocTypeOther, nonSbp.docTypeOther]);"
+  $idx = $c.IndexOf($anchor)
+  if ($idx -lt 0) { throw "FAIL: needDocTypeOther anchor not found" }
+
+  $insert = @"
+  }, [needDocTypeOther, nonSbp.docTypeOther]);
+
+  // $marker
+  useEffect(() => {
+    if (nonSbp.creditType !== 'WITHOUT_RIGHTS' || nonSbp.docTypeId || docTypes.length !== 1) {
+      return;
+    }
+
+    const preferred = docTypes[0];
+    clearFieldError('docTypeId');
+    patchNonSbp({
+      docTypeId: preferred.id,
+      docTypeOther: preferred.needComment ? nonSbp.docTypeOther : '',
+    });
+  }, [docTypes, nonSbp.creditType, nonSbp.docTypeId, nonSbp.docTypeOther]);
+"@
+  $insertN = $insert.Replace("`n", $nl)
+  $c = $c.Substring(0, $idx) + $insertN + $c.Substring($idx + $anchor.Length)
+
+  $utf8bom = New-Object System.Text.UTF8Encoding $true
+  [IO.File]::WriteAllText((Resolve-Path $path).Path, $c, $utf8bom)
+  Write-Host "OK inserted auto-select"
+}
+
+if (-not $c.Contains($marker)) { throw "VERIFY FAIL" }
+Write-Host "ALL OK"

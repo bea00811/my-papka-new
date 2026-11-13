@@ -1,0 +1,12 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx
+@@ -129,7 +129,7 @@ const BottomSheetDetails: React.FC<BottomSheetDetailsProps> = ({
+         <CheckHeader
+           variant={reportColors[statusColorName]}
+           orderTypeName={report.reportTypeName}
+-          instrumentIcon={<Icon />}
++          instrumentIcon={<Icon width={70} height={70} />}
+           indicator={reportBadge[statusColorName]}
+           title={testStatusNames[report.requestStatusCode] || report.requestStatusName}
+         />

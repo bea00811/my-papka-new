@@ -1,0 +1,13 @@
+
+webpack 5.70.0 compiled with 1 error and 17 warnings in 2996 ms
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+(node:3720) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+ERROR in src/modules/ReportsPage/components/ReportsHistory/components/BottomSheetDetails/BottomSheetDetails.tsx:156:24
+TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+    154 |           <DetailsItem title={'Счёт депо'} content={report.depoAccountName} />    155 |           <DetailsItem title={'Инструмент'} content={report.instrumentName} />  > 156 |           <DetailsItem title={periodTitle} content={periodContent} />
+        |                        ^^^^^
+    157 |           <DetailsItem title={'Дата заказа'} content={orderDateReformat(report.requestTime)} />
+    158 |         </div>
+    159 |       </div>

@@ -1,0 +1,12 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -808,7 +808,7 @@
+ 
+     setIsUploadingAttachments(true);
+     try {
+-      for (const [index, file] of attachmentFiles.entries()) {
++      for (const [index, file] of Array.from(attachmentFiles.entries())) {
+         if (nextStatuses[index] === 'success') {
+           continue;
+         }

@@ -1,0 +1,370 @@
+В продолжение задачи FRC-346
+Нужно добавить новые данные на экран детализации:
+Зеленым отмечены новые параметры, 
+некоторые старые параметры поменяли место,
+порядок расположения на экране должен быть как в таблице
+
+Откуда списать
+
+Название	Параметр
+Контрагент	ContractorName
+ID контрагента	ContractorID
+Со счета	SubAccount
+Со счета депо	DepoSubAccount
+С раздела	DepoSection
+Депозитарий	Depo
+Поставщик	Supplier
+
+
+
+
+
+Куда зачислить
+
+Название	Параметр
+Контрагент	ContractorNameTo
+ID контрагента	ContractorIDTo
+На счет	SubAccountTo
+На счет депо	DepoSubAccountTo
+На раздел	DepoSectionTo
+Депозитарий	DepoTo
+Получатель	Recipient
+
+Основание
+
+Название	Параметр
+Тип документа	DepoDocType
+№ документа	DepoDocNum
+Дата документа	DepoDocDate
+
+
+Название	Параметр
+Дата сделки	DealDate
+Дата расчетов	SettleDate
+Смена прав собственности	ChangeOwnership
+Референс	Reference
+Сумма сделки	Volume + VolumeCurrency
+Передать справку о составе затрат	SendCosts
+Примечание	Comment
+
+
+Раздел с информацией об инструменте и нижняя часть с датами выставления/завершения и т.д. остаются без изменения.
+Данные как и прежде получаются из метода 
+https://confluence.investpalata.tech/pages/viewpage.action?pageId=88321638 датасет  NonTradeSecurityDetail
+
+GET /orders/history/nontrade/detail/
+Параметры запроса
+*	order_guid	Query	GUID	GUID заявки
+*	JSESSIONID	Header/Cookie	String	Идентификатор сессии.
+Ответ
+Общая информация для всех типов заявок
+
+DataSet:OrdersHistoryNonTradeDetail
+Поле	Тип	Описание
+Order_Guid
+
+GUID
+
+GUID заявки
+
+OrderTypeCode	Enum	
+Тип заявки:
+
+Money.Withdrawal - Вывод денежных средств
+Security.Crediting - Зачисление ценных бумаг
+Security.CreditingSBP - Зачисление ценных бумаг через СБП
+Security.WriteOff - Списание ценных бумаг
+Security.WriteOffSBP - Списание ценных бумаг через СБП
+OrderTypeName	String	Наименование типа заявки
+OrderNumber
+
+String	Номер заявки 
+OrderDate
+
+Date(ISO)
+
+Дата заявки
+Status
+
+String
+
+Название состояние хода исполнения заявки 
+StatusCode
+
+Enum
+
+Код состояния хода исполнения заявки 
+
+PROCESSING - В работе
+COMPLETED - Исполнено
+CRASHED - Системная ошибка
+DECLINED - Отказано в исполнении
+CANCELED - Отменено
+Comment
+
+String	Комментарий к состоянию 
+Source	String	Название способа подачи поручения
+SourceCode	String	Код способа подачи поручения
+Initiator	String	ФИО лица, создавшего поручение.
+StatusUpdateTime	Date(ISO)	Дата и время последнего обновления статуса
+Для типов заявок Money.Withdrawal
+
+Поле	Тип	Описание
+SubAccount_Id
+
+Integer
+
+Идентификатор субсчёта, откуда осуществляется вывод ДС
+ToSubAccount_Id
+
+Integer
+
+Идентификатор субсчёта, куда осуществляется вывод ДС (только для OrderTypeCode = Money.Transfer)
+Currency_Id
+
+Integer
+
+Идентификатор валюты
+Volume
+
+Decimal	Сумма
+CurrencyCodeDec
+
+Integer	Код валюты числовой
+CurrencyCodeLat3
+
+String	Код валюты строковый
+CurrencyNameFull
+
+String	Наименование валюты
+ProductName
+
+String	Историческое наименование продукта
+PortfolioName
+
+String	Историческое наименование портфеля
+ToPortfolioName
+
+String	Историческое наименование портфеля, куда происходит перевод (только для OrderTypeCode = Money.Transfer)
+ToProductName
+
+String	Историческое наименование продукта, куда происходит перевод (только для OrderTypeCode = Money.Transfer)
+BankDetails_Id
+
+Integer	 Идентификатор банковских реквизитов (только для OrderTypeCode = Money.Withdrawal)
+Comission	Decimal	Комиссия за операцию
+Для типа заявок Money.Withdrawal
+
+DataSet:OrderBankDetail
+Поле	Тип	Описание
+ShortName
+
+String
+
+ Наименование реквизита
+
+WithdrawTypeCode	Enum	
+Способ вывода средств (только для типа Money.Withdrawal)
+
+Bank - банковский перевод (рубли)
+Swift - SWIFT (не рубли)
+BenefBankSwift
+
+String	Банк бенефициар: SWIFT (только для WithdrawTypeCode= Swift)
+BenefBankRs
+
+String	Банк бенефициар: Расчетный счет (только для WithdrawTypeCode= Swift)
+ImediaBankSwift
+
+String	Банк корреспондент: SWIFT (только для WithdrawTypeCode= Swift)
+ImediaBankRs
+
+String
+
+Банк корреспондент: Счет/IBAN (только для WithdrawTypeCode= Swift)
+BicCode
+
+String	БИК (только для WithdrawTypeCode= Bank или для типа Money.Refill)
+AccountBank
+
+String	Наименование банка (только для WithdrawTypeCode= Bank или для типа Money.Refill)
+AccountCorr
+
+String	Корреспондентский счет (только для WithdrawTypeCode= Bank)
+AccountRs
+
+String
+
+Рассчетный счет (только для WithdrawTypeCode= Bank)
+PersAccount
+
+String	Лицевой/карточный/дополнительный счет (только для WithdrawTypeCode= Bank)
+CardAccount	String	Номер карты (только для WithdrawTypeCode= Bank)
+Payee
+
+String	Получатель
+PaymentPurpose	String	Назначение платежа (только для WithdrawTypeCode= Bank или для типа Money.Refill)
+PayNum	String	Номер платежного поручения (только для типа Money.Refill)
+Для всех типов заявок Security.*
+
+DataSet:NonTradeSecurityDetail
+Поле	Тип	Описание
+Quantity
+
+Decimal	Количество ценных бумаг
+InstrumentName
+
+String	Наименование инструмента
+ISIN
+
+String	ISIN инструмента
+RegNum
+
+String	Код госрегистрации инструмента
+SubAccount
+
+String	Код брокерского лицевого счета, с которого списывают
+SubAccountTo	String	Код брокерского лицевого счета, на который зачисляют
+DepoSubAccount	String	Счет и раздел депо, с которого списывают
+DepoSubAccountTo
+
+String
+
+Счет и раздел депо, на который зачисляют
+
+Depo	String	Списывающий депозитарий
+DepoTo	String	Зачисляющий депозитарий
+ContractorName
+
+String	Контрагент списания
+ContractorNameTo
+
+String	Контрагент зачисления
+SendCosts
+
+Enum
+
+Передача справки о составе затрат:
+
+Да
+Нет
+DepoSection
+
+String
+
+Раздел счета депо списания
+
+DepoSectionTo
+
+String
+
+Раздел счета депо зачисления
+
+ContractorID
+
+String
+
+Идентификатор контрагента списания
+
+ContractorIDTo
+
+String
+
+Идентификатор контрагента зачисления
+
+DepoDealType
+
+String
+
+Тип подтверждающего документа
+
+DepoDealNum
+
+String
+
+Номер подтверждающего документа
+
+DepoDealDate
+
+Date(ISO)
+
+Дата подтверждающего документа
+
+Supplier
+
+String
+
+Поставщик
+
+Recipient
+
+String
+
+Получатель
+
+DealDate
+
+Date(ISO)
+
+Дата сделки
+
+SettleDate
+
+Date(ISO)
+
+Дата расчетов (поставки)
+
+ChangeOwnership
+
+Enum
+
+Смена прав собственности:
+
+Да
+Нет
+Reference
+
+String
+
+Референс
+
+Volume
+
+Decimal
+
+Сумма сделки
+
+VolumeCurrency
+
+String
+
+Валюта сделки
+
+Comment
+
+String
+
+Примечание
+
+Право для проверки
+PERSON_ORDERSHISTORY_NONTRADE
+
+Коды возможных ошибок
+AccessDenied	Недостаточно полномочий
+NoSession	Отсутствует сессия
+SessionClosed	Сессия уже была закрыта
+SessionTokenNotSpecified	Не указан токен сессии
+RequestGuidNotSpecified
+
+Не указан GUID запроса
+
+RequestNotFound	Не найден запрос
+Пример запроса
+GET /orders/history/nontrade/detail?order_guid=59737883-533F-491E-BBED-78CA327B91CC
+DataAPI
+03. Журнал неторговых поручений. Детализация. DataAPI
+
+
+
+ 
+

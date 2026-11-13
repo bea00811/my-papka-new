@@ -1,0 +1,66 @@
+diff --git a/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx b/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
+--- a/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
++++ b/src/modules/TradeOrder/components/TradeOrderConfirmation/TradeOrderConfirmation.tsx
+@@ -231,7 +231,12 @@ const TradeOrderConfirmation: FC<Props> = ({
+                 hints={data.hints}
+                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
+                 text={acceptBannerSlug.text}
+-                className={styles.banner}
++                className={
++                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
++                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
++                    ? `${styles.banner} ${styles.nkdBanner}`
++                    : styles.banner
++                }
+                 variant="accent"
+               />
+             )}
+diff --git a/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss b/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
+--- a/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
++++ b/src/modules/TradeOrder/components/TradeOrderConfirmation/styles.module.pcss
+@@ -35,3 +35,12 @@
+   padding: $spacing3 $spacing7;
+ }
+ 
++.nkd-banner {
++  background-color: #f2f1ff !important;
++  color: #6673e9 !important;
++}
++
++.nkd-banner * {
++  color: #6673e9 !important;
++}
++
+diff --git a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
+--- a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
++++ b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/LimitTradeOrderForm.tsx
+@@ -268,7 +268,12 @@ const TradeOrderForm: FC<Props> = ({
+                 hints={data.hints}
+                 slugData={{ slug: acceptBannerSlug.slug, vars: acceptBannerSlug.vars }}
+                 text={acceptBannerSlug.text}
+-                className={styles.banner}
++                className={
++                  acceptBannerSlug.slug === 'TRADE_BYE_BOND_ACI' ||
++                  acceptBannerSlug.slug === 'TRADE_SELL_BOND_ACI'
++                    ? `${styles.banner} ${styles.nkdBanner}`
++                    : styles.banner
++                }
+                 variant="accent"
+               />
+             </div>
+diff --git a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
+--- a/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
++++ b/src/modules/TradeOrder/components/TradeOrderForm/components/LimitTradeOrderForm/styles.module.pcss
+@@ -71,3 +71,12 @@
+   margin-bottom: $spacing5;
+ }
+ 
++.nkd-banner {
++  background-color: #f2f1ff !important;
++  color: #6673e9 !important;
++}
++
++.nkd-banner * {
++  color: #6673e9 !important;
++}
++

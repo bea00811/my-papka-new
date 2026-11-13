@@ -1,0 +1,30 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -808,7 +808,7 @@
+ 
+     setIsUploadingAttachments(true);
+     try {
+-      for (let index = 0; index < attachmentFiles.length; index += 1) {
++      for (const [index, file] of attachmentFiles.entries()) {
+         if (nextStatuses[index] === 'success') {
+           continue;
+         }
+@@ -818,7 +818,7 @@
+ 
+         await uploadWriteOffFile({
+           requestGuid,
+-          file: attachmentFiles[index],
++          file,
+         }).unwrap();
+ 
+         nextStatuses[index] = 'success';
+@@ -956,7 +956,7 @@
+           return;
+         }
+ 
+-        requestGuid = getRequestGuidFromResponse(response);
++        requestGuid = getRequestGuidFromResponse(response) ?? null;
+ 
+         if (!requestGuid) {
+           console.error('[SecuritiesWriteOff] requestGuid missing in POST response', response);

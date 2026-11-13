@@ -1,0 +1,12 @@
+При переходе на экран просмотра условных заявок вызываются ненужные методы:
+GET https://newlk-tt.investpalata.ru/rs/v2/instrument?instrument_id=undefined&trade_place_id=undefined&source=view
+GET https://newlk-tt.investpalata.ru/rs/v1/persons/current/trading/accounts?instrument_Id=undefined&tradePlace_Id=undefined
+GET https://newlk-tt.investpalata.ru/rs/v1/instruments/info_flags?instrument_Id=undefined&tradePlace_Id=undefined
+GET https://newlk-tt.investpalata.ru/rs/v3/persons/current/position?datasets=PositionValuationByProduct&instrument_Id=undefined&tradePlace_Id=undefined&calculateOpenPrice=true
+Контур - ТТ, Клиент - p620138/p620138Aa
+1) Авторизоваться в PWA
+2) Перейти в раздел "Заявки"
+3) Выбрать тип заявок "Условные"
+4) См. на вызываемые методы
+
+Ожидаемый результат: При переходе на экран просмотра условных заявок не вызываются методы instrument, accounts, info_flags, position.

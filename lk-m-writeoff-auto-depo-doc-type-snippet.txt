@@ -1,0 +1,13 @@
+﻿  // AUTO_SELECT_DOC_TYPE_WITHOUT_RIGHTS
+  useEffect(() => {
+    if (nonSbp.creditType !== 'WITHOUT_RIGHTS' || nonSbp.docTypeId || docTypes.length !== 1) {
+      return;
+    }
+
+    const preferred = docTypes[0];
+    clearFieldError('docTypeId');
+    patchNonSbp({
+      docTypeId: preferred.id,
+      docTypeOther: preferred.needComment ? nonSbp.docTypeOther : '',
+    });
+  }, [docTypes, nonSbp.creditType, nonSbp.docTypeId, nonSbp.docTypeOther]);

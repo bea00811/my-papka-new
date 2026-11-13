@@ -1,0 +1,50 @@
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git status
+On branch #FRC-422
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        lk-m-frc-422-report-icons-and-status.patch
+        src/images/icons/reports/
+        src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git restore .
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git status
+On branch #FRC-422
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        lk-m-frc-422-report-icons-and-status.patch
+        src/images/icons/reports/
+        src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git restore 'c:/Users/kozlova.ip/Desktop/test project/lk_m/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx'
+error: pathspec 'c:/Users/kozlova.ip/Desktop/test project/lk_m/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx' did not match any file(s) known to git
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git restore .
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git status
+On branch #FRC-422
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        lk-m-frc-422-report-icons-and-status.patch
+        src/images/icons/reports/
+        src/modules/ReportsPage/components/ReportsHistory/helpers.tsx
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ git restore 'c:/Users/kozlova.ip/Desktop/test project/lk_m/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx'
+error: pathspec 'c:/Users/kozlova.ip/Desktop/test project/lk_m/src/modules/ReportsPage/components/ReportsHistory/helpers.tsx' did not match any file(s) known to git
+
+kozlova.ip@ip-vm-it1644 MINGW64 ~/Desktop/test project/lk_m (#FRC-422)
+$ 

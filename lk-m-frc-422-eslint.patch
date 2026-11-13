@@ -1,0 +1,26 @@
+diff --git a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+--- a/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
++++ b/src/modules/ReportsPage/components/ReportsHistory/ReportsHistory.tsx
+@@ -112,7 +112,9 @@ const ReportsHistory = () => {
+           .then((status) => {
+             if (status) patchReportFromStatus(guid, status);
+           })
+-          .catch(() => undefined);
++          .catch(() => {
++            return undefined;
++          });
+       });
+     };
+     const unsubscribe = Notifications.subscribe('ReportReady', listener);
+diff --git a/src/types/reports/responses.ts b/src/types/reports/responses.ts
+--- a/src/types/reports/responses.ts
++++ b/src/types/reports/responses.ts
+@@ -17,7 +17,7 @@ export interface ReportsParametersResponse {
+   reportProductParameters: ReportProductParameter[];
+   reportDates: ReportDate[];
+   reportDepoAccountParameters: ReportDepoAccountParameter[];
+-  reportAvailableYears: any;
++  reportAvailableYears: unknown;
+   reportAgreementParameters: ReportAgreementParameter[];
+   eMail: EMailReport[];
+ }

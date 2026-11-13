@@ -1,0 +1,56 @@
+diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
+--- a/src/core/api/transfers.ts
++++ b/src/core/api/transfers.ts
+@@ -44,4 +44,7 @@
+   SecuritiesContractorsRequestParams,
+   SecuritiesContractorsResponse,
++  SecuritiesDepoDocType,
++  SecuritiesDocTypesRequestParams,
++  SecuritiesDocTypesResponse,
+   SecuritiesWriteOffCommitParams,
+   SecuritiesWriteOffDetailsParams,
+@@ -79,4 +82,5 @@
+   API_REQUEST_PERSON_BANK_DETAILS,
+   API_REQUEST_SECURITIES_CONTRACTORS,
++  API_REQUEST_SECURITIES_DOC_TYPES,
+   API_REQUEST_SECURITIES_WRITEOFF,
+   API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
+@@ -193,3 +197,32 @@
++    getSecuritiesDocTypes: builder.query<
++      SecuritiesDepoDocType[],
++      SecuritiesDocTypesRequestParams | void
++    >({
++      keepUnusedDataFor: 0,
++      query: (params) => ({
++        url: API_REQUEST_SECURITIES_DOC_TYPES,
++        params:
++          params?.changeOwnership === undefined
++            ? undefined
++            : { changeOwnership: params.changeOwnership },
++      }),
++      transformResponse: (
++        data: SecuritiesDocTypesResponse | SecuritiesDepoDocType[] | Record<string, unknown>,
++      ) => {
++        if (Array.isArray(data)) {
++          return data;
++        }
++
++        const record = data as Record<string, unknown>;
++        const list =
++          (record.depoDocTypes as SecuritiesDepoDocType[] | undefined) ??
++          (record.depoDocType as SecuritiesDepoDocType[] | undefined) ??
++          (record.docTypes as SecuritiesDepoDocType[] | undefined);
++
++        return Array.isArray(list) ? list : [];
++      },
++    }),
++
+     getSecuritiesContractors: builder.query<
+       SecuritiesContractor[],
+       SecuritiesContractorsRequestParams | void
+@@ -512,4 +545,5 @@
+   useGetMoneyOperationParamsQuery,
+   useGetSecuritiesWriteOffParamsQuery,
++  useGetSecuritiesDocTypesQuery,
+   useGetSecuritiesContractorsQuery,
+   useSecuritiesWriteOffMutation,
