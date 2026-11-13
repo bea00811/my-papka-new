@@ -1,0 +1,53 @@
+diff --git a/src/modules/Transfers/types/securitiesWriteOff.ts b/src/modules/Transfers/types/securitiesWriteOff.ts
+--- a/src/modules/Transfers/types/securitiesWriteOff.ts
++++ b/src/modules/Transfers/types/securitiesWriteOff.ts
+@@ -130,8 +130,8 @@
+   contractorDepoAccount?: string | null;
+   contractorDepoSection?: string | null;
+   contractorID?: string | null;
+-  contractorAgreementNum?: string | null;
+-  contractorAgreementDate?: string | null;
++  depoDocNum?: string | null;
++  depoDocDate?: string | null;
+   changeOwnership?: boolean | null;
+   recipient?: string | null;
+   dealDate?: string | null;
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -775,8 +775,8 @@
+             contractorDepoAccount: nonSbp.depoNumber || null,
+             contractorDepoSection: nonSbp.depoDivision || null,
+             contractorID: nonSbp.contractorID || null,
+-            contractorAgreementNum: nonSbp.contractNumber || null,
+-            contractorAgreementDate: toIsoDate(nonSbp.contractDate),
++            depoDocNum: nonSbp.contractNumber || null,
++            depoDocDate: toIsoDate(nonSbp.contractDate),
+             changeOwnership: nonSbp.creditType ? nonSbp.creditType === 'WITH_RIGHTS' : null,
+             recipient: isWithRights ? nonSbp.supplierName || null : null,
+             dealDate: toIsoDate(nonSbp.dealDate),
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+@@ -52,8 +52,10 @@
+   depodivision: 'depoDivision',
+   contractoragreementnum: 'contractNumber',
+   contractnumber: 'contractNumber',
++  depodocnum: 'contractNumber',
+   contractoragreementdate: 'contractDate',
+   contractdate: 'contractDate',
++  depodocdate: 'contractDate',
+   changeownership: 'creditType',
+   withrightstransfer: 'creditType',
+   credittype: 'creditType',
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
+@@ -108,6 +108,7 @@
+           accept={WRITEOFF_FILE_EXT_ACCEPT}
+           filesLimit={WRITEOFF_MAX_UPLOAD_FILES_COUNT}
+           caption="Максимальный размер 8 МБ"
++          files={files}
+           onChange={handleChange}
+           validateFiles={onValidateFiles}
+           className={styles.uploader}
