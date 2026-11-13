@@ -43,11 +43,11 @@ diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.
 diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
 --- a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
 +++ b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
-@@ -108,6 +108,7 @@
-           accept={WRITEOFF_FILE_EXT_ACCEPT}
-           filesLimit={WRITEOFF_MAX_UPLOAD_FILES_COUNT}
-           caption="Максимальный размер 8 МБ"
-+          files={files}
+@@ -109,6 +109,7 @@
            onChange={handleChange}
            validateFiles={onValidateFiles}
+           caption="Максимальный размер 8 МБ"
++          files={files}
            className={styles.uploader}
+         />
+       </div>
