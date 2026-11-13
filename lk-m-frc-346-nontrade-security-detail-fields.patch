@@ -1,0 +1,129 @@
+diff --git a/src/types/orderHistory/models.ts b/src/types/orderHistory/models.ts
+--- a/src/types/orderHistory/models.ts
++++ b/src/types/orderHistory/models.ts
+@@ -133,9 +133,29 @@
+   depoSubAccountTo?: string;
+   depo?: string;
+   depoTo?: string;
++  depoSection?: string;
++  depoSectionTo?: string;
+   contractorName?: string;
+   contractorNameTo?: string;
++  contractorID?: string;
++  contractorIDTo?: string;
++  supplier?: string;
++  recipient?: string;
+   sendCosts?: string;
++  /** UI/таблица FRC-346; в API также встречаются DepoDeal*. */
++  depoDocType?: string;
++  depoDocNum?: string;
++  depoDocDate?: string;
++  depoDealType?: string;
++  depoDealNum?: string;
++  depoDealDate?: string;
++  dealDate?: string;
++  settleDate?: string;
++  changeOwnership?: string;
++  reference?: string;
++  volume?: number;
++  volumeCurrency?: string;
++  comment?: string;
+   /** Старые поля датасета — оставляем опционально для совместимости. */
+   instrumentBaseName?: string;
+   instrumentCategoryCode?: string;
+diff --git a/src/modules/OrderHistory/components/BottomSheetDetails/components/Details/Details.tsx b/src/modules/OrderHistory/components/BottomSheetDetails/components/Details/Details.tsx
+--- a/src/modules/OrderHistory/components/BottomSheetDetails/components/Details/Details.tsx
++++ b/src/modules/OrderHistory/components/BottomSheetDetails/components/Details/Details.tsx
+@@ -4,7 +4,7 @@
+ import { Color } from '@aurora/text';
+ import cn from 'classnames';
+ 
+-import { orderDateReformat } from 'modules/OrderHistory/helpers';
++import { getViewDataFormat, orderDateReformat } from 'modules/OrderHistory/helpers';
+ 
+ import FormattedBalance from 'components/Balance/FormattedBalance';
+ 
+@@ -146,26 +146,81 @@
+           <DetailSection
+             title="Откуда списать"
+             rows={[
++              { title: 'Контрагент', content: securityDetails?.contractorName },
++              { title: 'ID контрагента', content: securityDetails?.contractorID },
+               {
+                 title: 'Со счета',
+                 content: securityDetails?.subAccount || securityDetails?.productName,
+               },
+               { title: 'Со счета депо', content: securityDetails?.depoSubAccount },
++              { title: 'С раздела', content: securityDetails?.depoSection },
+               { title: 'Депозитарий', content: securityDetails?.depo },
+-              { title: 'Контрагент', content: securityDetails?.contractorName },
++              { title: 'Поставщик', content: securityDetails?.supplier },
+             ]}
+           />
+           <DetailSection
+             title="Куда зачислить"
+             rows={[
++              { title: 'Контрагент', content: securityDetails?.contractorNameTo },
++              { title: 'ID контрагента', content: securityDetails?.contractorIDTo },
+               {
+                 title: 'На счет',
+                 content: securityDetails?.subAccountTo || securityDetails?.toProductName,
+               },
+               { title: 'На счет депо', content: securityDetails?.depoSubAccountTo },
++              { title: 'На раздел', content: securityDetails?.depoSectionTo },
+               { title: 'Депозитарий', content: securityDetails?.depoTo },
+-              { title: 'Контрагент', content: securityDetails?.contractorNameTo },
++              { title: 'Получатель', content: securityDetails?.recipient },
++            ]}
++          />
++          <DetailSection
++            title="Основание"
++            rows={[
++              {
++                title: 'Тип документа',
++                content: securityDetails?.depoDocType || securityDetails?.depoDealType,
++              },
++              {
++                title: '№ документа',
++                content: securityDetails?.depoDocNum || securityDetails?.depoDealNum,
++              },
++              {
++                title: 'Дата документа',
++                content: (securityDetails?.depoDocDate || securityDetails?.depoDealDate)
++                  ? getViewDataFormat(
++                      securityDetails?.depoDocDate || securityDetails?.depoDealDate || '',
++                    )
++                  : undefined,
++              },
++            ]}
++          />
++          <DetailSection
++            rows={[
++              {
++                title: 'Дата сделки',
++                content: securityDetails?.dealDate
++                  ? getViewDataFormat(securityDetails.dealDate)
++                  : undefined,
++              },
++              {
++                title: 'Дата расчетов',
++                content: securityDetails?.settleDate
++                  ? getViewDataFormat(securityDetails.settleDate)
++                  : undefined,
++              },
++              { title: 'Смена прав собственности', content: securityDetails?.changeOwnership },
++              { title: 'Референс', content: securityDetails?.reference },
++              {
++                title: 'Сумма сделки',
++                content:
++                  securityDetails?.volume != null
++                    ? [securityDetails.volume, securityDetails.volumeCurrency]
++                        .filter((part) => part != null && part !== '')
++                        .join(' ')
++                    : undefined,
++              },
+               { title: 'Передать справку о составе затрат', content: securityDetails?.sendCosts },
++              { title: 'Примечание', content: securityDetails?.comment },
+             ]}
+           />
+           <DetailSection
