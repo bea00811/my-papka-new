@@ -1,0 +1,41 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -360,7 +360,7 @@
+     docTypesChangeOwnership === undefined
+       ? undefined
+       : { changeOwnership: docTypesChangeOwnership },
+     {
+-      skip: !isNonSbpMode,
++      skip: !isNonSbpMode || !nonSbp.creditType,
+       refetchOnMountOrArgChange: true,
+     },
+   );
+@@ -1028,7 +1028,7 @@
+     );
+   }
+ 
+-  if (isStatusPolling || isUploadingAttachments || isCommitLoading) {
++  if (isWriteOffLoading || isStatusPolling || isUploadingAttachments || isCommitLoading) {
+     return (
+       <div className={styles.loaderPage}>
+         <CircleLoader brandColor size="large" />
+@@ -1515,12 +1515,16 @@
+                 classNameDescription={styles.fieldHint}
+                 placeholder="Тип документа"
+                 scale="small"
+                 clearable
+-                list={docTypeOptions}
++                disabled={!nonSbp.creditType}
++                list={nonSbp.creditType ? docTypeOptions : []}
+                 value={selectedDocType?.name ?? ''}
+                 emptyMessage={
+-                  isDocTypesLoading || isDocTypesFetching ? 'Загрузка...' : 'Ничего не найдено'
++                  !nonSbp.creditType
++                    ? 'Сначала выберите тип зачисления'
++                    : isDocTypesLoading || isDocTypesFetching
++                      ? 'Загрузка...'
++                      : 'Ничего не найдено'
+                 }
+                 separatorActionCells={false}
+                 status={fieldErrors.docTypeId ? 'error' : null}
