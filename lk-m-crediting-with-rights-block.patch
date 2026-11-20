@@ -1,0 +1,182 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+index b8b7a8b..2d01ed8 100644
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -322,7 +322,9 @@ const SecuritiesCrediting = () => {
+       creditType,
+       docTypeId: null,
+       docTypeOther: '',
+-      ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
++      ...(creditType === 'WITH_RIGHTS'
++        ? {}
++        : { supplierName: '', dealAmount: '', dealDate: '', settlementDate: '', reference: '' }),
+     });
+   };
+ 
+@@ -510,9 +512,9 @@ const SecuritiesCrediting = () => {
+       depoDocDate: toIsoDate(details.contractDate),
+       changeOwnership: details.creditType ? isWithRights : null,
+       supplier: isWithRights ? details.supplierName || null : null,
+-      dealDate: toIsoDate(details.dealDate),
+-      settleDate: toIsoDate(details.settlementDate),
+-      reference: details.reference || null,
++      dealDate: isWithRights ? toIsoDate(details.dealDate) : null,
++      settleDate: isWithRights ? toIsoDate(details.settlementDate) : null,
++      reference: isWithRights ? details.reference || null : null,
+       volume: isWithRights && volume != null ? volume : null,
+       comment: details.comment || null,
+     };
+@@ -953,7 +955,8 @@ const SecuritiesCrediting = () => {
+             value={details.depoNumber}
+             status={fieldErrors.depoNumber ? 'error' : null}
+             description={
+-              fieldErrors.depoNumber ?? 'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
++              fieldErrors.depoNumber ??
++              'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
+             }
+             onChange={handleLatinChange('depoNumber', 12)}
+           />
+@@ -1010,73 +1013,78 @@ const SecuritiesCrediting = () => {
+             />
+           )}
+ 
+-          <Text className={styles.sectionTitle}>Данные для зачисления</Text>
+           {isWithRights && (
+-            <Input
+-              label="Сумма сделки:"
+-              className={styles.sideField}
+-              classNameLabel={styles.sideFieldLabel}
+-              classNameDescription={styles.fieldHint}
+-              placeholder="0"
+-              scale="small"
+-              variant="number"
+-              precision={2}
+-              decimalSeparator="."
+-              allowedDecimalSeparators={['.', ',']}
+-              thousandSeparator=""
+-              status={fieldErrors.dealAmount ? 'error' : null}
+-              description={
+-                fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
+-              }
+-              value={details.dealAmount}
+-              onValueChange={(values) => {
+-                clearFieldError('dealAmount');
+-                patchDetails({ dealAmount: values.value ?? '' });
+-              }}
+-            />
++            <>
++              <Text className={styles.sectionTitle}>Данные для зачисления</Text>
++              <Input
++                label="Сумма сделки:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="0"
++                scale="small"
++                variant="number"
++                precision={2}
++                decimalSeparator="."
++                allowedDecimalSeparators={['.', ',']}
++                thousandSeparator=""
++                status={fieldErrors.dealAmount ? 'error' : null}
++                description={
++                  fieldErrors.dealAmount ??
++                  'Если зачисление производится на основании купли-продажи'
++                }
++                value={details.dealAmount}
++                onValueChange={(values) => {
++                  clearFieldError('dealAmount');
++                  patchDetails({ dealAmount: values.value ?? '' });
++                }}
++              />
++              <div onClick={() => setOpenDateField('dealDate')}>
++                <Input
++                  label="Дата сделки:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Выберите дату"
++                  scale="small"
++                  value={details.dealDate}
++                  addonAfter={<Calendar />}
++                  readOnly
++                  status={fieldErrors.dealDate ? 'error' : null}
++                  description={
++                    fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'
++                  }
++                />
++              </div>
++              <div onClick={() => setOpenDateField('settlementDate')}>
++                <Input
++                  label="Дата расчетов:"
++                  className={styles.sideField}
++                  classNameLabel={styles.sideFieldLabel}
++                  classNameDescription={styles.fieldHint}
++                  placeholder="Выберите дату"
++                  scale="small"
++                  value={details.settlementDate}
++                  addonAfter={<Calendar />}
++                  readOnly
++                  status={fieldErrors.settlementDate ? 'error' : null}
++                  description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
++                />
++              </div>
++              <Input
++                label="Референс:"
++                className={styles.sideField}
++                classNameLabel={styles.sideFieldLabel}
++                classNameDescription={styles.fieldHint}
++                placeholder="Референс"
++                scale="small"
++                value={details.reference}
++                status={fieldErrors.reference ? 'error' : null}
++                description={fieldErrors.reference ?? 'До 16 знаков, латинские буквы и цифры'}
++                onChange={handleLatinChange('reference', 16)}
++              />
++            </>
+           )}
+-          <div onClick={() => setOpenDateField('dealDate')}>
+-            <Input
+-              label="Дата сделки:"
+-              className={styles.sideField}
+-              classNameLabel={styles.sideFieldLabel}
+-              classNameDescription={styles.fieldHint}
+-              placeholder="Выберите дату"
+-              scale="small"
+-              value={details.dealDate}
+-              addonAfter={<Calendar />}
+-              readOnly
+-              status={fieldErrors.dealDate ? 'error' : null}
+-              description={fieldErrors.dealDate ?? 'Должна совпадать с датой во встречном поручении'}
+-            />
+-          </div>
+-          <div onClick={() => setOpenDateField('settlementDate')}>
+-            <Input
+-              label="Дата расчетов:"
+-              className={styles.sideField}
+-              classNameLabel={styles.sideFieldLabel}
+-              classNameDescription={styles.fieldHint}
+-              placeholder="Выберите дату"
+-              scale="small"
+-              value={details.settlementDate}
+-              addonAfter={<Calendar />}
+-              readOnly
+-              status={fieldErrors.settlementDate ? 'error' : null}
+-              description={fieldErrors.settlementDate ?? 'Не может быть раньше даты сделки'}
+-            />
+-          </div>
+-          <Input
+-            label="Референс:"
+-            className={styles.sideField}
+-            classNameLabel={styles.sideFieldLabel}
+-            classNameDescription={styles.fieldHint}
+-            placeholder="Референс"
+-            scale="small"
+-            value={details.reference}
+-            status={fieldErrors.reference ? 'error' : null}
+-            description={fieldErrors.reference ?? 'До 16 знаков, латинские буквы и цифры'}
+-            onChange={handleLatinChange('reference', 16)}
+-          />
+ 
+           <Text className={styles.sectionTitle}>Основание для зачисления</Text>
+           <SearchSelect
