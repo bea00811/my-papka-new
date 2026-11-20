@@ -1,0 +1,27 @@
+Securities Crediting — как накатить патч
+
+Файл: lk-m-securities-crediting.patch
+
+Из корня lk_m (Git Bash / PowerShell):
+
+  git apply --whitespace=nowarn lk-m-securities-crediting.patch
+
+Если reject:
+
+  git apply --reject --whitespace=nowarn lk-m-securities-crediting.patch
+
+Потом вручную:
+
+1) apiConstants / routes / constants — если .rej, вставить из APPLY.md
+2) В transfers.ts вставить эндпоинты из:
+   src/modules/Transfers/pages/SecuritiesCrediting/api-transfers.snippet.ts
+   и экспортировать хуки
+3) Скопировать:
+   SecuritiesWriteOff.module.pcss -> SecuritiesCrediting.module.pcss
+   SecurityIcon (+ module) из WriteOff (или re-export)
+4) Router: lazy SecuritiesCrediting + SecuritiesCreditingOrder
+5) Order: скопировать SecuritiesWriteOffOrder -> SecuritiesCreditingOrder, заменить writeoff->crediting
+6) Меню «Зачисление» -> ROUTE_SECURITIES_CREDITING
+   (или заменить stub requisites)
+
+Право: PERSON_NONTRADE_SECURITY_REFILL_EXT

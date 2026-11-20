@@ -1,0 +1,11 @@
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/WriteOffSupportingDocuments.tsx
+@@ -109,6 +109,7 @@
+           onChange={handleChange}
+           validateFiles={onValidateFiles}
+           caption="Максимальный размер 8 МБ"
++          files={files}
+           className={styles.uploader}
+         />
+       </div>

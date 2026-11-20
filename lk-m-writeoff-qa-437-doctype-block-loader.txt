@@ -1,0 +1,63 @@
+QA-437: (1) блок «Тип документа» без «Типа зачисления»  (2) лоадер на POST writeoff
+
+Файл: src\modules\Transfers\pages\SecuritiesWriteOff\SecuritiesWriteOff.tsx
+
+=== 1) skip doc_types пока нет creditType ===
+
+НАЙТИ:
+      skip: !isNonSbpMode,
+
+ЗАМЕНИТЬ НА:
+      skip: !isNonSbpMode || !nonSbp.creditType,
+
+=== 2) SearchSelect «Тип документа» — как Счёт/Способ ===
+
+НАЙТИ (блок Тип документа):
+                clearable
+                list={docTypeOptions}
+                value={selectedDocType?.name ?? ''}
+                emptyMessage={
+                  isDocTypesLoading || isDocTypesFetching ? 'Загрузка...' : 'Ничего не найдено'
+                }
+
+ЗАМЕНИТЬ НА:
+                clearable
+                disabled={!nonSbp.creditType}
+                list={nonSbp.creditType ? docTypeOptions : []}
+                value={selectedDocType?.name ?? ''}
+                emptyMessage={
+                  !nonSbp.creditType
+                    ? 'Сначала выберите тип зачисления'
+                    : isDocTypesLoading || isDocTypesFetching
+                      ? 'Загрузка...'
+                      : 'Ничего не найдено'
+                }
+
+Если SearchSelect ругается на disabled — уберите только строку disabled={!nonSbp.creditType};
+list=[] + emptyMessage достаточно (как у «Счёт» / «Способ»).
+
+=== 3) лоадер во время POST writeoff ===
+
+Вариант A (если у вас уже есть upload/commit):
+
+НАЙТИ:
+  if (isStatusPolling || isUploadingAttachments || isCommitLoading) {
+
+ЗАМЕНИТЬ НА:
+  if (isWriteOffLoading || isStatusPolling || isUploadingAttachments || isCommitLoading) {
+
+Вариант B (если upload/commit ещё нет):
+
+НАЙТИ:
+  if (isStatusPolling) {
+
+ЗАМЕНИТЬ НА:
+  if (isWriteOffLoading || isStatusPolling) {
+
+Текст лоадера можно оставить «Обработка поручения...» — он подходит и для POST, и для poll.
+
+=== проверка ===
+
+Select-String -Path src\modules\Transfers\pages\SecuritiesWriteOff\SecuritiesWriteOff.tsx -Pattern "skip: !isNonSbpMode \|\| !nonSbp.creditType"
+Select-String -Path src\modules\Transfers\pages\SecuritiesWriteOff\SecuritiesWriteOff.tsx -Pattern "Сначала выберите тип зачисления"
+Select-String -Path src\modules\Transfers\pages\SecuritiesWriteOff\SecuritiesWriteOff.tsx -Pattern "isWriteOffLoading \|\| isStatusPolling"
