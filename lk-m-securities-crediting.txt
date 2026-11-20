@@ -1,27 +1,35 @@
-Securities Crediting — как накатить патч
+Форма зачисления ценных бумаг (PERSON_NONTRADE_SECURITY_REFILL_EXT)
+Патч: lk-m-securities-crediting.patch (сделан через git diff от снимка проекта 20.11)
 
-Файл: lk-m-securities-crediting.patch
+Как применить (Git Bash, в папке lk_m):
 
-Из корня lk_m (Git Bash / PowerShell):
+  git checkout tt
+  git pull
+  git checkout -b FRC-crediting
+  git apply --check lk-m-securities-crediting.patch
+  git apply lk-m-securities-crediting.patch
 
-  git apply --whitespace=nowarn lk-m-securities-crediting.patch
+Если --check ругается на конкретный файл — значит этот файл в ветке поменялся
+после 20.11. Тогда:  git apply --3way lk-m-securities-crediting.patch
 
-Если reject:
+Что в патче:
+- API: crediting/params, POST crediting, GET crediting (статус), crediting/files,
+  crediting/file, crediting/commit, crediting/verify — core/api/transfers.ts, apiConstants.ts
+- Типы: modules/Transfers/types/securitiesCrediting.ts
+- Право: getSecuritiesCreditingPermission в modules/Transfers/permissions.ts
+- Роуты: /transfers/securities/crediting и /transfers/securities/crediting/order
+- Меню «Переводы»: вместо «Реквизиты для зачисления» — «Зачисление ценных бумаг»
+  (страница реквизитов и её роут остались)
+- Новая форма: pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+- Подписание: pages/SecuritiesCreditingOrder — это та же страница, что у списания,
+  с variant="crediting" (свой verify, свой URL файла, свои тексты)
+- Общие хелперы списания вынесены в SecuritiesWriteOff/writeOffFormHelpers.tsx,
+  списание теперь импортирует их оттуда (поведение списания не менялось)
 
-  git apply --reject --whitespace=nowarn lk-m-securities-crediting.patch
-
-Потом вручную:
-
-1) apiConstants / routes / constants — если .rej, вставить из APPLY.md
-2) В transfers.ts вставить эндпоинты из:
-   src/modules/Transfers/pages/SecuritiesCrediting/api-transfers.snippet.ts
-   и экспортировать хуки
-3) Скопировать:
-   SecuritiesWriteOff.module.pcss -> SecuritiesCrediting.module.pcss
-   SecurityIcon (+ module) из WriteOff (или re-export)
-4) Router: lazy SecuritiesCrediting + SecuritiesCreditingOrder
-5) Order: скопировать SecuritiesWriteOffOrder -> SecuritiesCreditingOrder, заменить writeoff->crediting
-6) Меню «Зачисление» -> ROUTE_SECURITIES_CREDITING
-   (или заменить stub requisites)
-
-Право: PERSON_NONTRADE_SECURITY_REFILL_EXT
+Допущения (проверить с аналитиком/бэком):
+- Список инструментов берётся из writeoff/params (как договорились)
+- Загрузка файлов — тот же /nontrade/securities/file, затем crediting/commit
+  (как у списания: POST с noCommit=true, если есть файлы)
+- Поля «Комиссия» нет — в API зачисления её нет
+- «Место расчётов» в POST не отправляется (в API нет такого поля), оно только
+  фильтрует «Тип зачисления»: если changeOwnershipAllowed=false, «С переходом прав» скрыт

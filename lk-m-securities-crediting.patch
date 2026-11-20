@@ -1,356 +1,193 @@
-diff --git a/src/core/api/apiConstants.ts b/src/core/api/apiConstants.ts
---- a/src/core/api/apiConstants.ts
-+++ b/src/core/api/apiConstants.ts
-@@ -74,2 +74,14 @@
- export const API_REQUEST_SECURITIES_WRITEOFF_PARAMS =
-   API_REQUEST_URL + '/nontrade/securities/writeoff/params';
-+// Зачисление ценных бумаг
-+export const API_REQUEST_SECURITIES_CREDITING_PARAMS =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/params';
-+export const API_REQUEST_SECURITIES_CREDITING =
-+  API_REQUEST_URL + '/nontrade/securities/crediting';
-+export const API_REQUEST_SECURITIES_CREDITING_FILES =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/files';
-+export const API_REQUEST_SECURITIES_CREDITING_FILE =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/file';
-+export const API_REQUEST_SECURITIES_CREDITING_VERIFY =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/verify';
-+export const API_REQUEST_SECURITIES_CREDITING_COMMIT =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/commit';
+diff --git a/src/components/DesktopMenu/DesktopMenu.tsx b/src/components/DesktopMenu/DesktopMenu.tsx
+index ee25f7d..a4f54db 100644
+--- a/src/components/DesktopMenu/DesktopMenu.tsx
++++ b/src/components/DesktopMenu/DesktopMenu.tsx
+@@ -15,6 +15,7 @@ import {
+   ROUTE_REPORTS,
+   ROUTE_REPORTS_HISTORY,
+   ROUTE_REQUISITES_VIEW,
++  ROUTE_SECURITIES_CREDITING,
+   ROUTE_SECURITIES_REQUISITES,
+   ROUTE_SECURITIES_WRITEOFF,
+   ROUTE_SETTINGS,
+@@ -101,6 +102,7 @@ const DesktopMenu = () => {
+       ROUTE_WITHDRAWAL,
+       ROUTE_SECURITIES_REQUISITES,
+       ROUTE_SECURITIES_WRITEOFF,
++      ROUTE_SECURITIES_CREDITING,
+     ];
+ 
+     if (transfersRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
 diff --git a/src/const/routes.ts b/src/const/routes.ts
+index ef7bd3b..1a1940c 100644
 --- a/src/const/routes.ts
 +++ b/src/const/routes.ts
-@@ -1,2 +1,4 @@
+@@ -87,6 +87,8 @@ export const ROUTE_WITHDRAWAL = '/transfers/withdrawal';
+ export const ROUTE_SECURITIES_REQUISITES = '/transfers/securities/requisites';
  export const ROUTE_SECURITIES_WRITEOFF = '/transfers/securities/writeoff';
  export const ROUTE_SECURITIES_WRITEOFF_ORDER = '/transfers/securities/writeoff/order';
 +export const ROUTE_SECURITIES_CREDITING = '/transfers/securities/crediting';
 +export const ROUTE_SECURITIES_CREDITING_ORDER = '/transfers/securities/crediting/order';
+ 
+ //Каталог
+ export const ROUTE_CATALOG = '/catalog';
+diff --git a/src/core/api/apiConstants.ts b/src/core/api/apiConstants.ts
+index 00188f5..e187989 100644
+--- a/src/core/api/apiConstants.ts
++++ b/src/core/api/apiConstants.ts
+@@ -89,6 +89,19 @@ export const API_REQUEST_SECURITIES_WRITEOFF_COMMIT =
+ export const API_REQUEST_SECURITIES_WRITEOFF_VERIFY =
+   API_REQUEST_URL + '/nontrade/securities/writeoff/verify';
+ 
++// Зачисление ценных бумаг
++export const API_REQUEST_SECURITIES_CREDITING_PARAMS =
++  API_REQUEST_URL + '/nontrade/securities/crediting/params';
++export const API_REQUEST_SECURITIES_CREDITING = API_REQUEST_URL + '/nontrade/securities/crediting';
++export const API_REQUEST_SECURITIES_CREDITING_FILES =
++  API_REQUEST_URL + '/nontrade/securities/crediting/files';
++export const API_REQUEST_SECURITIES_CREDITING_FILE =
++  API_REQUEST_URL + '/nontrade/securities/crediting/file';
++export const API_REQUEST_SECURITIES_CREDITING_COMMIT =
++  API_REQUEST_URL + '/nontrade/securities/crediting/commit';
++export const API_REQUEST_SECURITIES_CREDITING_VERIFY =
++  API_REQUEST_URL + '/nontrade/securities/crediting/verify';
++
+ //Каталог
+ export const API_REQUEST_CATALOG_STOCKS = API_REQUEST_URL_V2 + '/instruments/showcase/equities';
+ export const API_REQUEST_CATALOG_BONDS = API_REQUEST_URL_V2 + '/instruments/showcase/bonds';
+diff --git a/src/core/api/transfers.ts b/src/core/api/transfers.ts
+index 47ecd75..0931a69 100644
+--- a/src/core/api/transfers.ts
++++ b/src/core/api/transfers.ts
+@@ -42,6 +42,10 @@ import {
+   SecuritiesContractor,
+   SecuritiesContractorsRequestParams,
+   SecuritiesContractorsResponse,
++  SecuritiesCreditingParameter,
++  SecuritiesCreditingParamsRequest,
++  SecuritiesCreditingParamsResponse,
++  SecuritiesCreditingRequestParams,
+   SecuritiesDepoDocType,
+   SecuritiesDocTypesRequestParams,
+   SecuritiesDocTypesResponse,
+@@ -79,6 +83,11 @@ import {
+   API_REQUEST_MONEY_TRANSFERS_WITHDRAWAL_REQUEST,
+   API_REQUEST_PERSON_BANK_DETAILS,
+   API_REQUEST_SECURITIES_CONTRACTORS,
++  API_REQUEST_SECURITIES_CREDITING,
++  API_REQUEST_SECURITIES_CREDITING_COMMIT,
++  API_REQUEST_SECURITIES_CREDITING_FILES,
++  API_REQUEST_SECURITIES_CREDITING_PARAMS,
++  API_REQUEST_SECURITIES_CREDITING_VERIFY,
+   API_REQUEST_SECURITIES_DOC_TYPES,
+   API_REQUEST_SECURITIES_WRITEOFF,
+   API_REQUEST_SECURITIES_WRITEOFF_COMMIT,
+@@ -335,6 +344,76 @@ export const transfersApi = createApi({
+       }),
+     }),
+ 
++    getSecuritiesCreditingParams: builder.query<
++      SecuritiesCreditingParameter[],
++      SecuritiesCreditingParamsRequest
++    >({
++      keepUnusedDataFor: 0,
++      query: ({ depoInstrumentId }) => ({
++        url: API_REQUEST_SECURITIES_CREDITING_PARAMS,
++        params: { depoInstrument_Id: depoInstrumentId },
++      }),
++      transformResponse: (response: SecuritiesCreditingParamsResponse) =>
++        response?.creditingParameters ?? [],
++    }),
++
++    securitiesCrediting: builder.mutation<
++      SecuritiesWriteOffResponse,
++      SecuritiesCreditingRequestParams
++    >({
++      query: (params) => ({
++        url: API_REQUEST_SECURITIES_CREDITING,
++        method: 'POST',
++        body: params,
++      }),
++    }),
++
++    getSecuritiesCrediting: builder.query<
++      SecuritiesWriteOffDetailsResponse,
++      SecuritiesWriteOffDetailsParams
++    >({
++      keepUnusedDataFor: 0,
++      query: ({ requestGuid }) => ({
++        url: API_REQUEST_SECURITIES_CREDITING,
++        params: { requestGuid },
++      }),
++    }),
++
++    getSecuritiesCreditingFiles: builder.query<
++      SecuritiesWriteOffReferenceDocument[],
++      SecuritiesWriteOffFilesParams
++    >({
++      keepUnusedDataFor: 0,
++      query: ({ requestGuid }) => ({
++        url: API_REQUEST_SECURITIES_CREDITING_FILES,
++        params: { requestGuid },
++      }),
++      transformResponse: (response: SecuritiesWriteOffFilesResponse) =>
++        response?.referenceDocuments ?? [],
++    }),
++
++    securitiesCreditingCommit: builder.mutation<
++      SecuritiesWriteOffVerifyResponse,
++      SecuritiesWriteOffCommitParams
++    >({
++      query: ({ requestGuid }) => ({
++        url: API_REQUEST_SECURITIES_CREDITING_COMMIT,
++        method: 'POST',
++        body: { requestGuid },
++      }),
++    }),
++
++    securitiesCreditingVerify: builder.mutation<
++      SecuritiesWriteOffVerifyResponse,
++      SecuritiesWriteOffVerifyParams
++    >({
++      query: ({ requestGuid }) => ({
++        url: API_REQUEST_SECURITIES_CREDITING_VERIFY,
++        method: 'POST',
++        body: { requestGuid },
++      }),
++    }),
++
+     taxWriteOff: builder.query<string, void>({
+       keepUnusedDataFor: 0,
+       query: () => ({
+@@ -514,6 +593,12 @@ export const {
+   useSecuritiesWriteOffVerifyMutation,
+   useSecuritiesWriteOffUploadFileMutation,
+   useSecuritiesWriteOffCommitMutation,
++  useGetSecuritiesCreditingParamsQuery,
++  useSecuritiesCreditingMutation,
++  useLazyGetSecuritiesCreditingQuery,
++  useLazyGetSecuritiesCreditingFilesQuery,
++  useSecuritiesCreditingCommitMutation,
++  useSecuritiesCreditingVerifyMutation,
+   useTaxWriteOffQuery,
+   useTaxWriteOffStatusQuery,
+   useTaxWriteOffResponseQuery,
 diff --git a/src/modules/Transfers/constants.ts b/src/modules/Transfers/constants.ts
+index 0e649cc..1f52997 100644
 --- a/src/modules/Transfers/constants.ts
 +++ b/src/modules/Transfers/constants.ts
-@@ -1,1 +1,2 @@
- export const SECURITIES_WRITEOFF_PAGE_TITLE = 'Списание ценных бумаг';
-+export const SECURITIES_CREDITING_PAGE_TITLE = 'Зачисление ценных бумаг';
-diff --git a/src/modules/Transfers/types/securitiesCrediting.ts b/src/modules/Transfers/types/securitiesCrediting.ts
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/src/modules/Transfers/types/securitiesCrediting.ts
-@@ -0,0 +1,113 @@
-+/** same shape as writeoff SecuritiesDepoDocType — import from securitiesWriteOff.ts in lk_m */
-+export type SecuritiesDepoDocType = {
-+  id: number;
-+  name: string;
-+  changeOwnership?: boolean | null;
-+  needComment: boolean;
-+};
+@@ -11,3 +11,5 @@ export const SECURITIES_WRITEOFF_PAGE_TITLE = 'Переводы - Списани
+ 
+ export const SECURITIES_WRITEOFF_ORDER_PAGE_TITLE = 'Подача поручения';
+ 
++export const SECURITIES_CREDITING_PAGE_TITLE = 'Переводы - Зачисление ценных бумаг';
 +
-+export type CreditingCreditType = 'WITH_RIGHTS' | 'WITHOUT_RIGHTS' | '';
-+
-+export type SecuritiesCreditingSection = {
-+  depoSection: string;
-+  depoSubAccountId: number;
-+};
-+
-+export type SecuritiesCreditingAccount = {
-+  agreement: string;
-+  depoAccount: string;
-+  sections: SecuritiesCreditingSection[];
-+};
-+
-+export type SecuritiesCreditingParameter = {
-+  depo: string;
-+  name: string;
-+  accounts: SecuritiesCreditingAccount[];
-+  changeOwnershipAllowed: boolean;
-+};
-+
-+export type SecuritiesCreditingParamsResponse = {
-+  creditingParameters?: SecuritiesCreditingParameter[];
-+  /** fallbacks if backend wraps differently */
-+  data?: SecuritiesCreditingParameter[];
-+  disclaimer?: Array<{ text?: string }>;
-+};
-+
-+export type SecuritiesCreditingFormDetails = {
-+  contractorID: string;
-+  depoNumber: string;
-+  depoDivision: string;
-+  creditType: CreditingCreditType;
-+  supplierName: string;
-+  dealAmount: string;
-+  dealDate: string;
-+  settlementDate: string;
-+  reference: string;
-+  docTypeId: number | null;
-+  docTypeOther: string;
-+  depoDocNum: string;
-+  depoDocDate: string;
-+  comment: string;
-+};
-+
-+export type SecuritiesCreditingRequestParams = {
-+  depoInstrument_Id: number | null;
-+  depoSubAccount_Id: number | null;
-+  quantity: number | null;
-+  contractor_Id: number | null;
-+  contractorDepoAccount: string | null;
-+  contractorDepoSection: string | null;
-+  contractorID: string | null;
-+  depoDocType_Id?: number | null;
-+  depoDocTypeOther?: string | null;
-+  depoDocNum: string | null;
-+  depoDocDate: string | null;
-+  changeOwnership: boolean | null;
-+  supplier?: string | null;
-+  dealDate: string | null;
-+  settleDate: string | null;
-+  reference: string | null;
-+  volume?: number | null;
-+  comment?: string | null;
-+  noCommit?: boolean;
-+};
-+
-+export type SecuritiesCreditingCheckResultItem = {
-+  field?: string;
-+  Field?: string;
-+  status?: string;
-+  Status?: string;
-+};
-+
-+export type SecuritiesCreditingResponse = {
-+  checkResult?: SecuritiesCreditingCheckResultItem[];
-+  CheckResult?: SecuritiesCreditingCheckResultItem[];
-+  request?: Array<{ requestGuid?: string; RequestGuid?: string }>;
-+  Request?: Array<{ requestGuid?: string; RequestGuid?: string }>;
-+};
-+
-+export type SecuritiesCreditingStatus =
-+  | 'processing'
-+  | 'edit'
-+  | 'waiting_documents'
-+  | 'signing_documents'
-+  | 'signing_document'
-+  | 'waiting_confirmation'
-+  | 'waiting_iia_close'
-+  | 'ok'
-+  | 'completed'
-+  | 'error'
-+  | string;
-+
-+export type SecuritiesCreditingStatusDetails = {
-+  status?: SecuritiesCreditingStatus;
-+  Status?: SecuritiesCreditingStatus;
-+  maskedPhone?: string;
-+  MaskedPhone?: string;
-+  smsTimeout?: number;
-+  SmsTimeout?: number;
-+  warning?: string;
-+  Warning?: string;
-+};
-+
-+export type { SecuritiesDepoDocType };
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/creditingCheckResult.ts b/src/modules/Transfers/pages/SecuritiesCrediting/creditingCheckResult.ts
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/creditingCheckResult.ts
-@@ -0,0 +1,86 @@
-+import { SecuritiesCreditingResponse } from './securitiesCrediting';
-+
-+export type CreditingFormField =
-+  | 'instrument'
-+  | 'account'
-+  | 'depo'
-+  | 'quantity'
-+  | 'contractor'
-+  | 'contractorID'
-+  | 'depoNumber'
-+  | 'depoDivision'
-+  | 'creditType'
-+  | 'supplierName'
-+  | 'dealAmount'
-+  | 'dealDate'
-+  | 'settlementDate'
-+  | 'reference'
-+  | 'docTypeId'
-+  | 'docTypeOther'
-+  | 'depoDocNum'
-+  | 'depoDocDate'
-+  | 'comment';
-+
-+export type CreditingFieldErrors = Partial<Record<CreditingFormField, string>>;
-+
-+const FIELD_MAP: Record<string, CreditingFormField> = {
-+  depoinstrument_id: 'instrument',
-+  deposubaccount_id: 'account',
-+  depo: 'depo',
-+  quantity: 'quantity',
-+  contractor_id: 'contractor',
-+  contractorid: 'contractorID',
-+  contractordepoaccount: 'depoNumber',
-+  contractordeposection: 'depoDivision',
-+  changeownership: 'creditType',
-+  supplier: 'supplierName',
-+  volume: 'dealAmount',
-+  dealdate: 'dealDate',
-+  settledate: 'settlementDate',
-+  reference: 'reference',
-+  depodoctype_id: 'docTypeId',
-+  depodoctypeother: 'docTypeOther',
-+  depodocnum: 'depoDocNum',
-+  depodocdate: 'depoDocDate',
-+  comment: 'comment',
-+};
-+
-+const STATUS_TEXT: Record<string, string> = {
-+  EMPTY: 'Обязательное поле',
-+  INVALID: 'Некорректное значение',
-+};
-+
-+export const parseCreditingCheckResult = (
-+  payload: SecuritiesCreditingResponse | Record<string, unknown>,
-+): CreditingFieldErrors => {
-+  const record = payload as Record<string, unknown>;
-+  const list = (record.checkResult ??
-+    record.CheckResult ??
-+    []) as Array<Record<string, unknown>>;
-+
-+  if (!Array.isArray(list)) {
-+    return {};
-+  }
-+
-+  const errors: CreditingFieldErrors = {};
-+
-+  list.forEach((item) => {
-+    const rawField = String(item.field ?? item.Field ?? '')
-+      .trim()
-+      .toLowerCase();
-+    const rawStatus = String(item.status ?? item.Status ?? '')
-+      .trim()
-+      .toUpperCase();
-+    const mapped = FIELD_MAP[rawField];
-+    if (!mapped || !rawStatus) {
-+      return;
-+    }
-+
-+    errors[mapped] = STATUS_TEXT[rawStatus] ?? 'Некорректное значение';
-+  });
-+
-+  return errors;
-+};
-+
-+export const hasCreditingFieldErrors = (errors: CreditingFieldErrors) =>
-+  Object.keys(errors).length > 0;
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/creditingStatus.ts b/src/modules/Transfers/pages/SecuritiesCrediting/creditingStatus.ts
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/creditingStatus.ts
-@@ -0,0 +1,45 @@
-+export const CREDITING_STATUS_POLL_INTERVAL_MS = 1000;
-+export const CREDITING_STATUS_POLL_TIMEOUT_MS = 3 * 60 * 1000;
-+
-+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-+
-+export const getCreditingStatus = (details: unknown): string | undefined => {
-+  if (!details || typeof details !== 'object') {
-+    return undefined;
-+  }
-+
-+  const record = details as Record<string, unknown>;
-+  const status = record.status ?? record.Status;
-+
-+  if (typeof status === 'string') {
-+    return status;
-+  }
-+
-+  const list = (record.requestStatus ?? record.RequestStatus) as
-+    | Array<Record<string, unknown>>
-+    | undefined;
-+  const first = Array.isArray(list) ? list[0] : undefined;
-+  const nested = first?.status ?? first?.Status;
-+
-+  return typeof nested === 'string' ? nested : undefined;
-+};
-+
-+export const isCreditingStatusReady = (status?: string) => {
-+  if (!status) {
-+    return false;
-+  }
-+
-+  return [
-+    'signing_documents',
-+    'signing_document',
-+    'waiting_confirmation',
-+    'waiting_iia_close',
-+    'ok',
-+    'completed',
-+    'error',
-+    'edit',
-+  ].includes(status);
-+};
-+
-+export const isCreditingSigningStatus = (status?: string) =>
-+  status === 'signing_documents' || status === 'signing_document';
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/creditingErrors.ts b/src/modules/Transfers/pages/SecuritiesCrediting/creditingErrors.ts
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/creditingErrors.ts
-@@ -0,0 +1,19 @@
-+export const DEFAULT_CREDITING_ERROR_MESSAGE =
-+  'Не удалось отправить поручение. Попробуйте ещё раз или повторите позже.';
-+
-+export const getCreditingErrorMessage = (error: unknown): string => {
-+  const record = error as {
-+    data?: { message?: string; Message?: string; errorMessage?: string };
-+    error?: string;
-+    message?: string;
-+  };
-+
-+  return (
-+    record?.data?.message ||
-+    record?.data?.Message ||
-+    record?.data?.errorMessage ||
-+    record?.message ||
-+    (typeof record?.error === 'string' ? record.error : undefined) ||
-+    DEFAULT_CREDITING_ERROR_MESSAGE
-+  );
-+};
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx b/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx
-@@ -0,0 +1,21 @@
-+import { Navigate } from 'react-router-dom';
-+
-+import { ROUTE_TRANSFERS } from 'const/routes';
-+import { useAppSelector } from 'core/store';
-+import { selectHasPermission } from 'core/store/user';
-+
-+import SecuritiesCrediting from './SecuritiesCrediting';
-+
-+const PERMISSION = 'PERSON_NONTRADE_SECURITY_REFILL_EXT';
-+
-+const SecuritiesCreditingPage = () => {
-+  const allowed = useAppSelector((state) => selectHasPermission(state, PERMISSION));
-+
-+  if (!allowed) {
-+    return <Navigate to={ROUTE_TRANSFERS} replace />;
-+  }
-+
-+  return <SecuritiesCrediting />;
-+};
-+
-+export default SecuritiesCreditingPage;
 diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
 new file mode 100644
-index 0000000..1111111
+index 0000000..b8b7a8b
 --- /dev/null
 +++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
-@@ -0,0 +1,1183 @@
+@@ -0,0 +1,1235 @@
 +import { useEffect, useMemo, useState } from 'react';
 +import { NumberFormatValues } from 'react-number-format';
 +import { useNavigate } from 'react-router-dom';
@@ -364,7 +201,7 @@ index 0000000..1111111
 +  SearchSelect,
 +  Text,
 +} from '@aurora/components';
-+import { APP_TITLE, CDN_BASE_URL } from 'const/app';
++import { APP_TITLE } from 'const/app';
 +import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
 +import { ROUTE_SECURITIES_CREDITING_ORDER, ROUTE_TRANSFERS } from 'const/routes';
 +import { DateTime } from 'luxon';
@@ -377,315 +214,201 @@ index 0000000..1111111
 +  useGetSecuritiesWriteOffParamsQuery,
 +  useLazyGetSecuritiesCreditingFilesQuery,
 +  useLazyGetSecuritiesCreditingQuery,
++  useSecuritiesCreditingCommitMutation,
 +  useSecuritiesCreditingMutation,
++  useSecuritiesWriteOffUploadFileMutation,
 +} from 'core/api/transfers';
 +
 +import { SECURITIES_CREDITING_PAGE_TITLE } from 'modules/Transfers/constants';
 +import ArrowNextIcon from 'modules/Transfers/pages/Refill/icons/ArrowNextIcon';
-+import { SecuritiesContractor, SecuritiesWriteOffParameter } from 'modules/Transfers/types';
 +import {
-+  CreditingCreditType,
-+  SecuritiesCreditingAccount,
-+  SecuritiesCreditingFormDetails,
++  SecuritiesContractor,
 +  SecuritiesCreditingParameter,
 +  SecuritiesCreditingRequestParams,
-+  SecuritiesCreditingResponse,
-+  SecuritiesCreditingSection,
-+} from 'modules/Transfers/types/securitiesCrediting';
++  SecuritiesWriteOffNonSbpDetails,
++  SecuritiesWriteOffParameter,
++  SecuritiesWriteOffResponse,
++  SecuritiesWriteOffStatus,
++  WriteOffCreditType,
++} from 'modules/Transfers/types';
 +
 +import { HeaderPage } from 'components';
-+import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
 +
 +import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
 +import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
 +
 +import BlockedContent from '../../components/BlockedContent';
-+import styles from './SecuritiesCrediting.module.pcss';
-+import SecurityIcon from './SecurityIcon';
++import styles from '../SecuritiesWriteOff/SecuritiesWriteOff.module.pcss';
++import WriteOffSupportingDocuments from '../SecuritiesWriteOff/WriteOffSupportingDocuments';
 +import {
-+  CreditingFieldErrors,
-+  CreditingFormField,
-+  hasCreditingFieldErrors,
-+  parseCreditingCheckResult,
-+} from './creditingCheckResult';
-+import { DEFAULT_CREDITING_ERROR_MESSAGE, getCreditingErrorMessage } from './creditingErrors';
++  WriteOffFieldErrors,
++  WriteOffFormField,
++  hasWriteOffFieldErrors,
++  parseWriteOffCheckResult,
++} from '../SecuritiesWriteOff/writeOffCheckResult';
 +import {
-+  CREDITING_STATUS_POLL_INTERVAL_MS,
-+  CREDITING_STATUS_POLL_TIMEOUT_MS,
-+  getCreditingStatus,
-+  isCreditingSigningStatus,
-+  isCreditingStatusReady,
++  DEFAULT_WRITEOFF_ERROR_MESSAGE,
++  getWriteOffErrorMessage,
++} from '../SecuritiesWriteOff/writeOffErrors';
++import {
++  CREDIT_TYPE_OPTIONS,
++  EMPTY_NON_SBP,
++  filterByQuery,
++  formatQuantity,
++  getContractorIdentifier,
++  getQuantityFractionPart,
++  getRequestGuidFromResponse,
++  mapContractorToOption,
++  mapInstrumentToOption,
++  normalizeQuantityFromNumberFormat,
++  parseFormDate,
++  sanitizeLatin,
++  toIsoDate,
++  toQuantityNumber,
++} from '../SecuritiesWriteOff/writeOffFormHelpers';
++import {
++  WRITEOFF_STATUS_POLL_INTERVAL_MS,
++  WRITEOFF_STATUS_POLL_TIMEOUT_MS,
++  getWriteOffStatus,
++  isWriteOffSigningStatus,
++  isWriteOffStatusReady,
 +  sleep,
-+} from './creditingStatus';
++} from '../SecuritiesWriteOff/writeOffStatus';
++import WriteOffFailed from '../SecuritiesWriteOffOrder/WriteOffFailed';
 +
-+const ACCOUNT_HINT = 'Счёт депо (депозитарий, номер договора)';
-+const LATIN_DIGIT_RE = /[^\dA-Za-z]/g;
++const ACCOUNT_HINT = 'Счёт депо / раздел (договор)';
++const FAILED_TITLE = 'Поручение на зачисление ценных бумаг не выполнено.';
 +
-+const EMPTY_DETAILS: SecuritiesCreditingFormDetails = {
-+  contractorID: '',
-+  depoNumber: '',
-+  depoDivision: '',
-+  creditType: '',
-+  supplierName: '',
-+  dealAmount: '',
-+  dealDate: '',
-+  settlementDate: '',
-+  reference: '',
-+  docTypeId: null,
-+  docTypeOther: '',
-+  depoDocNum: '',
-+  depoDocDate: '',
-+  comment: '',
-+};
-+
-+const CREDIT_TYPE_OPTIONS: Array<{ id: CreditingCreditType; value: string }> = [
-+  { id: 'WITH_RIGHTS', value: 'С переходом прав' },
-+  { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
-+];
-+
-+type AccountOption = {
++type CreditingAccountOption = {
 +  depoSubAccountId: number;
-+  name: string;
-+  depoSection?: string;
++  depoAccount: string;
++  depoSection: string;
++  agreement: string;
 +};
 +
-+const sanitizeLatin = (value: string, max: number) =>
-+  value.replace(LATIN_DIGIT_RE, '').slice(0, max);
++/** Все разделы всех мест расчётов одним списком, без дублей по depoSubAccountId. */
++const getCreditingAccounts = (params: SecuritiesCreditingParameter[]) => {
++  const byId = new Map<number, CreditingAccountOption>();
 +
-+const parseFormDate = (value: string) => {
-+  if (!value) return null;
-+  const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
-+  return parsed.isValid ? parsed : null;
-+};
-+
-+const toIsoDate = (value: string) => parseFormDate(value)?.toISODate() ?? null;
-+
-+const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
-+  contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
-+
-+const getInstrumentIconSrc = (instrumentImageName?: string) =>
-+  instrumentImageName ? getSrc(CDN_BASE_URL, instrumentImageName) : undefined;
-+
-+const getQuantityFractionPart = (fractionPart?: number) => {
-+  if (fractionPart == null || !Number.isFinite(fractionPart) || fractionPart < 0) return 0;
-+  return Math.floor(fractionPart);
-+};
-+
-+const toQuantityNumber = (value: string) => {
-+  const normalized = value.trim().replace(',', '.');
-+  if (!normalized || normalized === '.') return null;
-+  const parsed = Number(normalized);
-+  return Number.isFinite(parsed) ? parsed : null;
-+};
-+
-+const normalizeQuantityFromNumberFormat = (values: NumberFormatValues, fractionPart?: number) => {
-+  const digits = getQuantityFractionPart(fractionPart);
-+  const rawValue = (values.value ?? '').replace(',', '.');
-+  if (!rawValue) return '';
-+  if (digits > 0 && rawValue.endsWith('.')) {
-+    const intValue =
-+      values.floatValue != null && Number.isFinite(values.floatValue)
-+        ? String(Math.trunc(Math.abs(values.floatValue)))
-+        : '0';
-+    return `${intValue}.`;
-+  }
-+  const cleaned = rawValue.replace(/[^\d.]/g, '');
-+  const separatorIndex = cleaned.indexOf('.');
-+  const rawInteger =
-+    separatorIndex === -1 ? cleaned : cleaned.slice(0, separatorIndex).replace(/\D/g, '');
-+  const strippedInteger = rawInteger.replace(/^0+/, '');
-+  const integerPart = strippedInteger === '' ? (rawInteger.length > 0 ? '0' : '') : strippedInteger;
-+  if (digits === 0 || separatorIndex === -1) return integerPart;
-+  const fractionValue = cleaned
-+    .slice(separatorIndex + 1)
-+    .replace(/\D/g, '')
-+    .slice(0, digits);
-+  return `${integerPart || '0'}.${fractionValue}`;
-+};
-+
-+const normalizeCreditingRows = (raw: unknown): SecuritiesCreditingParameter[] => {
-+  if (!raw || typeof raw !== 'object') return [];
-+  const record = raw as Record<string, unknown>;
-+  const list =
-+    (record.creditingParameters as unknown[]) ??
-+    (record.CreditingParameters as unknown[]) ??
-+    (Array.isArray(raw) ? raw : null);
-+  if (!Array.isArray(list)) return [];
-+
-+  return list.map((row) => {
-+    const item = row as Record<string, unknown>;
-+    const accountsRaw = (item.accounts ?? item.Accounts ?? []) as Array<Record<string, unknown>>;
-+    const accounts: SecuritiesCreditingAccount[] = accountsRaw.map((acc) => {
-+      const sectionsRaw = (acc.sections ?? acc.Sections ?? []) as Array<Record<string, unknown>>;
-+      const sections: SecuritiesCreditingSection[] = sectionsRaw.map((section) => ({
-+        depoSection: String(section.depoSection ?? section.DepoSection ?? ''),
-+        depoSubAccountId: Number(section.depoSubAccount_Id ?? section.depoSubAccountId ?? 0),
-+      }));
-+      return {
-+        agreement: String(acc.agreement ?? acc.Agreement ?? ''),
-+        depoAccount: String(acc.depoAccount ?? acc.DepoAccount ?? ''),
-+        sections,
-+      };
-+    });
-+
-+    return {
-+      depo: String(item.depo ?? item.Depo ?? ''),
-+      name: String(item.name ?? item.Name ?? item.depo ?? item.Depo ?? ''),
-+      accounts,
-+      changeOwnershipAllowed: Boolean(
-+        item.changeOwnershipAllowed ?? item.ChangeOwnershipAllowed ?? true,
-+      ),
-+    };
-+  });
-+};
-+
-+const flattenAccounts = (depo: SecuritiesCreditingParameter | null): AccountOption[] => {
-+  if (!depo) return [];
-+  return depo.accounts.flatMap((account) => {
-+    if (!account.sections.length) {
-+      return [
-+        {
-+          depoSubAccountId: 0,
-+          name: [account.agreement, account.depoAccount].filter(Boolean).join(' · '),
-+        },
-+      ];
-+    }
-+    return account.sections.map((section) => ({
-+      depoSubAccountId: section.depoSubAccountId,
-+      name: [account.agreement, account.depoAccount, section.depoSection]
-+        .filter(Boolean)
-+        .join(' · '),
-+      depoSection: section.depoSection,
-+    }));
-+  });
-+};
-+
-+const mapInstrumentToOption = (instrument: SecuritiesWriteOffParameter) => ({
-+  id: instrument.depoInstrumentId,
-+  value: instrument.name,
-+  description: [instrument.instrumentShortType, instrument.issuerName, instrument.isin]
-+    .filter(Boolean)
-+    .join(' · '),
-+  iconLeft: (
-+    <SecurityIcon
-+      src={getInstrumentIconSrc(instrument.instrumentImageName)}
-+      alt={instrument.name}
-+    />
-+  ),
-+});
-+
-+const mapContractorToOption = (contractor: SecuritiesContractor, index: number) => ({
-+  id: contractor.id ?? `${contractor.name}-${index}`,
-+  value: contractor.name,
-+});
-+
-+const filterByQuery = <T,>(items: T[], query: string, fields: Array<keyof T>) => {
-+  const normalized = query.trim().toLowerCase();
-+  if (!normalized) return items;
-+  return items.filter((item) =>
-+    fields.some((field) => String(item[field] ?? '').toLowerCase().includes(normalized)),
++  params.forEach((param) =>
++    param.accounts.forEach((account) =>
++      account.sections.forEach((section) => {
++        if (!byId.has(section.depoSubAccountId)) {
++          byId.set(section.depoSubAccountId, {
++            depoSubAccountId: section.depoSubAccountId,
++            depoAccount: account.depoAccount,
++            depoSection: section.depoSection,
++            agreement: account.agreement,
++          });
++        }
++      }),
++    ),
 +  );
++
++  return Array.from(byId.values());
 +};
 +
-+const clearSearchSelect = (fn: () => void) => () => fn();
++const getAccountLabel = (account: CreditingAccountOption) =>
++  `${account.depoAccount} / ${account.depoSection}`;
 +
-+const preventClearButtonFocus = (event: React.MouseEvent) => {
-+  const target = event.target as HTMLElement | null;
-+  if (target?.closest?.('[data-clear], .clear, button[aria-label="Clear"]')) {
-+    event.preventDefault();
-+  }
-+};
-+
-+const getRequestGuidFromResponse = (response: SecuritiesCreditingResponse) => {
-+  const list = response.request ?? response.Request ?? [];
-+  const first = list[0];
-+  return first?.requestGuid ?? first?.RequestGuid ?? null;
-+};
++const hasSubAccount = (param: SecuritiesCreditingParameter, depoSubAccountId: number) =>
++  param.accounts.some((account) =>
++    account.sections.some((section) => section.depoSubAccountId === depoSubAccountId),
++  );
 +
 +const SecuritiesCrediting = () => {
 +  const navigate = useNavigate();
 +  const isMobile = isMobileDevice();
-+
++  const [instrumentValue, setInstrumentValue] = useState('');
++  const [isinValue, setIsinValue] = useState('');
++  const [accountValue, setAccountValue] = useState('');
++  const [quantityValue, setQuantityValue] = useState('');
 +  const [selectedInstrument, setSelectedInstrument] = useState<SecuritiesWriteOffParameter | null>(
 +    null,
 +  );
-+  const [instrumentValue, setInstrumentValue] = useState('');
-+  const [isinValue, setIsinValue] = useState('');
++  const [selectedAccount, setSelectedAccount] = useState<CreditingAccountOption | null>(null);
 +  const [selectedDepo, setSelectedDepo] = useState<SecuritiesCreditingParameter | null>(null);
-+  const [depoValue, setDepoValue] = useState('');
-+  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
-+  const [accountValue, setAccountValue] = useState('');
-+  const [quantityValue, setQuantityValue] = useState('');
-+  const [selectedContractor, setSelectedContractor] = useState<SecuritiesContractor | null>(null);
 +  const [contractorValue, setContractorValue] = useState('');
-+  const [details, setDetails] = useState<SecuritiesCreditingFormDetails>(EMPTY_DETAILS);
++  const [selectedContractor, setSelectedContractor] = useState<SecuritiesContractor | null>(null);
++  const [details, setDetails] = useState<SecuritiesWriteOffNonSbpDetails>(EMPTY_NON_SBP);
 +  const [openDateField, setOpenDateField] = useState<
-+    'dealDate' | 'settlementDate' | 'depoDocDate' | null
++    'dealDate' | 'settlementDate' | 'contractDate' | null
 +  >(null);
-+  const [fieldErrors, setFieldErrors] = useState<CreditingFieldErrors>({});
-+  const [step, setStep] = useState<'FORM' | 'FAILED'>('FORM');
-+  const [errorMessage, setErrorMessage] = useState(DEFAULT_CREDITING_ERROR_MESSAGE);
-+  const [isStatusPolling, setIsStatusPolling] = useState(false);
 +
-+  const isWithRights = details.creditType === 'WITH_RIGHTS';
-+  const changeOwnershipParam =
-+    details.creditType === 'WITH_RIGHTS'
-+      ? true
-+      : details.creditType === 'WITHOUT_RIGHTS'
-+      ? false
-+      : undefined;
-+
-+  // ponytail: instrument catalog from writeoff/params until crediting has its own
 +  const {
-+    data: writeOffParams,
-+    isLoading: isInstrumentsLoading,
-+    isError: isInstrumentsError,
++    data: instrumentsParams,
++    isLoading,
++    isError: isParamsError,
 +  } = useGetSecuritiesWriteOffParamsQuery(undefined, { refetchOnMountOrArgChange: true });
-+
 +  const {
-+    data: creditingParamsRaw,
++    data: creditingParamsData,
 +    isLoading: isCreditingParamsLoading,
 +    isFetching: isCreditingParamsFetching,
 +  } = useGetSecuritiesCreditingParamsQuery(
-+    selectedInstrument
-+      ? { depoInstrument_Id: selectedInstrument.depoInstrumentId }
-+      : undefined,
++    { depoInstrumentId: selectedInstrument?.depoInstrumentId ?? 0 },
 +    { skip: !selectedInstrument, refetchOnMountOrArgChange: true },
 +  );
-+
-+  const { data: contractorsData, isLoading: isContractorsLoading } =
-+    useGetSecuritiesContractorsQuery(undefined, { refetchOnMountOrArgChange: true });
-+
-+  const { data: docTypes = [] } = useGetSecuritiesDocTypesQuery(
-+    changeOwnershipParam === undefined ? undefined : { changeOwnership: changeOwnershipParam },
-+    { skip: changeOwnershipParam === undefined },
++  const isWithRights = details.creditType === 'WITH_RIGHTS';
++  const {
++    data: docTypesData,
++    isLoading: isDocTypesLoading,
++    isFetching: isDocTypesFetching,
++  } = useGetSecuritiesDocTypesQuery(
++    details.creditType ? { changeOwnership: isWithRights } : undefined,
++    { skip: !details.creditType, refetchOnMountOrArgChange: true },
 +  );
-+
++  const docTypes = docTypesData ?? [];
++  const {
++    data: contractorsData,
++    isLoading: isContractorsLoading,
++    isFetching: isContractorsFetching,
++  } = useGetSecuritiesContractorsQuery(undefined, { refetchOnMountOrArgChange: true });
 +  const [crediting, { isLoading: isCreditingLoading }] = useSecuritiesCreditingMutation();
++  const [uploadFile] = useSecuritiesWriteOffUploadFileMutation();
++  const [commitCrediting, { isLoading: isCommitLoading }] = useSecuritiesCreditingCommitMutation();
 +  const [getCreditingDetails] = useLazyGetSecuritiesCreditingQuery();
 +  const [getCreditingFiles] = useLazyGetSecuritiesCreditingFilesQuery();
++  const [isStatusPolling, setIsStatusPolling] = useState(false);
++  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
++  const [step, setStep] = useState<'FORM' | 'FAILED'>('FORM');
++  const [errorMessage, setErrorMessage] = useState(DEFAULT_WRITEOFF_ERROR_MESSAGE);
++  const [fieldErrors, setFieldErrors] = useState<WriteOffFieldErrors>({});
++  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
++  const [attachmentStatuses, setAttachmentStatuses] = useState<
++    Array<'pending' | 'success' | 'failed'>
++  >([]);
++  const [draftRequestGuid, setDraftRequestGuid] = useState<string | null>(null);
++  const isNextBusy =
++    isCreditingLoading || isStatusPolling || isUploadingAttachments || isCommitLoading;
 +
-+  const instruments = writeOffParams?.writeOffParameters ?? [];
-+  const contractors = contractorsData ?? [];
-+  const depos = useMemo(() => normalizeCreditingRows(creditingParamsRaw), [creditingParamsRaw]);
-+  const accounts = useMemo(() => flattenAccounts(selectedDepo), [selectedDepo]);
-+  const quantityFractionPart = getQuantityFractionPart(selectedInstrument?.quantityFractionPart);
-+  const emptyMessage = isInstrumentsLoading ? 'Загрузка...' : 'Ничего не найдено';
-+  const isNextBusy = isCreditingLoading || isStatusPolling;
-+  const isWithRightsBlocked = selectedDepo != null && !selectedDepo.changeOwnershipAllowed;
-+
-+  const clearFieldError = (field: CreditingFormField) => {
++  const clearFieldError = (field: WriteOffFormField) => {
 +    setFieldErrors((prev) => {
-+      if (!prev[field]) return prev;
++      if (!prev[field]) {
++        return prev;
++      }
++
 +      const next = { ...prev };
 +      delete next[field];
 +      return next;
 +    });
 +  };
 +
-+  const patchDetails = (patch: Partial<SecuritiesCreditingFormDetails>) => {
-+    setDetails((prev) => ({ ...prev, ...patch }));
-+  };
++  const instruments = instrumentsParams?.writeOffParameters ?? [];
++  const creditingParams = creditingParamsData ?? [];
++  const contractors = contractorsData ?? [];
++  const accounts = useMemo(() => getCreditingAccounts(creditingParams), [creditingParams]);
++  const depos = useMemo(
++    () =>
++      selectedAccount
++        ? creditingParams.filter((param) => hasSubAccount(param, selectedAccount.depoSubAccountId))
++        : [],
++    [creditingParams, selectedAccount],
++  );
++  const isChangeOwnershipAllowed = selectedDepo?.changeOwnershipAllowed ?? true;
++  const creditTypeOptions = isChangeOwnershipAllowed
++    ? CREDIT_TYPE_OPTIONS
++    : CREDIT_TYPE_OPTIONS.filter((item) => item.id !== 'WITH_RIGHTS');
++  const emptyMessage = isLoading ? 'Загрузка...' : 'Ничего не найдено';
 +
 +  useEffect(() => {
 +    document.title = `${SECURITIES_CREDITING_PAGE_TITLE} — ${APP_TITLE}`;
@@ -696,45 +419,38 @@ index 0000000..1111111
 +      'name',
 +      'isin',
 +      'issuerName',
-+    ]).map(mapInstrumentToOption);
++    ]).map((instrument) => mapInstrumentToOption(instrument));
++
 +    if (
 +      selectedInstrument &&
 +      !filtered.some((item) => item.id === selectedInstrument.depoInstrumentId)
 +    ) {
 +      return [mapInstrumentToOption(selectedInstrument), ...filtered];
 +    }
++
 +    return filtered;
 +  }, [instruments, instrumentValue, selectedInstrument]);
 +
-+  const depoList = useMemo(() => {
-+    const normalizedQuery = depoValue.trim().toLowerCase();
-+    const filtered = (
-+      normalizedQuery
-+        ? depos.filter(
-+            (item) =>
-+              item.name.toLowerCase().includes(normalizedQuery) ||
-+              item.depo.toLowerCase().includes(normalizedQuery),
-+          )
-+        : depos
-+    ).map((item) => ({ id: item.depo, value: item.name }));
-+    if (selectedDepo && !filtered.some((item) => item.id === selectedDepo.depo)) {
-+      return [{ id: selectedDepo.depo, value: selectedDepo.name }, ...filtered];
-+    }
-+    return filtered;
-+  }, [depos, depoValue, selectedDepo]);
-+
 +  const accountList = useMemo(() => {
 +    const normalizedQuery = accountValue.trim().toLowerCase();
-+    const filtered = (
-+      normalizedQuery
-+        ? accounts.filter((account) => account.name.toLowerCase().includes(normalizedQuery))
++
++    return (
++      normalizedQuery && !selectedAccount
++        ? accounts.filter((account) =>
++            getAccountLabel(account).toLowerCase().includes(normalizedQuery),
++          )
 +        : accounts
-+    ).map((account) => ({ id: account.depoSubAccountId, value: account.name }));
-+    if (selectedAccount && !filtered.some((item) => item.id === selectedAccount.depoSubAccountId)) {
-+      return [{ id: selectedAccount.depoSubAccountId, value: selectedAccount.name }, ...filtered];
-+    }
-+    return filtered;
++    ).map((account) => ({
++      id: account.depoSubAccountId,
++      value: getAccountLabel(account),
++      description: account.agreement,
++    }));
 +  }, [accounts, accountValue, selectedAccount]);
++
++  const depoList = useMemo(
++    () => depos.map((param) => ({ id: param.depo, value: param.name })),
++    [depos],
++  );
 +
 +  const contractorList = useMemo(() => {
 +    const normalizedQuery = contractorValue.trim().toLowerCase();
@@ -745,25 +461,73 @@ index 0000000..1111111
 +          )
 +        : contractors
 +    ).map((contractor, index) => mapContractorToOption(contractor, index));
++
 +    if (selectedContractor && !filtered.some((item) => item.value === selectedContractor.name)) {
 +      return [mapContractorToOption(selectedContractor, -1), ...filtered];
 +    }
++
 +    return filtered;
 +  }, [contractors, contractorValue, selectedContractor]);
 +
-+  const docTypeList = useMemo(
++  const patchDetails = (patch: Partial<SecuritiesWriteOffNonSbpDetails>) => {
++    setDetails((prev) => ({ ...prev, ...patch }));
++  };
++
++  const docTypeOptions = useMemo(
 +    () => docTypes.map((item) => ({ id: item.id, value: item.name })),
 +    [docTypes],
 +  );
++  const selectedDocType = useMemo(
++    () => docTypes.find((item) => item.id === details.docTypeId) ?? null,
++    [docTypes, details.docTypeId],
++  );
++  const needDocTypeOther = Boolean(selectedDocType?.needComment);
 +
-+  const selectedDocType = docTypes.find((item) => item.id === details.docTypeId) ?? null;
++  useEffect(() => {
++    if (!details.docTypeId || docTypes.some((item) => item.id === details.docTypeId)) {
++      return;
++    }
 +
-+  const resetBelowInstrument = () => {
-+    setSelectedDepo(null);
-+    setDepoValue('');
-+    setSelectedAccount(null);
-+    setAccountValue('');
-+    setQuantityValue('');
++    patchDetails({ docTypeId: null, docTypeOther: '' });
++  }, [docTypes, details.docTypeId]);
++
++  useEffect(() => {
++    if (details.creditType !== 'WITHOUT_RIGHTS' || details.docTypeId || docTypes.length !== 1) {
++      return;
++    }
++
++    const [preferred] = docTypes;
++    clearFieldError('docTypeId');
++    patchDetails({
++      docTypeId: preferred.id,
++      docTypeOther: preferred.needComment ? details.docTypeOther : '',
++    });
++  }, [docTypes, details.creditType, details.docTypeId, details.docTypeOther]);
++
++  const selectCreditType = (creditType: WriteOffCreditType | '') => {
++    clearFieldError('creditType');
++    clearFieldError('docTypeId');
++    clearFieldError('docTypeOther');
++    patchDetails({
++      creditType,
++      docTypeId: null,
++      docTypeOther: '',
++      ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
++    });
++  };
++
++  const selectDepo = (depo: SecuritiesCreditingParameter | null) => {
++    setSelectedDepo(depo);
++    if (depo && !depo.changeOwnershipAllowed && details.creditType === 'WITH_RIGHTS') {
++      selectCreditType('');
++    }
++  };
++
++  const selectAccount = (account: CreditingAccountOption | null) => {
++    clearFieldError('account');
++    setSelectedAccount(account);
++    setAccountValue(account ? getAccountLabel(account) : '');
++    selectDepo(null);
 +  };
 +
 +  const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {
@@ -771,25 +535,8 @@ index 0000000..1111111
 +    setSelectedInstrument(instrument);
 +    setInstrumentValue(instrument?.name ?? '');
 +    setIsinValue(instrument?.isin ?? '');
-+    resetBelowInstrument();
-+  };
-+
-+  const selectDepo = (depo: SecuritiesCreditingParameter | null) => {
-+    clearFieldError('depo');
-+    setSelectedDepo(depo);
-+    setDepoValue(depo?.name ?? '');
-+    setSelectedAccount(null);
-+    setAccountValue('');
-+    if (depo && !depo.changeOwnershipAllowed && details.creditType === 'WITH_RIGHTS') {
-+      patchDetails({ creditType: '', supplierName: '', dealAmount: '' });
-+    }
-+  };
-+
-+  const selectAccount = (account: AccountOption | null) => {
-+    clearFieldError('account');
-+    clearFieldError('quantity');
-+    setSelectedAccount(account);
-+    setAccountValue(account?.name ?? '');
++    setQuantityValue('');
++    selectAccount(null);
 +  };
 +
 +  const selectContractor = (contractor: SecuritiesContractor | null) => {
@@ -812,22 +559,80 @@ index 0000000..1111111
 +    if (instruments.length === 1 && !selectedInstrument) {
 +      selectInstrument(instruments[0]);
 +    }
-+    // eslint-disable-next-line react-hooks/exhaustive-deps
 +  }, [instruments, selectedInstrument]);
-+
-+  useEffect(() => {
-+    if (depos.length === 1 && !selectedDepo) {
-+      selectDepo(depos[0]);
-+    }
-+    // eslint-disable-next-line react-hooks/exhaustive-deps
-+  }, [depos, selectedDepo]);
 +
 +  useEffect(() => {
 +    if (accounts.length === 1 && !selectedAccount) {
 +      selectAccount(accounts[0]);
 +    }
-+    // eslint-disable-next-line react-hooks/exhaustive-deps
 +  }, [accounts, selectedAccount]);
++
++  useEffect(() => {
++    if (depos.length === 1 && !selectedDepo) {
++      selectDepo(depos[0]);
++    }
++  }, [depos, selectedDepo]);
++
++  useEffect(() => {
++    if (contractors.length === 1 && !selectedContractor) {
++      selectContractor(contractors[0]);
++    }
++  }, [contractors, selectedContractor]);
++
++  const preventClearButtonFocus = (event: any) => {
++    const target = event.target as HTMLElement | null;
++    if (target?.closest('[class*="Input-module_icon-clear"]')) {
++      event.preventDefault();
++    }
++  };
++
++  const clearSearchSelect = (clear: () => void) => () => {
++    clear();
++    if (document.activeElement instanceof HTMLElement) {
++      document.activeElement.blur();
++    }
++  };
++
++  const quantityFractionPart = getQuantityFractionPart(selectedInstrument?.quantityFractionPart);
++  const quantityNumber = toQuantityNumber(quantityValue);
++  const isQuantityNonPositive = quantityNumber != null && quantityNumber <= 0;
++
++  const handleQuantityValueChange = (values: NumberFormatValues) => {
++    clearFieldError('quantity');
++    setQuantityValue(normalizeQuantityFromNumberFormat(values, quantityFractionPart));
++  };
++
++  const handleQuantityBlur = () => {
++    const parsed = toQuantityNumber(quantityValue);
++    if (parsed == null) {
++      return;
++    }
++
++    setQuantityValue(formatQuantity(parsed, quantityFractionPart));
++  };
++
++  const formPayload = useMemo(
++    () => ({
++      instrument: selectedInstrument
++        ? {
++            depoInstrumentId: selectedInstrument.depoInstrumentId,
++            name: selectedInstrument.name,
++            isin: selectedInstrument.isin,
++            issuerName: selectedInstrument.issuerName,
++            instrumentImageName: selectedInstrument.instrumentImageName,
++          }
++        : null,
++      quantity: quantityValue,
++      contractor: selectedContractor
++        ? { id: selectedContractor.id, name: selectedContractor.name }
++        : null,
++    }),
++    [selectedInstrument, quantityValue, selectedContractor],
++  );
++
++  const handleBackClick = () => {
++    navigate(ROUTE_TRANSFERS);
++  };
 +
 +  const handleLatinChange =
 +    (field: 'contractorID' | 'depoNumber' | 'depoDivision' | 'reference', max: number) =>
@@ -837,53 +642,63 @@ index 0000000..1111111
 +    };
 +
 +  const handleDateSubmit = (dates: Date[]) => {
-+    if (!openDateField || !dates?.[0]) return;
++    if (!openDateField || !dates?.[0]) {
++      return;
++    }
++
 +    const formatted = DateTime.fromJSDate(new Date(dates[0])).toFormat(DEFAULT_DATE_VIEW_FORMAT);
 +    clearFieldError(openDateField);
-+    if (openDateField === 'dealDate') clearFieldError('settlementDate');
++    if (openDateField === 'dealDate') {
++      clearFieldError('settlementDate');
++    }
 +    patchDetails({ [openDateField]: formatted });
 +    setOpenDateField(null);
 +  };
 +
-+  const handleQuantityValueChange = (values: NumberFormatValues) => {
-+    clearFieldError('quantity');
-+    setQuantityValue(normalizeQuantityFromNumberFormat(values, quantityFractionPart));
-+  };
-+
-+  const validateLocal = (): CreditingFieldErrors => {
-+    const errors: CreditingFieldErrors = {};
++  const validateFields = (): WriteOffFieldErrors => {
++    const errors: WriteOffFieldErrors = {};
++    if (!details.docTypeId) {
++      errors.docTypeId = 'Выберите тип документа';
++    }
++    if (needDocTypeOther && !details.docTypeOther.trim()) {
++      errors.docTypeOther = 'Укажите иной тип документа';
++    }
++    if (details.docTypeOther.length > 50) {
++      errors.docTypeOther = 'Не более 50 символов';
++    }
 +    if (details.contractorID && details.contractorID.length < 3) {
 +      errors.contractorID = 'От 3 до 12 знаков, латинские буквы и цифры';
 +    }
 +    if (details.depoDivision && details.depoDivision.length < 6) {
 +      errors.depoDivision = 'От 6 до 17 знаков, латинские буквы и цифры';
 +    }
++
 +    const dealDate = parseFormDate(details.dealDate);
 +    const settlementDate = parseFormDate(details.settlementDate);
 +    if (dealDate && settlementDate && settlementDate < dealDate) {
 +      errors.settlementDate = 'Не может быть раньше даты сделки';
 +    }
++
 +    return errors;
 +  };
 +
-+  const buildRequest = (): SecuritiesCreditingRequestParams => {
-+    const quantity = toQuantityNumber(quantityValue);
++  const buildCreditingRequest = (): SecuritiesCreditingRequestParams => {
 +    const contractorId = Number(selectedContractor?.id);
 +    const volume = toQuantityNumber(details.dealAmount);
 +
 +    return {
 +      depoInstrument_Id: selectedInstrument?.depoInstrumentId ?? null,
-+      depoSubAccount_Id: selectedAccount?.depoSubAccountId || null,
-+      quantity: quantity != null && quantity > 0 ? quantity : null,
++      depoSubAccount_Id: selectedAccount?.depoSubAccountId ?? null,
++      quantity: quantityNumber != null && quantityNumber > 0 ? quantityNumber : null,
 +      contractor_Id: Number.isFinite(contractorId) ? contractorId : null,
 +      contractorDepoAccount: details.depoNumber || null,
 +      contractorDepoSection: details.depoDivision || null,
 +      contractorID: details.contractorID || null,
 +      depoDocType_Id: details.docTypeId,
-+      depoDocTypeOther: selectedDocType?.needComment ? details.docTypeOther || null : null,
-+      depoDocNum: details.depoDocNum || null,
-+      depoDocDate: toIsoDate(details.depoDocDate),
-+      changeOwnership: details.creditType ? details.creditType === 'WITH_RIGHTS' : null,
++      depoDocTypeOther: needDocTypeOther ? details.docTypeOther || null : null,
++      depoDocNum: details.contractNumber || null,
++      depoDocDate: toIsoDate(details.contractDate),
++      changeOwnership: details.creditType ? isWithRights : null,
 +      supplier: isWithRights ? details.supplierName || null : null,
 +      dealDate: toIsoDate(details.dealDate),
 +      settleDate: toIsoDate(details.settlementDate),
@@ -894,125 +709,207 @@ index 0000000..1111111
 +  };
 +
 +  const applyCheckResultErrors = (payload: unknown) => {
-+    const errors = parseCreditingCheckResult(
-+      (payload ?? {}) as SecuritiesCreditingResponse | Record<string, unknown>,
++    const errors = parseWriteOffCheckResult(
++      (payload ?? {}) as SecuritiesWriteOffResponse | Record<string, unknown>,
 +    );
-+    if (!hasCreditingFieldErrors(errors)) return false;
++
++    if (!hasWriteOffFieldErrors(errors)) {
++      return false;
++    }
++
++    console.log('[SecuritiesCrediting] CheckResult field errors', errors);
 +    setFieldErrors(errors);
 +    return true;
 +  };
 +
-+  const showFailed = (message = DEFAULT_CREDITING_ERROR_MESSAGE) => {
++  const showFailed = (message = DEFAULT_WRITEOFF_ERROR_MESSAGE) => {
 +    setErrorMessage(message);
 +    setStep('FAILED');
 +  };
 +
-+  const handleNextClick = async () => {
-+    if (isNextBusy) return;
++  const handleAttachmentFilesChange = (nextFiles: File[]) => {
++    setAttachmentFiles(nextFiles);
++    setAttachmentStatuses(nextFiles.map(() => 'pending'));
++    setDraftRequestGuid(null);
++  };
 +
-+    const localErrors = validateLocal();
-+    if (hasCreditingFieldErrors(localErrors)) {
-+      setFieldErrors(localErrors);
-+      return;
++  const uploadAttachmentFiles = async (requestGuid: string) => {
++    const nextStatuses = [...attachmentStatuses];
++    while (nextStatuses.length < attachmentFiles.length) {
++      nextStatuses.push('pending');
 +    }
 +
-+    const requestParams = buildRequest();
-+    setFieldErrors({});
-+
++    setIsUploadingAttachments(true);
 +    try {
-+      const response = await crediting(requestParams).unwrap();
-+      if (applyCheckResultErrors(response)) return;
++      for (const [index, file] of Array.from(attachmentFiles.entries())) {
++        if (nextStatuses[index] === 'success') {
++          continue;
++        }
 +
-+      const requestGuid = getRequestGuidFromResponse(response);
-+      if (!requestGuid) {
-+        showFailed();
-+        return;
++        nextStatuses[index] = 'pending';
++        setAttachmentStatuses([...nextStatuses]);
++
++        await uploadFile({ requestGuid, file }).unwrap();
++
++        nextStatuses[index] = 'success';
++        setAttachmentStatuses([...nextStatuses]);
 +      }
-+
-+      setIsStatusPolling(true);
-+      let detailsResponse;
-+      let status: string | undefined;
-+      const pollDeadline = Date.now() + CREDITING_STATUS_POLL_TIMEOUT_MS;
-+      let attempt = 0;
-+
-+      while (Date.now() <= pollDeadline) {
-+        attempt += 1;
-+        detailsResponse = await getCreditingDetails({ requestGuid }, false).unwrap();
-+        status = getCreditingStatus(detailsResponse);
-+        console.log('[SecuritiesCrediting] status poll', { attempt, requestGuid, status });
-+
-+        if (isCreditingStatusReady(status)) break;
-+
-+        const remainingMs = pollDeadline - Date.now();
-+        if (remainingMs <= 0) break;
-+        await sleep(Math.min(CREDITING_STATUS_POLL_INTERVAL_MS, remainingMs));
-+      }
-+
-+      if (!isCreditingStatusReady(status) || !detailsResponse) {
-+        showFailed();
-+        return;
-+      }
-+
-+      if (!isCreditingSigningStatus(status)) {
-+        showFailed();
-+        return;
-+      }
-+
-+      const files = await getCreditingFiles({ requestGuid }, false).unwrap();
-+      if (!files.length) {
-+        showFailed('Не удалось получить список документов для подписания.');
-+        return;
-+      }
-+
-+      navigate(ROUTE_SECURITIES_CREDITING_ORDER, {
-+        state: {
-+          formPayload: {
-+            instrument: selectedInstrument
-+              ? {
-+                  depoInstrumentId: selectedInstrument.depoInstrumentId,
-+                  name: selectedInstrument.name,
-+                  isin: selectedInstrument.isin,
-+                }
-+              : null,
-+            quantity: quantityValue,
-+            contractor: selectedContractor
-+              ? { id: selectedContractor.id, name: selectedContractor.name }
-+              : null,
-+            documentId: requestGuid,
-+          },
-+          requestGuid,
-+          creditingDetails: detailsResponse,
-+          creditingStatus: status,
-+          referenceDocuments: files,
-+        },
-+      });
 +    } catch (error) {
-+      const errorData =
-+        (error as { data?: unknown } | undefined)?.data ??
-+        (error as { error?: unknown } | undefined)?.error;
-+      if (applyCheckResultErrors(errorData)) return;
-+      showFailed(getCreditingErrorMessage(error));
++      const failedIndex = nextStatuses.findIndex((status) => status !== 'success');
++      if (failedIndex >= 0) {
++        nextStatuses[failedIndex] = 'failed';
++        setAttachmentStatuses([...nextStatuses]);
++      }
++      throw error;
 +    } finally {
-+      setIsStatusPolling(false);
++      setIsUploadingAttachments(false);
 +    }
 +  };
 +
-+  if (step === 'FAILED') {
++  const pollAndOpenOrder = async (requestGuid: string) => {
++    setIsStatusPolling(true);
++
++    let creditingDetails;
++    let status: SecuritiesWriteOffStatus | undefined;
++    const pollDeadline = Date.now() + WRITEOFF_STATUS_POLL_TIMEOUT_MS;
++
++    while (Date.now() <= pollDeadline) {
++      creditingDetails = await getCreditingDetails({ requestGuid }, false).unwrap();
++      status = getWriteOffStatus(creditingDetails);
++
++      console.log('[SecuritiesCrediting] GET /v1/nontrade/securities/crediting status poll', {
++        requestGuid,
++        status,
++      });
++
++      if (isWriteOffStatusReady(status)) {
++        break;
++      }
++
++      const remainingMs = pollDeadline - Date.now();
++      if (remainingMs <= 0) {
++        break;
++      }
++
++      await sleep(Math.min(WRITEOFF_STATUS_POLL_INTERVAL_MS, remainingMs));
++    }
++
++    if (!isWriteOffStatusReady(status) || !creditingDetails || !isWriteOffSigningStatus(status)) {
++      showFailed();
++      return;
++    }
++
++    const files = await getCreditingFiles({ requestGuid }, false).unwrap();
++
++    if (!files.length) {
++      showFailed('Не удалось получить список документов для подписания.');
++      return;
++    }
++
++    navigate(ROUTE_SECURITIES_CREDITING_ORDER, {
++      state: {
++        formPayload: { ...formPayload, documentId: requestGuid },
++        requestGuid,
++        writeOffStatus: status,
++        referenceDocuments: files,
++      },
++    });
++  };
++
++  const handleNextClick = async () => {
++    if (isNextBusy) {
++      return;
++    }
++
++    const errors = validateFields();
++    if (hasWriteOffFieldErrors(errors)) {
++      setFieldErrors(errors);
++      return;
++    }
++
++    const requestParams = buildCreditingRequest();
++    const hasAttachments = attachmentFiles.length > 0;
++
++    console.log('[SecuritiesCrediting] POST /v1/nontrade/securities/crediting', {
++      ...requestParams,
++      noCommit: hasAttachments,
++    });
++    setFieldErrors({});
++    setStep('FORM');
++
++    try {
++      let requestGuid = draftRequestGuid;
++
++      if (!requestGuid) {
++        const response = await crediting({ ...requestParams, noCommit: hasAttachments }).unwrap();
++
++        if (applyCheckResultErrors(response)) {
++          return;
++        }
++
++        requestGuid = getRequestGuidFromResponse(response) ?? null;
++
++        if (!requestGuid) {
++          console.error('[SecuritiesCrediting] requestGuid missing in POST response', response);
++          showFailed();
++          return;
++        }
++
++        if (hasAttachments) {
++          setDraftRequestGuid(requestGuid);
++        }
++      }
++
++      if (hasAttachments) {
++        await uploadAttachmentFiles(requestGuid);
++        await commitCrediting({ requestGuid }).unwrap();
++        setDraftRequestGuid(null);
++      }
++
++      await pollAndOpenOrder(requestGuid);
++    } catch (error) {
++      console.error('[SecuritiesCrediting] crediting error', error);
++
++      const errorData =
++        (error as { data?: unknown } | undefined)?.data ??
++        (error as { error?: unknown } | undefined)?.error;
++
++      if (applyCheckResultErrors(errorData)) {
++        return;
++      }
++
++      showFailed(getWriteOffErrorMessage(error));
++    } finally {
++      setIsStatusPolling(false);
++      setIsUploadingAttachments(false);
++    }
++  };
++
++  const handleRepeat = () => {
++    if (draftRequestGuid && attachmentFiles.length > 0) {
++      void handleNextClick();
++      return;
++    }
++
++    setStep('FORM');
++  };
++
++  if (step === 'FAILED' && !isNextBusy) {
 +    return (
-+      <div className={styles.page}>
-+        <Text>{errorMessage}</Text>
-+        <Button onClick={() => setStep('FORM')} shape="inline" variant="white">
-+          <Text type="labelMedium">Повторить</Text>
-+        </Button>
-+      </div>
++      <WriteOffFailed
++        formPayload={formPayload}
++        errorMessage={errorMessage}
++        onRepeat={handleRepeat}
++        title={FAILED_TITLE}
++      />
 +    );
 +  }
 +
-+  if (isInstrumentsError) {
++  if (isParamsError) {
 +    return <BlockedContent type="errorInternalTransfer" />;
 +  }
 +
-+  if (isInstrumentsLoading) {
++  if (isLoading) {
 +    return (
 +      <div className={styles.loaderPage}>
 +        <CircleLoader brandColor size="large" />
@@ -1020,11 +917,17 @@ index 0000000..1111111
 +    );
 +  }
 +
-+  if (isStatusPolling || isCreditingLoading) {
++  if (isNextBusy) {
 +    return (
 +      <div className={styles.loaderPage}>
 +        <CircleLoader brandColor size="large" />
-+        <Text>Обработка поручения...</Text>
++        <Text>
++          {isUploadingAttachments
++            ? 'Загрузка документов...'
++            : isCommitLoading
++            ? 'Подтверждение заявки...'
++            : 'Обработка поручения...'}
++        </Text>
 +      </div>
 +    );
 +  }
@@ -1036,7 +939,7 @@ index 0000000..1111111
 +          title={SECURITIES_CREDITING_PAGE_TITLE}
 +          documentTitle={SECURITIES_CREDITING_PAGE_TITLE}
 +          leftIconVariant="back"
-+          onLeftIconClick={() => navigate(ROUTE_TRANSFERS)}
++          onLeftIconClick={handleBackClick}
 +          showDivider
 +        />
 +      )}
@@ -1048,7 +951,7 @@ index 0000000..1111111
 +            <Button
 +              className={styles.backButton}
 +              iconLeft={<BackSvg />}
-+              onClick={() => navigate(ROUTE_TRANSFERS)}
++              onClick={handleBackClick}
 +              shape="inline"
 +              variant="white"
 +            >
@@ -1081,7 +984,7 @@ index 0000000..1111111
 +              setInstrumentValue(event.target.value);
 +              setSelectedInstrument(null);
 +              setIsinValue('');
-+              resetBelowInstrument();
++              selectAccount(null);
 +            }}
 +            onClear={clearSearchSelect(() => selectInstrument(null))}
 +            onSelect={(item) => {
@@ -1102,43 +1005,6 @@ index 0000000..1111111
 +
 +          <Text className={styles.sectionTitle}>Куда зачислить</Text>
 +          <SearchSelect
-+            label="Место расчетов:"
-+            className={styles.sideField}
-+            classNameLabel={styles.sideFieldLabel}
-+            classNamePopover={styles.searchSelectPopover}
-+            classNameContent={styles.searchSelectDropdown}
-+            classNameDescription={styles.fieldHint}
-+            placeholder="Выберите место расчетов"
-+            scale="small"
-+            searchIcon
-+            clearable
-+            list={depoList}
-+            value={depoValue}
-+            minChar={0}
-+            emptyMessage={
-+              !selectedInstrument
-+                ? 'Сначала выберите инструмент'
-+                : isCreditingParamsLoading || isCreditingParamsFetching
-+                ? 'Загрузка...'
-+                : 'Ничего не найдено'
-+            }
-+            separatorActionCells={false}
-+            status={fieldErrors.depo ? 'error' : null}
-+            description={fieldErrors.depo}
-+            onChange={(event) => {
-+              clearFieldError('depo');
-+              setDepoValue(event.target.value);
-+              setSelectedDepo(null);
-+              setSelectedAccount(null);
-+              setAccountValue('');
-+            }}
-+            onClear={clearSearchSelect(() => selectDepo(null))}
-+            onSelect={(item) => {
-+              const selected = depos.find((depo) => depo.depo === item.id) ?? null;
-+              selectDepo(selected);
-+            }}
-+          />
-+          <SearchSelect
 +            label="Счёт:"
 +            className={styles.sideField}
 +            classNameLabel={styles.sideFieldLabel}
@@ -1154,12 +1020,19 @@ index 0000000..1111111
 +            list={accountList}
 +            value={accountValue}
 +            minChar={0}
-+            emptyMessage={!selectedDepo ? 'Сначала выберите место расчетов' : 'Ничего не найдено'}
++            emptyMessage={
++              !selectedInstrument
++                ? 'Сначала выберите инструмент'
++                : isCreditingParamsLoading || isCreditingParamsFetching
++                ? 'Загрузка...'
++                : 'Ничего не найдено'
++            }
 +            separatorActionCells={false}
 +            onChange={(event) => {
 +              clearFieldError('account');
 +              setAccountValue(event.target.value);
 +              setSelectedAccount(null);
++              selectDepo(null);
 +            }}
 +            onClear={clearSearchSelect(() => selectAccount(null))}
 +            onSelect={(item) => {
@@ -1173,7 +1046,10 @@ index 0000000..1111111
 +            className={styles.sideField}
 +            classNameLabel={styles.sideFieldLabel}
 +            classNameDescription={styles.fieldHint}
-+            description={fieldErrors.quantity}
++            description={
++              fieldErrors.quantity ??
++              (isQuantityNonPositive ? 'Количество должно быть больше 0' : undefined)
++            }
 +            placeholder="0"
 +            scale="small"
 +            variant="number"
@@ -1182,21 +1058,31 @@ index 0000000..1111111
 +            allowedDecimalSeparators={['.', ',']}
 +            thousandSeparator=""
 +            allowLeadingZeros={false}
-+            status={fieldErrors.quantity ? 'error' : null}
++            status={fieldErrors.quantity || isQuantityNonPositive ? 'error' : null}
 +            value={quantityValue}
 +            onValueChange={handleQuantityValueChange}
-+          />
-+          <Input
-+            label="Комиссия:"
-+            className={`${styles.sideField} ${styles.fieldMax400}`}
-+            classNameLabel={styles.sideFieldLabel}
-+            scale="small"
-+            value=""
-+            disabled
-+            description="— "
++            onBlur={handleQuantityBlur}
 +          />
 +
 +          <Text className={styles.sectionTitle}>Откуда списать</Text>
++          <SearchSelect
++            label="Место расчётов:"
++            className={styles.sideField}
++            classNameLabel={styles.sideFieldLabel}
++            classNamePopover={styles.searchSelectPopover}
++            classNameContent={styles.searchSelectDropdown}
++            classNameDescription={styles.fieldHint}
++            placeholder="Выберите место расчётов"
++            scale="small"
++            clearable
++            list={depoList}
++            value={selectedDepo?.name ?? ''}
++            minChar={0}
++            emptyMessage={!selectedAccount ? 'Сначала выберите счёт' : 'Ничего не найдено'}
++            separatorActionCells={false}
++            onClear={clearSearchSelect(() => selectDepo(null))}
++            onSelect={(item) => selectDepo(depos.find((param) => param.depo === item.id) ?? null)}
++          />
 +          <SearchSelect
 +            label="Контрагент:"
 +            className={styles.sideField}
@@ -1211,7 +1097,9 @@ index 0000000..1111111
 +            list={contractorList}
 +            value={contractorValue}
 +            minChar={3}
-+            emptyMessage={isContractorsLoading ? 'Загрузка...' : 'Ничего не найдено'}
++            emptyMessage={
++              isContractorsLoading || isContractorsFetching ? 'Загрузка...' : 'Ничего не найдено'
++            }
 +            separatorActionCells={false}
 +            status={fieldErrors.contractor ? 'error' : null}
 +            description={fieldErrors.contractor ?? 'Наименование контрагента'}
@@ -1255,8 +1143,7 @@ index 0000000..1111111
 +            value={details.depoNumber}
 +            status={fieldErrors.depoNumber ? 'error' : null}
 +            description={
-+              fieldErrors.depoNumber ??
-+              'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
++              fieldErrors.depoNumber ?? 'Номер счета депо. От 1 до 12 знаков, латинские буквы и цифры'
 +            }
 +            onChange={handleLatinChange('depoNumber', 12)}
 +          />
@@ -1285,79 +1172,59 @@ index 0000000..1111111
 +            placeholder="Выберите тип зачисления"
 +            scale="small"
 +            clearable
-+            list={
-+              isWithRightsBlocked
-+                ? CREDIT_TYPE_OPTIONS.filter((item) => item.id !== 'WITH_RIGHTS')
-+                : CREDIT_TYPE_OPTIONS
-+            }
-+            value={CREDIT_TYPE_OPTIONS.find((item) => item.id === details.creditType)?.value ?? ''}
++            list={creditTypeOptions}
++            value={creditTypeOptions.find((item) => item.id === details.creditType)?.value ?? ''}
 +            minChar={0}
 +            emptyMessage="Ничего не найдено"
 +            separatorActionCells={false}
 +            status={fieldErrors.creditType ? 'error' : null}
 +            description={fieldErrors.creditType}
-+            onClear={clearSearchSelect(() => {
-+              clearFieldError('creditType');
-+              patchDetails({
-+                creditType: '',
-+                supplierName: '',
-+                dealAmount: '',
-+                docTypeId: null,
-+                docTypeOther: '',
-+              });
-+            })}
-+            onSelect={(item) => {
-+              const creditType = item.id as CreditingCreditType;
-+              clearFieldError('creditType');
-+              patchDetails({
-+                creditType,
-+                docTypeId: null,
-+                docTypeOther: '',
-+                ...(creditType === 'WITH_RIGHTS' ? {} : { supplierName: '', dealAmount: '' }),
-+              });
-+            }}
++            onClear={clearSearchSelect(() => selectCreditType(''))}
++            onSelect={(item) => selectCreditType(item.id as WriteOffCreditType)}
 +          />
-+          <Input
-+            label="Поставщик:"
-+            className={`${styles.sideField} ${styles.fieldMax400}`}
-+            classNameLabel={styles.sideFieldLabel}
-+            classNameDescription={styles.fieldHint}
-+            placeholder="ФИО поставщика ценных бумаг"
-+            scale="small"
-+            value={details.supplierName}
-+            disabled={!isWithRights}
-+            status={fieldErrors.supplierName ? 'error' : null}
-+            description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
-+            onChange={(event) => {
-+              clearFieldError('supplierName');
-+              patchDetails({ supplierName: event.target.value });
-+            }}
-+          />
++          {isWithRights && (
++            <Input
++              label="Поставщик:"
++              className={styles.sideField}
++              classNameLabel={styles.sideFieldLabel}
++              classNameDescription={styles.fieldHint}
++              placeholder="ФИО поставщика ценных бумаг"
++              scale="small"
++              value={details.supplierName}
++              status={fieldErrors.supplierName ? 'error' : null}
++              description={fieldErrors.supplierName ?? 'ФИО поставщика ценных бумаг'}
++              onChange={(event) => {
++                clearFieldError('supplierName');
++                patchDetails({ supplierName: event.target.value });
++              }}
++            />
++          )}
 +
 +          <Text className={styles.sectionTitle}>Данные для зачисления</Text>
-+          <Input
-+            label="Сумма сделки:"
-+            className={styles.sideField}
-+            classNameLabel={styles.sideFieldLabel}
-+            classNameDescription={styles.fieldHint}
-+            placeholder="0"
-+            scale="small"
-+            variant="number"
-+            precision={2}
-+            decimalSeparator="."
-+            allowedDecimalSeparators={['.', ',']}
-+            thousandSeparator=""
-+            disabled={!isWithRights}
-+            status={fieldErrors.dealAmount ? 'error' : null}
-+            description={
-+              fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
-+            }
-+            value={details.dealAmount}
-+            onValueChange={(values) => {
-+              clearFieldError('dealAmount');
-+              patchDetails({ dealAmount: values.value ?? '' });
-+            }}
-+          />
++          {isWithRights && (
++            <Input
++              label="Сумма сделки:"
++              className={styles.sideField}
++              classNameLabel={styles.sideFieldLabel}
++              classNameDescription={styles.fieldHint}
++              placeholder="0"
++              scale="small"
++              variant="number"
++              precision={2}
++              decimalSeparator="."
++              allowedDecimalSeparators={['.', ',']}
++              thousandSeparator=""
++              status={fieldErrors.dealAmount ? 'error' : null}
++              description={
++                fieldErrors.dealAmount ?? 'Если зачисление производится на основании купли-продажи'
++              }
++              value={details.dealAmount}
++              onValueChange={(values) => {
++                clearFieldError('dealAmount');
++                patchDetails({ dealAmount: values.value ?? '' });
++              }}
++            />
++          )}
 +          <div onClick={() => setOpenDateField('dealDate')}>
 +            <Input
 +              label="Дата сделки:"
@@ -1409,73 +1276,90 @@ index 0000000..1111111
 +            classNamePopover={styles.searchSelectPopover}
 +            classNameContent={styles.searchSelectDropdown}
 +            classNameDescription={styles.fieldHint}
-+            placeholder="Выберите тип документа"
++            placeholder="Тип документа"
 +            scale="small"
 +            clearable
-+            list={docTypeList}
++            disabled={!details.creditType}
++            list={details.creditType ? docTypeOptions : []}
 +            value={selectedDocType?.name ?? ''}
-+            minChar={0}
 +            emptyMessage={
-+              !details.creditType ? 'Сначала выберите тип зачисления' : 'Ничего не найдено'
++              !details.creditType
++                ? 'Сначала выберите тип зачисления'
++                : isDocTypesLoading || isDocTypesFetching
++                ? 'Загрузка...'
++                : 'Ничего не найдено'
 +            }
 +            separatorActionCells={false}
 +            status={fieldErrors.docTypeId ? 'error' : null}
 +            description={fieldErrors.docTypeId}
-+            disabled={!details.creditType}
 +            onClear={clearSearchSelect(() => {
 +              clearFieldError('docTypeId');
++              clearFieldError('docTypeOther');
 +              patchDetails({ docTypeId: null, docTypeOther: '' });
 +            })}
 +            onSelect={(item) => {
 +              clearFieldError('docTypeId');
-+              patchDetails({ docTypeId: Number(item.id), docTypeOther: '' });
++              clearFieldError('docTypeOther');
++              const selected =
++                docTypes.find((docType) => docType.id === item.id || docType.name === item.value) ??
++                null;
++              patchDetails({
++                docTypeId: selected?.id ?? null,
++                docTypeOther: selected?.needComment ? details.docTypeOther : '',
++              });
 +            }}
 +          />
-+          {selectedDocType?.needComment && (
++          {needDocTypeOther && (
 +            <Input
 +              label="Иной тип:"
 +              className={styles.sideField}
 +              classNameLabel={styles.sideFieldLabel}
 +              classNameDescription={styles.fieldHint}
-+              placeholder="Укажите тип документа"
++              placeholder="Иной тип документа"
 +              scale="small"
 +              value={details.docTypeOther}
++              maxLength={50}
 +              status={fieldErrors.docTypeOther ? 'error' : null}
-+              description={fieldErrors.docTypeOther}
++              description={
++                fieldErrors.docTypeOther ?? 'Тип подтверждающего документа. Не более 50 символов'
++              }
 +              onChange={(event) => {
 +                clearFieldError('docTypeOther');
-+                patchDetails({ docTypeOther: event.target.value });
++                patchDetails({ docTypeOther: event.target.value.slice(0, 50) });
 +              }}
 +            />
 +          )}
 +          <Input
-+            label="Номер докум.:"
++            label="Номер документа:"
 +            className={styles.sideField}
 +            classNameLabel={styles.sideFieldLabel}
 +            classNameDescription={styles.fieldHint}
 +            placeholder="Номер документа"
 +            scale="small"
-+            value={details.depoDocNum}
-+            status={fieldErrors.depoDocNum ? 'error' : null}
-+            description={fieldErrors.depoDocNum}
++            value={details.contractNumber}
++            status={fieldErrors.contractNumber ? 'error' : null}
++            description={
++              fieldErrors.contractNumber ??
++              'Номер подтверждающего документа. Если у документа нет номера, то нужно прямо написать б/н'
++            }
 +            onChange={(event) => {
-+              clearFieldError('depoDocNum');
-+              patchDetails({ depoDocNum: event.target.value });
++              clearFieldError('contractNumber');
++              patchDetails({ contractNumber: event.target.value });
 +            }}
 +          />
-+          <div onClick={() => setOpenDateField('depoDocDate')}>
++          <div onClick={() => setOpenDateField('contractDate')}>
 +            <Input
-+              label="Дата докум.:"
++              label="Дата документа:"
 +              className={styles.sideField}
 +              classNameLabel={styles.sideFieldLabel}
 +              classNameDescription={styles.fieldHint}
 +              placeholder="Выберите дату"
 +              scale="small"
-+              value={details.depoDocDate}
++              value={details.contractDate}
 +              addonAfter={<Calendar />}
 +              readOnly
-+              status={fieldErrors.depoDocDate ? 'error' : null}
-+              description={fieldErrors.depoDocDate}
++              status={fieldErrors.contractDate ? 'error' : null}
++              description={fieldErrors.contractDate ?? 'Дата подтверждающего документа'}
 +            />
 +          </div>
 +
@@ -1496,7 +1380,12 @@ index 0000000..1111111
 +              patchDetails({ comment: event.target.value.slice(0, 250) });
 +            }}
 +          />
-+          {/* ponytail: supporting docs — copy WriteOffSupportingDocuments and wire upload/commit when needed */}
++
++          <WriteOffSupportingDocuments
++            files={attachmentFiles}
++            onFilesChange={handleAttachmentFilesChange}
++            disabled={isNextBusy}
++          />
 +        </div>
 +
 +        <div className={styles.footer}>
@@ -1534,231 +1423,969 @@ index 0000000..1111111
 +};
 +
 +export default SecuritiesCrediting;
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/api-transfers.snippet.ts b/src/modules/Transfers/pages/SecuritiesCrediting/api-transfers.snippet.ts
+diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx b/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx
 new file mode 100644
-index 0000000..1111111
+index 0000000..6539707
 --- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/api-transfers.snippet.ts
-@@ -0,0 +1,112 @@
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/index.tsx
+@@ -0,0 +1,17 @@
++import { SECURITIES_CREDITING_PAGE_TITLE } from 'modules/Transfers/constants';
++import { getSecuritiesCreditingPermission } from 'modules/Transfers/permissions';
++
++import SecuritiesWriteOffUnavailable from '../SecuritiesWriteOff/SecuritiesWriteOffUnavailable';
++import SecuritiesCrediting from './SecuritiesCrediting';
++
++const SecuritiesCreditingPage = () => {
++  const { isGranted } = getSecuritiesCreditingPermission();
++
++  if (!isGranted) {
++    return <SecuritiesWriteOffUnavailable title={SECURITIES_CREDITING_PAGE_TITLE} />;
++  }
++
++  return <SecuritiesCrediting />;
++};
++
++export default SecuritiesCreditingPage;
+diff --git a/src/modules/Transfers/pages/SecuritiesCreditingOrder/index.tsx b/src/modules/Transfers/pages/SecuritiesCreditingOrder/index.tsx
+new file mode 100644
+index 0000000..69206cc
+--- /dev/null
++++ b/src/modules/Transfers/pages/SecuritiesCreditingOrder/index.tsx
+@@ -0,0 +1,5 @@
++import SecuritiesWriteOffOrder from '../SecuritiesWriteOffOrder/SecuritiesWriteOffOrder';
++
++const SecuritiesCreditingOrder = () => <SecuritiesWriteOffOrder variant="crediting" />;
++
++export default SecuritiesCreditingOrder;
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+index d41b694..f128534 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOff.tsx
+@@ -12,7 +12,7 @@ import {
+   SearchSelect,
+   Text,
+ } from '@aurora/components';
+-import { APP_TITLE, CDN_BASE_URL } from 'const/app';
++import { APP_TITLE } from 'const/app';
+ import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
+ import { ROUTE_SECURITIES_WRITEOFF_ORDER, ROUTE_TRANSFERS } from 'const/routes';
+ import { DateTime } from 'luxon';
+@@ -46,7 +46,6 @@ import {
+ } from 'modules/Transfers/types';
+ 
+ import { HeaderPage } from 'components';
+-import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
+ 
+ import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+ import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
+@@ -56,6 +55,25 @@ import WriteOffFailed from '../SecuritiesWriteOffOrder/WriteOffFailed';
+ import styles from './SecuritiesWriteOff.module.pcss';
+ import SecurityIcon from './SecurityIcon';
+ import WriteOffSupportingDocuments from './WriteOffSupportingDocuments';
++import {
++  CREDIT_TYPE_OPTIONS,
++  EMPTY_NON_SBP,
++  filterByQuery,
++  formatQuantity,
++  formatQuantityHint,
++  getContractorIdentifier,
++  getInstrumentIconSrc,
++  getModeIconSrc,
++  getQuantityFractionPart,
++  getRequestGuidFromResponse,
++  mapContractorToOption,
++  mapInstrumentToOption,
++  normalizeQuantityFromNumberFormat,
++  parseFormDate,
++  sanitizeLatin,
++  toIsoDate,
++  toQuantityNumber,
++} from './writeOffFormHelpers';
+ import {
+   WriteOffFieldErrors,
+   WriteOffFormField,
+@@ -74,83 +92,6 @@ import {
+ } from './writeOffStatus';
+ 
+ const ACCOUNT_HINT = 'Счёт депо (депозитарий, Номер документа)';
+-const LATIN_DIGIT_RE = /[^\dA-Za-z]/g;
+-const EMPTY_NON_SBP: SecuritiesWriteOffNonSbpDetails = {
+-  contractorID: '',
+-  depoNumber: '',
+-  depoDivision: '',
+-  creditType: '',
+-  supplierName: '',
+-  dealAmount: '',
+-  dealDate: '',
+-  settlementDate: '',
+-  reference: '',
+-  docTypeId: null,
+-  docTypeOther: '',
+-  contractNumber: '',
+-  contractDate: '',
+-  comment: '',
+-};
+-const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
+-  { id: 'WITH_RIGHTS', value: 'С переходом прав' },
+-  { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
+-];
+-
+-const sanitizeLatin = (value: string, max: number) =>
+-  value.replace(LATIN_DIGIT_RE, '').slice(0, max);
+-
+-const parseFormDate = (value: string) => {
+-  if (!value) {
+-    return null;
+-  }
+-
+-  const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
+-  return parsed.isValid ? parsed : null;
+-};
+-
+-const toIsoDate = (value: string) => parseFormDate(value)?.toISODate() ?? null;
+-
+-const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
+-  contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
+-
+-const getInstrumentIconSrc = (instrumentImageName?: string) =>
+-  instrumentImageName ? getSrc(CDN_BASE_URL, instrumentImageName) : undefined;
+-
+-const getModeIconSrc = (imageName?: string) =>
+-  imageName ? getSrc(CDN_BASE_URL, imageName) : undefined;
+-
+-const getQuantityFractionPart = (fractionPart?: number) => {
+-  if (fractionPart == null || !Number.isFinite(fractionPart) || fractionPart < 0) {
+-    return 0;
+-  }
+-
+-  return Math.floor(fractionPart);
+-};
+-
+-/** Одинаковый формат для value и подсказки — ровно QuantityFractionPart знаков после точки. */
+-const formatQuantity = (value: number, fractionPart?: number) => {
+-  const digits = getQuantityFractionPart(fractionPart);
+-  return value.toFixed(digits);
+-};
+-
+-const formatQuantityHint = (
+-  quantity: number | undefined,
+-  fractionPart: number | undefined,
+-  label: string,
+-) =>
+-  quantity == null || !Number.isFinite(quantity)
+-    ? undefined
+-    : `${label} ${formatQuantity(quantity, fractionPart)} шт.`;
+-
+-const toQuantityNumber = (value: string) => {
+-  const normalized = value.trim().replace(',', '.');
+-  if (!normalized || normalized === '.') {
+-    return null;
+-  }
+-
+-  const parsed = Number(normalized);
+-  return Number.isFinite(parsed) ? parsed : null;
+-};
+ 
+ /** Комиссия способа + SendCostsComission, если включён чекбокс расходов. */
+ const getDisplayCommission = (
+@@ -184,71 +125,6 @@ const formatCommissionDisplay = (value: string): string => {
+   return `${sumFormatter(amount, 2)} ${currencySign('RUB')}`;
+ };
+ 
+-/**
+- * Нормализация из react-number-format:
+- * - точка как разделитель;
+- * - без ведущих нулей;
+- * - не больше QuantityFractionPart знаков после точки.
+- */
+-const normalizeQuantityFromNumberFormat = (values: NumberFormatValues, fractionPart?: number) => {
+-  const digits = getQuantityFractionPart(fractionPart);
+-  const rawValue = (values.value ?? '').replace(',', '.');
+-
+-  if (!rawValue) {
+-    return '';
+-  }
+-
+-  // Пока печатают "5." — сохраняем незавершённый ввод
+-  if (digits > 0 && rawValue.endsWith('.')) {
+-    const intValue =
+-      values.floatValue != null && Number.isFinite(values.floatValue)
+-        ? String(Math.trunc(Math.abs(values.floatValue)))
+-        : '0';
+-    return `${intValue}.`;
+-  }
+-
+-  if (values.floatValue != null && Number.isFinite(values.floatValue) && digits === 0) {
+-    return String(values.floatValue);
+-  }
+-
+-  const cleaned = rawValue.replace(/[^\d.]/g, '');
+-  const separatorIndex = cleaned.indexOf('.');
+-  const rawInteger =
+-    separatorIndex === -1 ? cleaned : cleaned.slice(0, separatorIndex).replace(/\D/g, '');
+-  const strippedInteger = rawInteger.replace(/^0+/, '');
+-  const integerPart = strippedInteger === '' ? (rawInteger.length > 0 ? '0' : '') : strippedInteger;
+-
+-  if (digits === 0 || separatorIndex === -1) {
+-    return integerPart;
+-  }
+-
+-  const fractionValue = cleaned
+-    .slice(separatorIndex + 1)
+-    .replace(/\D/g, '')
+-    .slice(0, digits);
+-
+-  return `${integerPart || '0'}.${fractionValue}`;
+-};
+-
+-const mapInstrumentToOption = (instrument: SecuritiesWriteOffParameter) => ({
+-  id: instrument.depoInstrumentId,
+-  value: instrument.name,
+-  description: [
+-    instrument.instrumentShortType,
+-    instrument.issuerName,
+-    instrument.isin,
+-    formatQuantityHint(instrument.quantity, instrument.quantityFractionPart, 'Количество:'),
+-  ]
+-    .filter(Boolean)
+-    .join(' · '),
+-  iconLeft: (
+-    <SecurityIcon
+-      src={getInstrumentIconSrc(instrument.instrumentImageName)}
+-      alt={instrument.name}
+-    />
+-  ),
+-});
+-
+ const mapAccountToOption = (account: SecuritiesWriteOffAccount, fractionPart?: number) => ({
+   id: account.depoSubAccountId,
+   value: account.name,
+@@ -265,49 +141,6 @@ const mapModeToOption = (mode: SecuritiesWriteOffMode) => ({
+   iconLeft: <SecurityIcon src={getModeIconSrc(mode.imageName)} alt={mode.name} square />,
+ });
+ 
+-const mapContractorToOption = (contractor: SecuritiesContractor, index: number) => ({
+-  id: contractor.id ?? `${contractor.name}-${index}`,
+-  value: contractor.name,
+-});
+-
+-const filterByQuery = (
+-  instruments: SecuritiesWriteOffParameter[],
+-  query: string,
+-  fields: Array<keyof SecuritiesWriteOffParameter>,
+-): SecuritiesWriteOffParameter[] => {
+-  const normalizedQuery = query.trim().toLowerCase();
+-
+-  if (!normalizedQuery) {
+-    return instruments;
+-  }
+-
+-  return instruments.filter((instrument) =>
+-    fields.some((field) => {
+-      const value = instrument[field];
+-      return typeof value === 'string' && value.toLowerCase().includes(normalizedQuery);
+-    }),
+-  );
+-};
+-
+-const getRequestGuidFromResponse = (response: SecuritiesWriteOffResponse): string | undefined => {
+-  const fromRequest = response.request?.[0]?.requestGuid;
+-  if (fromRequest) {
+-    return fromRequest;
+-  }
+-
+-  const record = response as Record<string, unknown>;
+-  const nestedRequest = record.request ?? record.Request;
+-
+-  if (Array.isArray(nestedRequest) && nestedRequest[0]) {
+-    const first = nestedRequest[0] as Record<string, unknown>;
+-    const guid = first.requestGuid ?? first.RequestGuid;
+-    return typeof guid === 'string' ? guid : undefined;
+-  }
+-
+-  const topLevelGuid = record.requestGuid ?? record.RequestGuid;
+-  return typeof topLevelGuid === 'string' ? topLevelGuid : undefined;
+-};
+-
+ const SecuritiesWriteOff = () => {
+   const navigate = useNavigate();
+   const isMobile = isMobileDevice();
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOffUnavailable.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOffUnavailable.tsx
+index b4dceee..7ead59f 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOffUnavailable.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/SecuritiesWriteOffUnavailable.tsx
+@@ -14,7 +14,11 @@ import { ReactComponent as BlockedSvg } from 'images/raw-icons/blocked.svg';
+ 
+ import styles from '../Withdrawal/components/Unavailable/Unavailable.module.pcss';
+ 
+-const SecuritiesWriteOffUnavailable = () => {
++type Props = {
++  title?: string;
++};
++
++const SecuritiesWriteOffUnavailable = ({ title = SECURITIES_WRITEOFF_PAGE_TITLE }: Props) => {
+   const navigate = useNavigate();
+   const isMobile = isMobileDevice();
+ 
+@@ -27,7 +31,7 @@ const SecuritiesWriteOffUnavailable = () => {
+       <HeaderPage
+         leftIconVariant="close"
+         onLeftIconClick={handleBackClick}
+-        title={SECURITIES_WRITEOFF_PAGE_TITLE}
++        title={title}
+       />
+       <Placeholder
+         variant="error"
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+index 318fe02..0f548ad 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffCheckResult.ts
+@@ -62,6 +62,7 @@ const FIELD_NAME_MAP: Record<string, WriteOffFormField> = {
+   withrightstransfer: 'creditType',
+   credittype: 'creditType',
+   recipient: 'supplierName',
++  supplier: 'supplierName',
+   suppliername: 'supplierName',
+   volume: 'dealAmount',
+   dealamount: 'dealAmount',
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffFormHelpers.tsx b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffFormHelpers.tsx
+new file mode 100644
+index 0000000..949c760
+--- /dev/null
++++ b/src/modules/Transfers/pages/SecuritiesWriteOff/writeOffFormHelpers.tsx
+@@ -0,0 +1,203 @@
++import { NumberFormatValues } from 'react-number-format';
++
++import { CDN_BASE_URL } from 'const/app';
++import { DEFAULT_DATE_VIEW_FORMAT } from 'const/date';
++import { DateTime } from 'luxon';
++
++import {
++  SecuritiesContractor,
++  SecuritiesWriteOffNonSbpDetails,
++  SecuritiesWriteOffParameter,
++  SecuritiesWriteOffResponse,
++  WriteOffCreditType,
++} from 'modules/Transfers/types';
++
++import { getSrc } from 'components/Instrument/components/InstrumentIcon/helpers';
++
++import SecurityIcon from './SecurityIcon';
++
++export const LATIN_DIGIT_RE = /[^\dA-Za-z]/g;
++export const EMPTY_NON_SBP: SecuritiesWriteOffNonSbpDetails = {
++  contractorID: '',
++  depoNumber: '',
++  depoDivision: '',
++  creditType: '',
++  supplierName: '',
++  dealAmount: '',
++  dealDate: '',
++  settlementDate: '',
++  reference: '',
++  docTypeId: null,
++  docTypeOther: '',
++  contractNumber: '',
++  contractDate: '',
++  comment: '',
++};
++export const CREDIT_TYPE_OPTIONS: Array<{ id: WriteOffCreditType; value: string }> = [
++  { id: 'WITH_RIGHTS', value: 'С переходом прав' },
++  { id: 'WITHOUT_RIGHTS', value: 'Без перехода прав' },
++];
++
++export const sanitizeLatin = (value: string, max: number) =>
++  value.replace(LATIN_DIGIT_RE, '').slice(0, max);
++
++export const parseFormDate = (value: string) => {
++  if (!value) {
++    return null;
++  }
++
++  const parsed = DateTime.fromFormat(value, DEFAULT_DATE_VIEW_FORMAT);
++  return parsed.isValid ? parsed : null;
++};
++
++export const toIsoDate = (value: string) => parseFormDate(value)?.toISODate() ?? null;
++
++export const getContractorIdentifier = (contractor?: SecuritiesContractor | null) =>
++  contractor?.contractorID ?? contractor?.contractorId ?? contractor?.depoIdentifier ?? '';
++
++export const getInstrumentIconSrc = (instrumentImageName?: string) =>
++  instrumentImageName ? getSrc(CDN_BASE_URL, instrumentImageName) : undefined;
++
++export const getModeIconSrc = (imageName?: string) =>
++  imageName ? getSrc(CDN_BASE_URL, imageName) : undefined;
++
++export const getQuantityFractionPart = (fractionPart?: number) => {
++  if (fractionPart == null || !Number.isFinite(fractionPart) || fractionPart < 0) {
++    return 0;
++  }
++
++  return Math.floor(fractionPart);
++};
++
++/** Одинаковый формат для value и подсказки — ровно QuantityFractionPart знаков после точки. */
++export const formatQuantity = (value: number, fractionPart?: number) => {
++  const digits = getQuantityFractionPart(fractionPart);
++  return value.toFixed(digits);
++};
++
++export const formatQuantityHint = (
++  quantity: number | undefined,
++  fractionPart: number | undefined,
++  label: string,
++) =>
++  quantity == null || !Number.isFinite(quantity)
++    ? undefined
++    : `${label} ${formatQuantity(quantity, fractionPart)} шт.`;
++
++export const toQuantityNumber = (value: string) => {
++  const normalized = value.trim().replace(',', '.');
++  if (!normalized || normalized === '.') {
++    return null;
++  }
++
++  const parsed = Number(normalized);
++  return Number.isFinite(parsed) ? parsed : null;
++};
++
 +/**
-+ * Вставить в src/core/api/transfers.ts рядом с writeoff-эндпоинтами.
-+ * Импорты констант и типов — см. APPLY.md.
++ * Нормализация из react-number-format:
++ * - точка как разделитель;
++ * - без ведущих нулей;
++ * - не больше QuantityFractionPart знаков после точки.
 + */
++export const normalizeQuantityFromNumberFormat = (values: NumberFormatValues, fractionPart?: number) => {
++  const digits = getQuantityFractionPart(fractionPart);
++  const rawValue = (values.value ?? '').replace(',', '.');
 +
-+/*
-+    getSecuritiesCreditingParams: builder.query<
-+      SecuritiesCreditingParamsResponse,
-+      { depoInstrument_Id: number; contractorDepoAccount?: string } | void
-+    >({
-+      keepUnusedDataFor: 0,
-+      query: (params) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING_PARAMS,
-+        params: params?.depoInstrument_Id
-+          ? {
-+              depoInstrument_Id: params.depoInstrument_Id,
-+              ...(params.contractorDepoAccount
-+                ? { contractorDepoAccount: params.contractorDepoAccount }
-+                : {}),
-+            }
-+          : undefined,
-+      }),
-+      transformResponse: (data: SecuritiesCreditingParamsResponse | Record<string, unknown>) => {
-+        if (!data || typeof data !== 'object') {
-+          return { creditingParameters: [] };
-+        }
-+        const record = data as Record<string, unknown>;
-+        const list =
-+          (record.creditingParameters as unknown[]) ??
-+          (record.CreditingParameters as unknown[]) ??
-+          (record.data as unknown[]) ??
-+          (Array.isArray(data) ? data : null);
++  if (!rawValue) {
++    return '';
++  }
 +
-+        return {
-+          ...(data as object),
-+          creditingParameters: Array.isArray(list) ? list : [],
-+        } as SecuritiesCreditingParamsResponse;
-+      },
++  // Пока печатают "5." — сохраняем незавершённый ввод
++  if (digits > 0 && rawValue.endsWith('.')) {
++    const intValue =
++      values.floatValue != null && Number.isFinite(values.floatValue)
++        ? String(Math.trunc(Math.abs(values.floatValue)))
++        : '0';
++    return `${intValue}.`;
++  }
++
++  if (values.floatValue != null && Number.isFinite(values.floatValue) && digits === 0) {
++    return String(values.floatValue);
++  }
++
++  const cleaned = rawValue.replace(/[^\d.]/g, '');
++  const separatorIndex = cleaned.indexOf('.');
++  const rawInteger =
++    separatorIndex === -1 ? cleaned : cleaned.slice(0, separatorIndex).replace(/\D/g, '');
++  const strippedInteger = rawInteger.replace(/^0+/, '');
++  const integerPart = strippedInteger === '' ? (rawInteger.length > 0 ? '0' : '') : strippedInteger;
++
++  if (digits === 0 || separatorIndex === -1) {
++    return integerPart;
++  }
++
++  const fractionValue = cleaned
++    .slice(separatorIndex + 1)
++    .replace(/\D/g, '')
++    .slice(0, digits);
++
++  return `${integerPart || '0'}.${fractionValue}`;
++};
++
++export const mapInstrumentToOption = (instrument: SecuritiesWriteOffParameter) => ({
++  id: instrument.depoInstrumentId,
++  value: instrument.name,
++  description: [
++    instrument.instrumentShortType,
++    instrument.issuerName,
++    instrument.isin,
++    formatQuantityHint(instrument.quantity, instrument.quantityFractionPart, 'Количество:'),
++  ]
++    .filter(Boolean)
++    .join(' · '),
++  iconLeft: (
++    <SecurityIcon
++      src={getInstrumentIconSrc(instrument.instrumentImageName)}
++      alt={instrument.name}
++    />
++  ),
++});
++
++export const mapContractorToOption = (contractor: SecuritiesContractor, index: number) => ({
++  id: contractor.id ?? `${contractor.name}-${index}`,
++  value: contractor.name,
++});
++
++export const filterByQuery = (
++  instruments: SecuritiesWriteOffParameter[],
++  query: string,
++  fields: Array<keyof SecuritiesWriteOffParameter>,
++): SecuritiesWriteOffParameter[] => {
++  const normalizedQuery = query.trim().toLowerCase();
++
++  if (!normalizedQuery) {
++    return instruments;
++  }
++
++  return instruments.filter((instrument) =>
++    fields.some((field) => {
++      const value = instrument[field];
++      return typeof value === 'string' && value.toLowerCase().includes(normalizedQuery);
 +    }),
++  );
++};
 +
-+    securitiesCrediting: builder.mutation<
-+      SecuritiesCreditingResponse,
-+      SecuritiesCreditingRequestParams
-+    >({
-+      query: (body) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING,
-+        method: 'POST',
-+        body,
-+      }),
-+    }),
++export const getRequestGuidFromResponse = (response: SecuritiesWriteOffResponse): string | undefined => {
++  const fromRequest = response.request?.[0]?.requestGuid;
++  if (fromRequest) {
++    return fromRequest;
++  }
 +
-+    getSecuritiesCrediting: builder.query<
-+      SecuritiesCreditingStatusDetails,
-+      { requestGuid: string }
-+    >({
-+      query: ({ requestGuid }) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING,
-+        params: { requestGuid },
-+      }),
-+    }),
++  const record = response as Record<string, unknown>;
++  const nestedRequest = record.request ?? record.Request;
 +
-+    getSecuritiesCreditingFiles: builder.query<
-+      Array<{ type?: string; Type?: string; displayName?: string; DisplayName?: string }>,
-+      { requestGuid: string }
-+    >({
-+      keepUnusedDataFor: 0,
-+      query: ({ requestGuid }) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING_FILES,
-+        params: { requestGuid },
-+      }),
-+      transformResponse: (data: Record<string, unknown> | unknown[]) => {
-+        if (Array.isArray(data)) return data;
-+        const record = data as Record<string, unknown>;
-+        const list =
-+          record.referenceDocuments ??
-+          record.ReferenceDocuments ??
-+          record.files ??
-+          record.documents;
-+        return Array.isArray(list) ? list : [];
-+      },
-+    }),
++  if (Array.isArray(nestedRequest) && nestedRequest[0]) {
++    const first = nestedRequest[0] as Record<string, unknown>;
++    const guid = first.requestGuid ?? first.RequestGuid;
++    return typeof guid === 'string' ? guid : undefined;
++  }
 +
-+    securitiesCreditingVerify: builder.mutation<
-+      SecuritiesCreditingStatusDetails,
-+      { requestGuid: string }
-+    >({
-+      query: ({ requestGuid }) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING_VERIFY,
-+        method: 'POST',
-+        body: { requestGuid },
-+      }),
-+    }),
++  const topLevelGuid = record.requestGuid ?? record.RequestGuid;
++  return typeof topLevelGuid === 'string' ? topLevelGuid : undefined;
++};
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/SecuritiesWriteOffOrder.tsx b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/SecuritiesWriteOffOrder.tsx
+index 346e829..a29f128 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/SecuritiesWriteOffOrder.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/SecuritiesWriteOffOrder.tsx
+@@ -3,10 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
+ 
+ import { Button, Checkbox, CircleLoader, Text } from '@aurora/components';
+ import { APP_TITLE } from 'const/app';
+-import { ROUTE_SECURITIES_WRITEOFF } from 'const/routes';
++import { ROUTE_SECURITIES_CREDITING, ROUTE_SECURITIES_WRITEOFF } from 'const/routes';
+ 
+ import { isMobileDevice } from 'core/DeviceDetector';
+-import { useSecuritiesWriteOffVerifyMutation } from 'core/api/transfers';
++import {
++  API_REQUEST_SECURITIES_CREDITING_FILE,
++  API_REQUEST_SECURITIES_WRITEOFF_FILE,
++} from 'core/api/apiConstants';
++import {
++  useSecuritiesCreditingVerifyMutation,
++  useSecuritiesWriteOffVerifyMutation,
++} from 'core/api/transfers';
+ 
+ import { isRetriableOTPConfirmError } from 'utils/oneTimePassword';
+ 
+@@ -33,8 +40,13 @@ const AGREEMENT_LABEL =
+   'Подписывая кодом СМС я подтверждаю, что ознакомился и согласен со всеми документами и указанными в них условиями, принимаю все описанные риски.';
+ const SMS_PAGE_TITLE = 'SMS-подтверждение';
+ 
++export type OrderFormPayload = Pick<
++  SecuritiesWriteOffFormPayload,
++  'instrument' | 'quantity' | 'contractor' | 'documentId'
++>;
 +
-+    securitiesCreditingCommit: builder.mutation<
-+      SecuritiesCreditingStatusDetails,
-+      { requestGuid: string }
-+    >({
-+      query: ({ requestGuid }) => ({
-+        url: API_REQUEST_SECURITIES_CREDITING_COMMIT,
-+        method: 'POST',
-+        body: { requestGuid },
-+      }),
-+    }),
-+*/
+ type OrderLocationState = {
+-  formPayload?: SecuritiesWriteOffFormPayload;
++  formPayload?: OrderFormPayload;
+   requestGuid?: string;
+   writeOffStatus?: SecuritiesWriteOffStatus;
+   referenceDocuments?: SecuritiesWriteOffReferenceDocument[];
+@@ -42,16 +54,40 @@ type OrderLocationState = {
+ 
+ type OrderStep = 'ORDER' | 'CONFIRM' | 'SUCCESS' | 'FAILED';
+ 
+-const SecuritiesWriteOffOrder = () => {
++export type OrderVariant = 'writeoff' | 'crediting';
 +
-+// exports:
-+// useGetSecuritiesCreditingParamsQuery,
-+// useSecuritiesCreditingMutation,
-+// useLazyGetSecuritiesCreditingQuery,
-+// useLazyGetSecuritiesCreditingFilesQuery,
-+// useSecuritiesCreditingVerifyMutation,
-+// useSecuritiesCreditingCommitMutation,
-diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/APPLY.md b/src/modules/Transfers/pages/SecuritiesCrediting/APPLY.md
++const ORDER_CONFIG = {
++  writeoff: {
++    formRoute: ROUTE_SECURITIES_WRITEOFF,
++    fileUrl: API_REQUEST_SECURITIES_WRITEOFF_FILE,
++    failedTitle: 'Поручение на списание ценных бумаг не выполнено.',
++    successSubtitle: 'Заявка на списание ценных бумаг отправлена на исполнение',
++  },
++  crediting: {
++    formRoute: ROUTE_SECURITIES_CREDITING,
++    fileUrl: API_REQUEST_SECURITIES_CREDITING_FILE,
++    failedTitle: 'Поручение на зачисление ценных бумаг не выполнено.',
++    successSubtitle: 'Заявка на зачисление ценных бумаг отправлена на исполнение',
++  },
++} as const;
++
++type Props = {
++  variant?: OrderVariant;
++};
++
++const SecuritiesWriteOffOrder = ({ variant = 'writeoff' }: Props) => {
+   const navigate = useNavigate();
+   const location = useLocation();
+   const isMobile = isMobileDevice();
+   const [agreed, setAgreed] = useState(false);
+   const [step, setStep] = useState<OrderStep>('ORDER');
+   const [errorMessage, setErrorMessage] = useState(DEFAULT_WRITEOFF_ERROR_MESSAGE);
++  const config = ORDER_CONFIG[variant];
+ 
++  const writeOffVerify = useSecuritiesWriteOffVerifyMutation();
++  const creditingVerify = useSecuritiesCreditingVerifyMutation();
+   const [verifyWriteOff, { data: verifyData, isLoading: isVerifyLoading, reset: resetVerify }] =
+-    useSecuritiesWriteOffVerifyMutation();
++    variant === 'crediting' ? creditingVerify : writeOffVerify;
+ 
+   const state = (location.state as OrderLocationState | null) ?? {};
+   const formPayload = state.formPayload;
+@@ -65,16 +101,16 @@ const SecuritiesWriteOffOrder = () => {
+ 
+   useEffect(() => {
+     if (!formPayload || !requestGuid || !referenceDocuments.length) {
+-      navigate(ROUTE_SECURITIES_WRITEOFF, { replace: true });
++      navigate(config.formRoute, { replace: true });
+     }
+-  }, [formPayload, navigate, referenceDocuments.length, requestGuid]);
++  }, [config.formRoute, formPayload, navigate, referenceDocuments.length, requestGuid]);
+ 
+   const handleSignClick = async () => {
+     if (!agreed || !requestGuid || isVerifyLoading) {
+       return;
+     }
+ 
+-    console.log('[SecuritiesWriteOffOrder] POST /v1/nontrade/securities/writeoff/verify', {
++    console.log(`[SecuritiesWriteOffOrder] POST /v1/nontrade/securities/${variant}/verify`, {
+       requestGuid,
+     });
+ 
+@@ -129,7 +165,7 @@ const SecuritiesWriteOffOrder = () => {
+   }
+ 
+   if (step === 'SUCCESS') {
+-    return <WriteOffSuccess formPayload={formPayload} />;
++    return <WriteOffSuccess formPayload={formPayload} subtitle={config.successSubtitle} />;
+   }
+ 
+   if (step === 'FAILED') {
+@@ -138,6 +174,7 @@ const SecuritiesWriteOffOrder = () => {
+         formPayload={formPayload}
+         errorMessage={errorMessage}
+         onRepeat={handleRepeat}
++        title={config.failedTitle}
+       />
+     );
+   }
+@@ -183,7 +220,7 @@ const SecuritiesWriteOffOrder = () => {
+           title={SECURITIES_WRITEOFF_ORDER_PAGE_TITLE}
+           documentTitle={SECURITIES_WRITEOFF_ORDER_PAGE_TITLE}
+           leftIconVariant="back"
+-          onLeftIconClick={() => navigate(ROUTE_SECURITIES_WRITEOFF)}
++          onLeftIconClick={() => navigate(config.formRoute)}
+           showDivider
+         />
+       )}
+@@ -200,6 +237,7 @@ const SecuritiesWriteOffOrder = () => {
+                 key={`${document.type}-${document.crc}`}
+                 requestGuid={requestGuid}
+                 document={document}
++                fileUrl={config.fileUrl}
+               />
+             ))}
+           </div>
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffDocumentItem.tsx b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffDocumentItem.tsx
+index 50cab6b..31727ae 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffDocumentItem.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffDocumentItem.tsx
+@@ -9,20 +9,25 @@ import DocumentCell from 'components/DocumentCell';
+ type Props = {
+   requestGuid: string;
+   document: SecuritiesWriteOffReferenceDocument;
++  fileUrl?: string;
+ };
+ 
+-const buildWriteOffFileUrl = (requestGuid: string, fileType: string) => {
++const buildWriteOffFileUrl = (fileUrl: string, requestGuid: string, fileType: string) => {
+   const params = new URLSearchParams({
+     requestGuid,
+     fileType,
+     download: 'false',
+   });
+ 
+-  return `${API_REQUEST_SECURITIES_WRITEOFF_FILE}?${params.toString()}`;
++  return `${fileUrl}?${params.toString()}`;
+ };
+ 
+-const WriteOffDocumentItem = ({ requestGuid, document }: Props) => {
+-  const filePath = buildWriteOffFileUrl(requestGuid, document.type);
++const WriteOffDocumentItem = ({
++  requestGuid,
++  document,
++  fileUrl = API_REQUEST_SECURITIES_WRITEOFF_FILE,
++}: Props) => {
++  const filePath = buildWriteOffFileUrl(fileUrl, requestGuid, document.type);
+ 
+   console.log('[SecuritiesWriteOffOrder] GET /v1/nontrade/securities/writeoff/file', {
+     requestGuid,
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffFailed.tsx b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffFailed.tsx
+index 95b617e..b72b767 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffFailed.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffFailed.tsx
+@@ -12,12 +12,18 @@ import { DEFAULT_WRITEOFF_ERROR_MESSAGE } from '../SecuritiesWriteOff/writeOffEr
+ import styles from './WriteOffStatus.module.pcss';
+ 
+ type Props = {
+-  formPayload?: SecuritiesWriteOffFormPayload | null;
++  formPayload?: Pick<SecuritiesWriteOffFormPayload, 'instrument' | 'quantity' | 'contractor'> | null;
+   errorMessage?: string;
+   onRepeat: () => void;
++  title?: string;
+ };
+ 
+-const WriteOffFailed = ({ formPayload, errorMessage, onRepeat }: Props) => {
++const WriteOffFailed = ({
++  formPayload,
++  errorMessage,
++  onRepeat,
++  title = 'Поручение на списание ценных бумаг не выполнено.',
++}: Props) => {
+   const navigate = useNavigate();
+   const message = errorMessage?.trim() || DEFAULT_WRITEOFF_ERROR_MESSAGE;
+ 
+@@ -26,7 +32,7 @@ const WriteOffFailed = ({ formPayload, errorMessage, onRepeat }: Props) => {
+       <div className={styles.header}>
+         <ErrorSvg className={styles.icon} />
+         <Text type="bodyRegular" className={styles.errorMessage}>
+-          Поручение на списание ценных бумаг не выполнено.
++          {title}
+         </Text>
+         <Text type="bodyRegular">{message}</Text>
+       </div>
+diff --git a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffSuccess.tsx b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffSuccess.tsx
+index 4063ca6..d59cf0f 100644
+--- a/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffSuccess.tsx
++++ b/src/modules/Transfers/pages/SecuritiesWriteOffOrder/WriteOffSuccess.tsx
+@@ -15,10 +15,14 @@ import { ReactComponent as SuccessSvg } from 'images/raw-icons/status/success.sv
+ import styles from './WriteOffStatus.module.pcss';
+ 
+ type Props = {
+-  formPayload: SecuritiesWriteOffFormPayload;
++  formPayload: Pick<SecuritiesWriteOffFormPayload, 'instrument' | 'quantity' | 'contractor'>;
++  subtitle?: string;
+ };
+ 
+-const WriteOffSuccess = ({ formPayload }: Props) => {
++const WriteOffSuccess = ({
++  formPayload,
++  subtitle = 'Заявка на списание ценных бумаг отправлена на исполнение',
++}: Props) => {
+   const navigate = useNavigate();
+ 
+   const onHistoryClick = () => {
+@@ -39,7 +43,7 @@ const WriteOffSuccess = ({ formPayload }: Props) => {
+           Поручение принято
+         </Text>
+         <Text type="bodyRegular" className={styles.subtitle}>
+-          Заявка на списание ценных бумаг отправлена на исполнение
++          {subtitle}
+         </Text>
+       </div>
+ 
+diff --git a/src/modules/Transfers/pages/Transfers/Transfers.tsx b/src/modules/Transfers/pages/Transfers/Transfers.tsx
+index d6c3f1a..2492a1c 100644
+--- a/src/modules/Transfers/pages/Transfers/Transfers.tsx
++++ b/src/modules/Transfers/pages/Transfers/Transfers.tsx
+@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
+ import { ActionCell, Card, Text } from '@aurora/components';
+ import {
+   ROUTE_REQUISITES_VIEW,
+-  ROUTE_SECURITIES_REQUISITES,
++  ROUTE_SECURITIES_CREDITING,
+   ROUTE_SECURITIES_WRITEOFF,
+   ROUTE_WITHDRAWAL,
+ } from 'const/routes';
+@@ -12,7 +12,10 @@ import { isMobileDevice } from 'core/DeviceDetector';
+ import { Permissions } from 'core/permissions';
+ 
+ import { TRANSFERS_PAGE_TITLE } from 'modules/Transfers/constants';
+-import { getSecuritiesWriteOffPermission } from 'modules/Transfers/permissions';
++import {
++  getSecuritiesCreditingPermission,
++  getSecuritiesWriteOffPermission,
++} from 'modules/Transfers/permissions';
+ 
+ import { HeaderPage } from 'components';
+ 
+@@ -40,6 +43,7 @@ const Transfers = () => {
+     Permissions.granted('PERSON_BANKDETAILS');
+ 
+   const { isVisible: isSecuritiesWriteOffVisible } = getSecuritiesWriteOffPermission();
++  const { isVisible: isSecuritiesCreditingVisible } = getSecuritiesCreditingPermission();
+ 
+   const moneyItems: TransferMenuItem[] = [
+     {
+@@ -62,12 +66,12 @@ const Transfers = () => {
+ 
+   const securitiesItems: TransferMenuItem[] = [
+     {
+-      id: 'securities-requisites',
+-      title: 'Реквизиты для зачисления',
+-      description: 'Отобразить реквизиты для зачисления ценных бумаг',
+-      link: ROUTE_SECURITIES_REQUISITES,
++      id: 'securities-crediting',
++      title: 'Зачисление ценных бумаг',
++      description: 'Подача поручения на зачисление ценных бумаг',
++      link: ROUTE_SECURITIES_CREDITING,
+       icon: <TransferIcon3 />,
+-      visible: true,
++      visible: isSecuritiesCreditingVisible,
+     },
+     {
+       id: 'securities-writeoff',
+diff --git a/src/modules/Transfers/permissions.ts b/src/modules/Transfers/permissions.ts
+index 7a2916b..4902e02 100644
+--- a/src/modules/Transfers/permissions.ts
++++ b/src/modules/Transfers/permissions.ts
+@@ -1,4 +1,5 @@
+ import { Permissions } from 'core/permissions';
++import { PermissionsMapConstantsKeys } from 'core/permissions/constants';
+ 
+ type PermissionValue = 'granted' | 'blocked' | 'denied';
+ 
+@@ -54,14 +55,11 @@ export const getInternalTransferPermissionForProduct = () => ({
+ });
+ 
+ /**
+- * PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT:
+  * GRANTED / NONACTIVE — показать вкладку и форму
+  * BLOCKED — скрыть вкладку
+  * DENIED — показать вкладку, на странице заглушку
+  */
+-export const getSecuritiesWriteOffPermission = () => {
+-  const code = 'PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT' as const;
+-
++const getSecuritiesPermission = (code: PermissionsMapConstantsKeys) => {
+   return {
+     /** Вкладка видна при GRANTED, NONACTIVE и DENIED; скрыта при BLOCKED */
+     get isVisible() {
+@@ -80,3 +78,9 @@ export const getSecuritiesWriteOffPermission = () => {
+   };
+ };
+ 
++export const getSecuritiesWriteOffPermission = () =>
++  getSecuritiesPermission('PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT');
++
++export const getSecuritiesCreditingPermission = () =>
++  getSecuritiesPermission('PERSON_NONTRADE_SECURITY_REFILL_EXT');
++
+diff --git a/src/modules/Transfers/types/index.ts b/src/modules/Transfers/types/index.ts
+index 63a492f..f199d47 100644
+--- a/src/modules/Transfers/types/index.ts
++++ b/src/modules/Transfers/types/index.ts
+@@ -4,4 +4,5 @@ export * from './moneyOperation';
+ export * from './moneyRefillSBP';
+ export * from './moneyCrossCurrencies';
+ export * from './securitiesWriteOff';
++export * from './securitiesCrediting';
+ 
+diff --git a/src/modules/Transfers/types/securitiesCrediting.ts b/src/modules/Transfers/types/securitiesCrediting.ts
 new file mode 100644
-index 0000000..1111111
+index 0000000..34c4195
 --- /dev/null
-+++ b/src/modules/Transfers/pages/SecuritiesCrediting/APPLY.md
-@@ -0,0 +1,104 @@
-+# Securities Crediting — куда вставлять в lk_m
++++ b/src/modules/Transfers/types/securitiesCrediting.ts
+@@ -0,0 +1,47 @@
++export type SecuritiesCreditingSection = {
++  depoSection: string;
++  depoSubAccountId: number;
++};
 +
-+Цель: форма **Зачисление ценных бумаг** по аналогии со списанием.
-+Эндпоинты: `/v1/nontrade/securities/crediting*`.
-+Общее со списанием: `contractors`, `doc_types`, upload `/nontrade/securities/file`.
-+Список инструментов: временно из `writeoff/params` (как договорились), после выбора инструмента — `crediting/params?depoInstrument_Id=`.
++export type SecuritiesCreditingAccount = {
++  agreement: string;
++  depoAccount: string;
++  sections: SecuritiesCreditingSection[];
++};
 +
-+## 1. Константы API — `src/core/api/apiConstants.ts`
++export type SecuritiesCreditingParameter = {
++  depo: string;
++  name: string;
++  accounts: SecuritiesCreditingAccount[];
++  changeOwnershipAllowed: boolean;
++};
 +
-+Добавить рядом с writeoff:
++export type SecuritiesCreditingParamsRequest = {
++  depoInstrumentId: number;
++};
 +
-+```ts
-+// Зачисление ценных бумаг
-+export const API_REQUEST_SECURITIES_CREDITING_PARAMS =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/params';
-+export const API_REQUEST_SECURITIES_CREDITING =
-+  API_REQUEST_URL + '/nontrade/securities/crediting';
-+export const API_REQUEST_SECURITIES_CREDITING_FILES =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/files';
-+export const API_REQUEST_SECURITIES_CREDITING_FILE =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/file';
-+export const API_REQUEST_SECURITIES_CREDITING_VERIFY =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/verify';
-+// ponytail: commit/upload — как у writeoff, если бэкенд отдаст 404 — убрать
-+export const API_REQUEST_SECURITIES_CREDITING_COMMIT =
-+  API_REQUEST_URL + '/nontrade/securities/crediting/commit';
-+```
++export type SecuritiesCreditingParamsResponse = {
++  creditingParameters?: SecuritiesCreditingParameter[];
++};
 +
-+Upload файл тот же: `API_REQUEST_SECURITIES_WRITEOFF_UPLOAD_FILE` → `/nontrade/securities/file`.
-+
-+## 2. Types — `src/modules/Transfers/types/securitiesCrediting.ts`
-+
-+Скопировать файл из этой папки.
-+
-+## 3. RTK — `src/core/api/transfers.ts`
-+
-+Скопировать эндпоинты из `api-transfers.snippet.ts` (getCreditingParams, mutation, status, files, verify, commit).
-+Экспорт хуков: `useGetSecuritiesCreditingParamsQuery`, `useSecuritiesCreditingMutation`, и т.д.
-+
-+## 4. Routes — `src/const/routes.ts`
-+
-+```ts
-+export const ROUTE_SECURITIES_CREDITING = '/transfers/securities/crediting';
-+export const ROUTE_SECURITIES_CREDITING_ORDER = '/transfers/securities/crediting/order';
-+```
-+
-+Если меню ведёт на `/transfers/securities/requisites` — либо поменять ссылку на `crediting`, либо в роутере `requisites` → тот же компонент формы.
-+
-+## 5. Constants title — `src/modules/Transfers/constants`
-+
-+```ts
-+export const SECURITIES_CREDITING_PAGE_TITLE = 'Зачисление ценных бумаг';
-+```
-+
-+## 6. Страницы
-+
-+Создать папки и скопировать:
-+
-+```
-+src/modules/Transfers/pages/SecuritiesCrediting/
-+  index.tsx
-+  SecuritiesCrediting.tsx
-+  SecuritiesCrediting.module.pcss   ← копия WriteOff.module.pcss
-+  SecurityIcon.tsx                 ← копия / re-export из WriteOff
-+  creditingCheckResult.ts
-+  creditingStatus.ts
-+  creditingErrors.ts
-+```
-+
-+Order (быстрее всего):
-+
-+1. Скопировать `SecuritiesWriteOffOrder` → `SecuritiesCreditingOrder`
-+2. Rename WriteOff → Crediting в файлах
-+3. Заменить API hooks/URL на crediting
-+4. Роут success/back на `ROUTE_SECURITIES_CREDITING*`
-+
-+## 7. Router + permission
-+
-+- Lazy route на `ROUTE_SECURITIES_CREDITING` и `.../order`
-+- Право: `PERSON_NONTRADE_SECURITY_REFILL_EXT` (см. `index.tsx`)
-+
-+## 8. Меню Переводы
-+
-+Пункт «Зачисление ценных бумаг» → `ROUTE_SECURITIES_CREDITING`.
-+
-+## 9. Что уже сделано в пакете / что допилить руками
-+
-+| Готово | Допилить в lk_m |
-+|--------|-----------------|
-+| Форма `SecuritiesCrediting.tsx` (поля по макету + POST/poll/files) | Вставить API hooks в `transfers.ts` |
-+| types / checkResult / status / errors | Роуты + router lazy |
-+| index с правом `PERSON_NONTRADE_SECURITY_REFILL_EXT` | Скопировать `*.module.pcss` и `SecurityIcon` из WriteOff |
-+| | Order/SMS: копия `SecuritiesWriteOffOrder` → Crediting |
-+| | Uploader файлов (как WriteOffSupportingDocuments) |
-+| | Комиссия: в API params нет поля — сейчас пусто |
-+| | Инструменты: из `writeoff/params` (временно) |
-+
-+Порядок на форме: сначала **Место расчетов** (Depo из params), потом **Счёт** — так завязано на ответ `crediting/params`. На макете Depo в блоке «Откуда списать»; при желании подписи секций подвиньте, логику выбора не ломая.
-+
-+## Проверка
-+
-+1. Открыть форму, выбрать инструмент → уходит GET `crediting/params?depoInstrument_Id=`
-+2. Заполнить поля → POST `crediting` → poll GET → files → order → verify → SMS
-+3. CheckResult EMPTY/INVALID → ошибки на полях
++export type SecuritiesCreditingRequestParams = {
++  depoInstrument_Id: number | null;
++  depoSubAccount_Id: number | null;
++  quantity: number | null;
++  contractor_Id: number | null;
++  contractorDepoAccount: string | null;
++  contractorDepoSection: string | null;
++  contractorID: string | null;
++  depoDocType_Id: number | null;
++  depoDocTypeOther: string | null;
++  depoDocNum: string | null;
++  depoDocDate: string | null;
++  changeOwnership: boolean | null;
++  supplier: string | null;
++  dealDate: string | null;
++  settleDate: string | null;
++  reference: string | null;
++  volume: number | null;
++  comment: string | null;
++  noCommit?: boolean;
++};
+diff --git a/src/routes.tsx b/src/routes.tsx
+index f342a30..e5af8a7 100644
+--- a/src/routes.tsx
++++ b/src/routes.tsx
+@@ -119,6 +119,8 @@ import {
+   ROUTE_RISKGROUP_CHANGE,
+   ROUTE_RISKGROUP_CONFIRM,
+   ROUTE_RISKGROUP_TEST,
++  ROUTE_SECURITIES_CREDITING,
++  ROUTE_SECURITIES_CREDITING_ORDER,
+   ROUTE_SECURITIES_REQUISITES,
+   ROUTE_SECURITIES_WRITEOFF,
+   ROUTE_SECURITIES_WRITEOFF_ORDER,
+@@ -283,6 +285,10 @@ const SecuritiesWriteOff = lazy(() => import('modules/Transfers/pages/Securities
+ const SecuritiesWriteOffOrder = lazy(
+   () => import('modules/Transfers/pages/SecuritiesWriteOffOrder'),
+ );
++const SecuritiesCrediting = lazy(() => import('modules/Transfers/pages/SecuritiesCrediting'));
++const SecuritiesCreditingOrder = lazy(
++  () => import('modules/Transfers/pages/SecuritiesCreditingOrder'),
++);
+ const View360 = lazy(() => import('modules/View360/ViewPage'));
+ 
+ const {
+@@ -496,6 +502,11 @@ const ContainerRouter = () => {
+               <Route path={ROUTE_SECURITIES_REQUISITES} element={<SecuritiesRequisites />} />
+               <Route path={ROUTE_SECURITIES_WRITEOFF} element={<SecuritiesWriteOff />} />
+               <Route path={ROUTE_SECURITIES_WRITEOFF_ORDER} element={<SecuritiesWriteOffOrder />} />
++              <Route path={ROUTE_SECURITIES_CREDITING} element={<SecuritiesCrediting />} />
++              <Route
++                path={ROUTE_SECURITIES_CREDITING_ORDER}
++                element={<SecuritiesCreditingOrder />}
++              />
+ 
+               <Route path={ROUTE_CATEGORIES_LIST} element={<CategoriesList />} />
+               <Route path={ROUTE_CATEGORY_INFO} element={<CategoryInfo />} />
+@@ -561,6 +572,11 @@ const ContainerRouter = () => {
+               <Route path={ROUTE_SECURITIES_REQUISITES} element={<SecuritiesRequisites />} />
+               <Route path={ROUTE_SECURITIES_WRITEOFF} element={<SecuritiesWriteOff />} />
+               <Route path={ROUTE_SECURITIES_WRITEOFF_ORDER} element={<SecuritiesWriteOffOrder />} />
++              <Route path={ROUTE_SECURITIES_CREDITING} element={<SecuritiesCrediting />} />
++              <Route
++                path={ROUTE_SECURITIES_CREDITING_ORDER}
++                element={<SecuritiesCreditingOrder />}
++              />
+ 
+               <Route element={<Outlet />}>
+                 <Route path={ROUTE_TRADE_PASSWORD} element={<TradePasswordForm />} />
