@@ -176,12 +176,11 @@ diff --git a/src/modules/Transfers/constants.ts b/src/modules/Transfers/constant
 index 0e649cc..1f52997 100644
 --- a/src/modules/Transfers/constants.ts
 +++ b/src/modules/Transfers/constants.ts
-@@ -11,3 +11,5 @@ export const SECURITIES_WRITEOFF_PAGE_TITLE = 'Переводы - Списани
+@@ -11,2 +11,4 @@ export const SECURITIES_WRITEOFF_PAGE_TITLE = 'Переводы - Списани
  
  export const SECURITIES_WRITEOFF_ORDER_PAGE_TITLE = 'Подача поручения';
- 
-+export const SECURITIES_CREDITING_PAGE_TITLE = 'Переводы - Зачисление ценных бумаг';
 +
++export const SECURITIES_CREDITING_PAGE_TITLE = 'Переводы - Зачисление ценных бумаг';
 diff --git a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
 new file mode 100644
 index 0000000..b8b7a8b
@@ -2268,26 +2267,24 @@ index 7a2916b..4902e02 100644
    return {
      /** Вкладка видна при GRANTED, NONACTIVE и DENIED; скрыта при BLOCKED */
      get isVisible() {
-@@ -80,3 +78,9 @@ export const getSecuritiesWriteOffPermission = () => {
+@@ -80,2 +78,8 @@ export const getSecuritiesWriteOffPermission = () => {
    };
  };
- 
++
 +export const getSecuritiesWriteOffPermission = () =>
 +  getSecuritiesPermission('PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT');
 +
 +export const getSecuritiesCreditingPermission = () =>
 +  getSecuritiesPermission('PERSON_NONTRADE_SECURITY_REFILL_EXT');
-+
 diff --git a/src/modules/Transfers/types/index.ts b/src/modules/Transfers/types/index.ts
 index 63a492f..f199d47 100644
 --- a/src/modules/Transfers/types/index.ts
 +++ b/src/modules/Transfers/types/index.ts
-@@ -4,4 +4,5 @@ export * from './moneyOperation';
+@@ -4,3 +4,4 @@ export * from './moneyOperation';
  export * from './moneyRefillSBP';
  export * from './moneyCrossCurrencies';
  export * from './securitiesWriteOff';
 +export * from './securitiesCrediting';
- 
 diff --git a/src/modules/Transfers/types/securitiesCrediting.ts b/src/modules/Transfers/types/securitiesCrediting.ts
 new file mode 100644
 index 0000000..34c4195
