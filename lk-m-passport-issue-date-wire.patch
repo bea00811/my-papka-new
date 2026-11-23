@@ -1,0 +1,32 @@
+diff --git a/src/modules/PersonalInformation/PersonalInformation.tsx b/src/modules/PersonalInformation/PersonalInformation.tsx
+index 9939020..266a8f1 100644
+--- a/src/modules/PersonalInformation/PersonalInformation.tsx
++++ b/src/modules/PersonalInformation/PersonalInformation.tsx
+@@ -544,6 +544,7 @@ const PersonalInformation = () => {
+           personPassport={profileData?.personDocument || []}
+           personFio={profileData?.personData || []}
+           errorText={formDraftCreateErrorText}
++          setSectorErrors={setSectorErrors}
+           sectorErrorsFromCheck={sectorErrors.filter((sec) =>
+             PASPORT_ERROR_FIELD_CODES.includes(sec.fieldCode),
+           )}
+diff --git a/src/modules/PersonalInformation/components/Passport/Passport.tsx b/src/modules/PersonalInformation/components/Passport/Passport.tsx
+index 2c4f07d..596430c 100644
+--- a/src/modules/PersonalInformation/components/Passport/Passport.tsx
++++ b/src/modules/PersonalInformation/components/Passport/Passport.tsx
+@@ -30,6 +30,7 @@ const Passport: FC<PassportProps> = ({
+   personFio,
+   errorText,
+   sectorErrorsFromCheck,
++  setSectorErrors,
+ }) => {
+   const { snackbarInfo } = useSnackbars();
+   const [getFormDraft, { data: formDraft, isError: isFormDraftError }] = useLazyGetFormDraftQuery();
+@@ -58,6 +59,7 @@ const Passport: FC<PassportProps> = ({
+     requestGuid,
+     personalSectors,
+     setPersonalSectors,
++    setSectorErrors,
+     goBack,
+     state,
+   );
