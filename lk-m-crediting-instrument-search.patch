@@ -10,18 +10,6 @@ index 19cdbe4..aaeb8af 100644
            },
          };
        },
-diff --git a/src/types/reports/requests.ts b/src/types/reports/requests.ts
-index ac6b321..244752c 100644
---- a/src/types/reports/requests.ts
-+++ b/src/types/reports/requests.ts
-@@ -14,5 +14,7 @@ export interface CreateReportRequest {
- export interface DepoInstrumentsRequest {
-   searchText?: string;
-   maxCount?: number;
-+  /** true — только инструменты, доступные к зачислению */
-+  forCrediting?: boolean;
- }
- 
 --- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
 +++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
 @@ -1,6 +1,7 @@
