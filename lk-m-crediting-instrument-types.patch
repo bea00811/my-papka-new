@@ -1,0 +1,30 @@
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -68,7 +68,6 @@
+   formatQuantity,
+   getContractorIdentifier,
+   getInstrumentIconSrc,
+-  getQuantityFractionPart,
+   getRequestGuidFromResponse,
+   mapContractorToOption,
+   normalizeQuantityFromNumberFormat,
+@@ -441,7 +440,7 @@
+     }
+   };
+ 
+-  const quantityFractionPart = getQuantityFractionPart(selectedInstrument?.quantityFractionPart);
++  const quantityFractionPart = 0;
+   const quantityNumber = toQuantityNumber(quantityValue);
+   const isQuantityNonPositive = quantityNumber != null && quantityNumber <= 0;
+ 
+@@ -466,8 +465,8 @@
+             depoInstrumentId: selectedInstrument.depoInstrumentId,
+             name: selectedInstrument.name,
+             isin: selectedInstrument.isin ?? '',
+-            issuerName: selectedInstrument.issuerName,
+-            instrumentImageName: selectedInstrument.instrumentImageName,
++            issuerName: selectedInstrument.issuerName ?? undefined,
++            instrumentImageName: selectedInstrument.instrumentImageName ?? undefined,
+           }
+         : null,
+       quantity: quantityValue,
