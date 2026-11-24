@@ -1,0 +1,243 @@
+diff --git a/src/core/api/instrumentDepo.ts b/src/core/api/instrumentDepo.ts
+index 19cdbe4..aaeb8af 100644
+--- a/src/core/api/instrumentDepo.ts
++++ b/src/core/api/instrumentDepo.ts
+@@ -17,6 +17,7 @@ export const depoInstrumentsApi = createApi({
+           params: {
+             max_count: params.maxCount,
+             search_text: params.searchText,
++            ...(params.forCrediting ? { for_crediting: true } : {}),
+           },
+         };
+       },
+diff --git a/src/types/reports/requests.ts b/src/types/reports/requests.ts
+index ac6b321..244752c 100644
+--- a/src/types/reports/requests.ts
++++ b/src/types/reports/requests.ts
+@@ -14,5 +14,7 @@ export interface CreateReportRequest {
+ export interface DepoInstrumentsRequest {
+   searchText?: string;
+   maxCount?: number;
++  /** true — только инструменты, доступные к зачислению */
++  forCrediting?: boolean;
+ }
+ 
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -1,6 +1,7 @@
+ import { useEffect, useMemo, useState } from 'react';
+ import { NumberFormatValues } from 'react-number-format';
+ import { useNavigate } from 'react-router-dom';
++import { useDebounce } from 'react-use';
+ 
+ import {
+   BottomSheet,
+@@ -17,11 +18,11 @@
+ import { DateTime } from 'luxon';
+ 
+ import { isMobileDevice } from 'core/DeviceDetector';
++import { useLazyGetDepoInstrumentsQuery } from 'core/api/instrumentDepo';
+ import {
+   useGetSecuritiesContractorsQuery,
+   useGetSecuritiesCreditingParamsQuery,
+   useGetSecuritiesDocTypesQuery,
+-  useGetSecuritiesWriteOffParamsQuery,
+   useLazyGetSecuritiesCreditingFilesQuery,
+   useLazyGetSecuritiesCreditingQuery,
+   useSecuritiesCreditingCommitMutation,
+@@ -36,7 +37,6 @@
+   SecuritiesCreditingParameter,
+   SecuritiesCreditingRequestParams,
+   SecuritiesWriteOffNonSbpDetails,
+-  SecuritiesWriteOffParameter,
+   SecuritiesWriteOffResponse,
+   SecuritiesWriteOffStatus,
+   WriteOffCreditType,
+@@ -47,8 +47,10 @@
+ import { ReactComponent as Calendar } from 'images/icons/calendarI.svg';
+ import { ReactComponent as BackSvg } from 'images/icons/glyphs/back.svg';
+ 
+-import BlockedContent from '../../components/BlockedContent';
++import { DepoInstrumentItem } from 'types/reports';
++
+ import styles from '../SecuritiesWriteOff/SecuritiesWriteOff.module.pcss';
++import SecurityIcon from '../SecuritiesWriteOff/SecurityIcon';
+ import WriteOffSupportingDocuments from '../SecuritiesWriteOff/WriteOffSupportingDocuments';
+ import {
+   WriteOffFieldErrors,
+@@ -63,13 +65,12 @@
+ import {
+   CREDIT_TYPE_OPTIONS,
+   EMPTY_NON_SBP,
+-  filterByQuery,
+   formatQuantity,
+   getContractorIdentifier,
++  getInstrumentIconSrc,
+   getQuantityFractionPart,
+   getRequestGuidFromResponse,
+   mapContractorToOption,
+-  mapInstrumentToOption,
+   normalizeQuantityFromNumberFormat,
+   parseFormDate,
+   sanitizeLatin,
+@@ -88,7 +89,24 @@
+ 
+ const ACCOUNT_HINT = 'Счёт депо / раздел (договор)';
+ const FAILED_TITLE = 'Поручение на зачисление ценных бумаг не выполнено.';
++const INSTRUMENT_SEARCH_MIN = 3;
++const INSTRUMENT_MAX_COUNT = 16;
+ 
++const mapDepoInstrumentToOption = (instrument: DepoInstrumentItem) => ({
++  id: instrument.depoInstrumentId,
++  value: instrument.name,
++  description: [instrument.instrumentShortType, instrument.issuerName, instrument.isin]
++    .filter(Boolean)
++    .join(' · '),
++  disabled: instrument.allowed === false,
++  iconLeft: (
++    <SecurityIcon
++      src={getInstrumentIconSrc(instrument.instrumentImageName ?? undefined)}
++      alt={instrument.name}
++    />
++  ),
++});
++
+ type CreditingAccountOption = {
+   depoSubAccountId: number;
+   depoAccount: string;
+@@ -133,9 +151,7 @@
+   const [isinValue, setIsinValue] = useState('');
+   const [accountValue, setAccountValue] = useState('');
+   const [quantityValue, setQuantityValue] = useState('');
+-  const [selectedInstrument, setSelectedInstrument] = useState<SecuritiesWriteOffParameter | null>(
+-    null,
+-  );
++  const [selectedInstrument, setSelectedInstrument] = useState<DepoInstrumentItem | null>(null);
+   const [selectedAccount, setSelectedAccount] = useState<CreditingAccountOption | null>(null);
+   const [selectedDepo, setSelectedDepo] = useState<SecuritiesCreditingParameter | null>(null);
+   const [contractorValue, setContractorValue] = useState('');
+@@ -145,12 +161,11 @@
+     'dealDate' | 'settlementDate' | 'contractDate' | null
+   >(null);
+ 
++  const [
++    getDepoInstruments,
++    { data: depoInstruments, isFetching: isInstrumentsFetching, isError: isInstrumentsError },
++  ] = useLazyGetDepoInstrumentsQuery();
+   const {
+-    data: instrumentsParams,
+-    isLoading,
+-    isError: isParamsError,
+-  } = useGetSecuritiesWriteOffParamsQuery(undefined, { refetchOnMountOrArgChange: true });
+-  const {
+     data: creditingParamsData,
+     isLoading: isCreditingParamsLoading,
+     isFetching: isCreditingParamsFetching,
+@@ -203,7 +218,7 @@
+     });
+   };
+ 
+-  const instruments = instrumentsParams?.writeOffParameters ?? [];
++  const instruments = depoInstruments ?? [];
+   const creditingParams = creditingParamsData ?? [];
+   const contractors = contractorsData ?? [];
+   const accounts = useMemo(() => getCreditingAccounts(creditingParams), [creditingParams]);
+@@ -218,28 +233,51 @@
+   const creditTypeOptions = isChangeOwnershipAllowed
+     ? CREDIT_TYPE_OPTIONS
+     : CREDIT_TYPE_OPTIONS.filter((item) => item.id !== 'WITH_RIGHTS');
+-  const emptyMessage = isLoading ? 'Загрузка...' : 'Ничего не найдено';
++  const instrumentQuery = instrumentValue.trim();
++  const emptyMessage = selectedInstrument
++    ? 'Ничего не найдено'
++    : instrumentQuery.length < INSTRUMENT_SEARCH_MIN
++    ? 'Введите не менее 3 символов'
++    : isInstrumentsFetching
++    ? 'Загрузка...'
++    : isInstrumentsError
++    ? 'Не удалось загрузить инструменты'
++    : 'Ничего не найдено';
+ 
+   useEffect(() => {
+     document.title = `${SECURITIES_CREDITING_PAGE_TITLE} — ${APP_TITLE}`;
+   }, []);
+ 
++  useDebounce(
++    () => {
++      if (selectedInstrument || instrumentQuery.length < INSTRUMENT_SEARCH_MIN) {
++        return;
++      }
++
++      getDepoInstruments({
++        searchText: instrumentQuery,
++        maxCount: INSTRUMENT_MAX_COUNT,
++        forCrediting: true,
++      });
++    },
++    300,
++    [getDepoInstruments, instrumentQuery, selectedInstrument],
++  );
++
+   const instrumentList = useMemo(() => {
+-    const filtered = filterByQuery(instruments, instrumentValue, [
+-      'name',
+-      'isin',
+-      'issuerName',
+-    ]).map((instrument) => mapInstrumentToOption(instrument));
++    const source =
++      !selectedInstrument && instrumentQuery.length < INSTRUMENT_SEARCH_MIN ? [] : instruments;
++    const options = source.map((instrument) => mapDepoInstrumentToOption(instrument));
+ 
+     if (
+       selectedInstrument &&
+-      !filtered.some((item) => item.id === selectedInstrument.depoInstrumentId)
++      !options.some((item) => item.id === selectedInstrument.depoInstrumentId)
+     ) {
+-      return [mapInstrumentToOption(selectedInstrument), ...filtered];
++      return [mapDepoInstrumentToOption(selectedInstrument), ...options];
+     }
+ 
+-    return filtered;
+-  }, [instruments, instrumentValue, selectedInstrument]);
++    return options;
++  }, [instrumentQuery, instruments, selectedInstrument]);
+ 
+   const accountList = useMemo(() => {
+     const normalizedQuery = accountValue.trim().toLowerCase();
+@@ -340,7 +378,7 @@
+     selectDepo(null);
+   };
+ 
+-  const selectInstrument = (instrument: SecuritiesWriteOffParameter | null) => {
++  const selectInstrument = (instrument: DepoInstrumentItem | null) => {
+     clearFieldError('instrument');
+     setSelectedInstrument(instrument);
+     setInstrumentValue(instrument?.name ?? '');
+@@ -427,7 +465,7 @@
+         ? {
+             depoInstrumentId: selectedInstrument.depoInstrumentId,
+             name: selectedInstrument.name,
+-            isin: selectedInstrument.isin,
++            isin: selectedInstrument.isin ?? '',
+             issuerName: selectedInstrument.issuerName,
+             instrumentImageName: selectedInstrument.instrumentImageName,
+           }
+@@ -715,18 +753,6 @@
+     );
+   }
+ 
+-  if (isParamsError) {
+-    return <BlockedContent type="errorInternalTransfer" />;
+-  }
+-
+-  if (isLoading) {
+-    return (
+-      <div className={styles.loaderPage}>
+-        <CircleLoader brandColor size="large" />
+-      </div>
+-    );
+-  }
+-
+   if (isNextBusy) {
+     return (
+       <div className={styles.loaderPage}>
