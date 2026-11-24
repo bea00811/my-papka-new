@@ -1,0 +1,88 @@
+--- a/src/modules/Transfers/permissions.ts
++++ b/src/modules/Transfers/permissions.ts
+@@ -81,5 +81,26 @@
+ export const getSecuritiesWriteOffPermission = () =>
+   getSecuritiesPermission('PERSON_NONTRADE_SECURITY_WITHDRAWAL_OUT');
+ 
+-export const getSecuritiesCreditingPermission = () =>
+-  getSecuritiesPermission('PERSON_NONTRADE_SECURITY_REFILL_EXT');
++/**
++ * DENIED — скрыть плашку
++ * BLOCKED — показать плашку, форму не открывать
++ * GRANTED / NONACTIVE — показать плашку и форму
++ */
++export const getSecuritiesCreditingPermission = () => {
++  const permission = getSecuritiesPermission('PERSON_NONTRADE_SECURITY_REFILL_EXT');
++
++  return {
++    get isVisible() {
++      return permission.isGranted || permission.isBlocked;
++    },
++    get isGranted() {
++      return permission.isGranted;
++    },
++    get isDenied() {
++      return permission.isDenied;
++    },
++    get isBlocked() {
++      return permission.isBlocked;
++    },
++  };
++};
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -26,7 +26,6 @@
+   useGetSecuritiesDocTypesQuery,
+   useLazyGetSecuritiesCreditingFilesQuery,
+   useLazyGetSecuritiesCreditingQuery,
+-  useSecuritiesCreditingCommitMutation,
+   useSecuritiesCreditingMutation,
+   useSecuritiesWriteOffUploadFileMutation,
+ } from 'core/api/transfers';
+@@ -199,7 +198,6 @@
+   } = useGetSecuritiesContractorsQuery(undefined, { refetchOnMountOrArgChange: true });
+   const [crediting, { isLoading: isCreditingLoading }] = useSecuritiesCreditingMutation();
+   const [uploadFile] = useSecuritiesWriteOffUploadFileMutation();
+-  const [commitCrediting, { isLoading: isCommitLoading }] = useSecuritiesCreditingCommitMutation();
+   const [getCreditingDetails] = useLazyGetSecuritiesCreditingQuery();
+   const [getCreditingFiles] = useLazyGetSecuritiesCreditingFilesQuery();
+   const [isStatusPolling, setIsStatusPolling] = useState(false);
+@@ -212,8 +210,7 @@
+     Array<'pending' | 'success' | 'failed'>
+   >([]);
+   const [draftRequestGuid, setDraftRequestGuid] = useState<string | null>(null);
+-  const isNextBusy =
+-    isCreditingLoading || isStatusPolling || isUploadingAttachments || isCommitLoading;
++  const isNextBusy = isCreditingLoading || isStatusPolling || isUploadingAttachments;
+ 
+   const clearFieldError = (field: WriteOffFormField) => {
+     setFieldErrors((prev) => {
+@@ -719,7 +716,6 @@
+ 
+       if (hasAttachments) {
+         await uploadAttachmentFiles(requestGuid);
+-        await commitCrediting({ requestGuid }).unwrap();
+         setDraftRequestGuid(null);
+       }
+ 
+@@ -767,11 +763,7 @@
+       <div className={styles.loaderPage}>
+         <CircleLoader brandColor size="large" />
+         <Text>
+-          {isUploadingAttachments
+-            ? 'Загрузка документов...'
+-            : isCommitLoading
+-            ? 'Подтверждение заявки...'
+-            : 'Обработка поручения...'}
++          {isUploadingAttachments ? 'Загрузка документов...' : 'Обработка поручения...'}
+         </Text>
+       </div>
+     );
+@@ -1016,6 +1008,7 @@
+             classNameDescription={styles.fieldHint}
+             placeholder="Выберите тип зачисления"
+             scale="small"
++            searchIcon={false}
+             clearable
+             list={creditTypeOptions}
+             value={creditTypeOptions.find((item) => item.id === details.creditType)?.value ?? ''}
