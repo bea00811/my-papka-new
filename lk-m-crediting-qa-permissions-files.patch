@@ -58,28 +58,7 @@
  
    const clearFieldError = (field: WriteOffFormField) => {
      setFieldErrors((prev) => {
-@@ -687,10 +684,7 @@
-     const requestParams = buildCreditingRequest();
-     const hasAttachments = attachmentFiles.length > 0;
- 
--    console.log('[SecuritiesCrediting] POST /v1/nontrade/securities/crediting', {
--      ...requestParams,
--      noCommit: hasAttachments,
--    });
-+    console.log('[SecuritiesCrediting] POST /v1/nontrade/securities/crediting', requestParams);
-     setFieldErrors({});
-     setStep('FORM');
- 
-@@ -698,7 +692,7 @@
-       let requestGuid = draftRequestGuid;
- 
-       if (!requestGuid) {
--        const response = await crediting({ ...requestParams, noCommit: hasAttachments }).unwrap();
-+        const response = await crediting(requestParams).unwrap();
- 
-         if (applyCheckResultErrors(response)) {
-           return;
-@@ -719,7 +713,6 @@
+@@ -719,7 +716,6 @@
  
        if (hasAttachments) {
          await uploadAttachmentFiles(requestGuid);
@@ -87,7 +66,7 @@
          setDraftRequestGuid(null);
        }
  
-@@ -767,11 +760,7 @@
+@@ -767,11 +763,7 @@
        <div className={styles.loaderPage}>
          <CircleLoader brandColor size="large" />
          <Text>
@@ -100,7 +79,7 @@
          </Text>
        </div>
      );
-@@ -1016,6 +1005,7 @@
+@@ -1016,6 +1008,7 @@
              classNameDescription={styles.fieldHint}
              placeholder="Выберите тип зачисления"
              scale="small"
