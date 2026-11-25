@@ -1,0 +1,15 @@
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -411,12 +411,6 @@
+       });
+     }
+   };
+-
+-  useEffect(() => {
+-    if (instruments.length === 1 && !selectedInstrument) {
+-      selectInstrument(instruments[0]);
+-    }
+-  }, [instruments, selectedInstrument]);
+ 
+   useEffect(() => {
+     if (accounts.length === 1 && !selectedAccount) {
