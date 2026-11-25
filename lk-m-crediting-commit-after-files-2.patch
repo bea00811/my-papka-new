@@ -1,0 +1,36 @@
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -26,6 +26,7 @@
+   useGetSecuritiesDocTypesQuery,
+   useLazyGetSecuritiesCreditingFilesQuery,
+   useLazyGetSecuritiesCreditingQuery,
++  useSecuritiesCreditingCommitMutation,
+   useSecuritiesCreditingMutation,
+   useSecuritiesWriteOffUploadFileMutation,
+ } from 'core/api/transfers';
+@@ -198,6 +199,7 @@
+   } = useGetSecuritiesContractorsQuery(undefined, { refetchOnMountOrArgChange: true });
+   const [crediting, { isLoading: isCreditingLoading }] = useSecuritiesCreditingMutation();
+   const [uploadFile] = useSecuritiesWriteOffUploadFileMutation();
++  const [commitCrediting, { isLoading: isCommitLoading }] = useSecuritiesCreditingCommitMutation();
+   const [getCreditingDetails] = useLazyGetSecuritiesCreditingQuery();
+   const [getCreditingFiles] = useLazyGetSecuritiesCreditingFilesQuery();
+   const [isStatusPolling, setIsStatusPolling] = useState(false);
+@@ -210,7 +212,8 @@
+     Array<'pending' | 'success' | 'failed'>
+   >([]);
+   const [draftRequestGuid, setDraftRequestGuid] = useState<string | null>(null);
+-  const isNextBusy = isCreditingLoading || isStatusPolling || isUploadingAttachments;
++  const isNextBusy =
++    isCreditingLoading || isStatusPolling || isUploadingAttachments || isCommitLoading;
+ 
+   const clearFieldError = (field: WriteOffFormField) => {
+     setFieldErrors((prev) => {
+@@ -716,6 +719,7 @@
+ 
+       if (hasAttachments) {
+         await uploadAttachmentFiles(requestGuid);
++        await commitCrediting({ requestGuid }).unwrap();
+         setDraftRequestGuid(null);
+       }
+ 
