@@ -1,0 +1,85 @@
+--- a/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
++++ b/src/modules/Transfers/pages/SecuritiesCrediting/SecuritiesCrediting.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useState } from 'react';
++import { useEffect, useMemo, useRef, useState } from 'react';
+ import { NumberFormatValues } from 'react-number-format';
+ import { useNavigate } from 'react-router-dom';
+ import { useDebounce } from 'react-use';
+@@ -170,10 +170,10 @@
+     'dealDate' | 'settlementDate' | 'contractDate' | null
+   >(null);
+ 
+-  const [
+-    getDepoInstruments,
+-    { data: depoInstruments, isFetching: isInstrumentsFetching, isError: isInstrumentsError },
+-  ] = useLazyGetDepoInstrumentsQuery();
++  const [getDepoInstruments, { isFetching: isInstrumentsFetching, isError: isInstrumentsError }] =
++    useLazyGetDepoInstrumentsQuery();
++  const [instrumentOptions, setInstrumentOptions] = useState<DepoInstrumentItem[]>([]);
++  const instrumentSearchId = useRef(0);
+   const {
+     data: creditingParamsData,
+     isLoading: isCreditingParamsLoading,
+@@ -227,7 +227,7 @@
+     });
+   };
+ 
+-  const instruments = depoInstruments ?? [];
++  const instruments = instrumentOptions;
+   const creditingParams = creditingParamsData ?? [];
+   const contractors = contractorsData ?? [];
+   const accounts = useMemo(() => getCreditingAccounts(creditingParams), [creditingParams]);
+@@ -257,17 +257,38 @@
+     document.title = `${SECURITIES_CREDITING_PAGE_TITLE} — ${APP_TITLE}`;
+   }, []);
+ 
++  useEffect(() => {
++    if (selectedInstrument || instrumentQuery.length >= INSTRUMENT_SEARCH_MIN) {
++      return;
++    }
++
++    instrumentSearchId.current += 1;
++    setInstrumentOptions([]);
++  }, [instrumentQuery, selectedInstrument]);
++
+   useDebounce(
+     () => {
+       if (selectedInstrument || instrumentQuery.length < INSTRUMENT_SEARCH_MIN) {
+         return;
+       }
+ 
++      const searchId = ++instrumentSearchId.current;
+       getDepoInstruments({
+         searchText: instrumentQuery,
+         maxCount: INSTRUMENT_MAX_COUNT,
+         forCrediting: true,
+-      });
++      })
++        .unwrap()
++        .then((items) => {
++          if (instrumentSearchId.current === searchId) {
++            setInstrumentOptions(items);
++          }
++        })
++        .catch(() => {
++          if (instrumentSearchId.current === searchId) {
++            setInstrumentOptions([]);
++          }
++        });
+     },
+     300,
+     [getDepoInstruments, instrumentQuery, selectedInstrument],
+@@ -413,12 +434,6 @@
+   };
+ 
+   useEffect(() => {
+-    if (instruments.length === 1 && !selectedInstrument) {
+-      selectInstrument(instruments[0]);
+-    }
+-  }, [instruments, selectedInstrument]);
+-
+-  useEffect(() => {
+     if (accounts.length === 1 && !selectedAccount) {
+       selectAccount(accounts[0]);
+     }
